@@ -1,0 +1,60 @@
+/**
+ * Every icon the app draws, one module each. Importing from the package root
+ * would put all ~1,600 icons in the bundle: Metro does not tree-shake, so the
+ * app imports icons from here and this file names exactly the ones it uses.
+ */
+export type { LucideIcon, LucideProps } from "lucide-react-native";
+export { default as Archive } from "lucide-react-native/icons/archive";
+export { default as ArchiveRestore } from "lucide-react-native/icons/archive-restore";
+export { default as ArrowDownLeft } from "lucide-react-native/icons/arrow-down-left";
+export { default as ArrowLeft } from "lucide-react-native/icons/arrow-left";
+export { default as ArrowLeftRight } from "lucide-react-native/icons/arrow-left-right";
+export { default as ArrowRight } from "lucide-react-native/icons/arrow-right";
+export { default as ArrowUpRight } from "lucide-react-native/icons/arrow-up-right";
+export { default as Banknote } from "lucide-react-native/icons/banknote";
+export { default as Bird } from "lucide-react-native/icons/bird";
+export { default as CalendarClock } from "lucide-react-native/icons/calendar-clock";
+export { default as Check } from "lucide-react-native/icons/check";
+export { default as ChevronDown } from "lucide-react-native/icons/chevron-down";
+export { default as ChevronLeft } from "lucide-react-native/icons/chevron-left";
+export { default as ChevronRight } from "lucide-react-native/icons/chevron-right";
+export { default as CircleCheck } from "lucide-react-native/icons/circle-check";
+export { default as CircleHelp } from "lucide-react-native/icons/circle-question-mark";
+export { default as CloudOff } from "lucide-react-native/icons/cloud-off";
+export { default as CopyPlus } from "lucide-react-native/icons/copy-plus";
+export { default as CreditCard } from "lucide-react-native/icons/credit-card";
+export { default as Ellipsis } from "lucide-react-native/icons/ellipsis";
+export { default as Eye } from "lucide-react-native/icons/eye";
+export { default as EyeOff } from "lucide-react-native/icons/eye-off";
+export { default as FolderPlus } from "lucide-react-native/icons/folder-plus";
+export { default as HandCoins } from "lucide-react-native/icons/hand-coins";
+export { default as Home } from "lucide-react-native/icons/house";
+export { default as Landmark } from "lucide-react-native/icons/landmark";
+export { default as Languages } from "lucide-react-native/icons/languages";
+export { default as Layers } from "lucide-react-native/icons/layers";
+export { default as LayoutDashboard } from "lucide-react-native/icons/layout-dashboard";
+export { default as LineChart } from "lucide-react-native/icons/chart-line";
+export { default as LogOut } from "lucide-react-native/icons/log-out";
+export { default as MessageCircle } from "lucide-react-native/icons/message-circle";
+export { default as MessagesSquare } from "lucide-react-native/icons/messages-square";
+export { default as Moon } from "lucide-react-native/icons/moon";
+export { default as OctagonX } from "lucide-react-native/icons/octagon-x";
+export { default as Pencil } from "lucide-react-native/icons/pencil";
+export { default as PieChart } from "lucide-react-native/icons/chart-pie";
+export { default as PiggyBank } from "lucide-react-native/icons/piggy-bank";
+export { default as Plus } from "lucide-react-native/icons/plus";
+export { default as Receipt } from "lucide-react-native/icons/receipt";
+export { default as Repeat } from "lucide-react-native/icons/repeat";
+export { default as Search } from "lucide-react-native/icons/search";
+export { default as Settings } from "lucide-react-native/icons/settings";
+export { default as ShieldCheck } from "lucide-react-native/icons/shield-check";
+export { default as Sparkles } from "lucide-react-native/icons/sparkles";
+export { default as Sun } from "lucide-react-native/icons/sun";
+export { default as Tag } from "lucide-react-native/icons/tag";
+export { default as Tags } from "lucide-react-native/icons/tags";
+export { default as Trash2 } from "lucide-react-native/icons/trash";
+export { default as TrendingUp } from "lucide-react-native/icons/trending-up";
+export { default as TriangleAlert } from "lucide-react-native/icons/triangle-alert";
+export { default as Upload } from "lucide-react-native/icons/upload";
+export { default as Wallet } from "lucide-react-native/icons/wallet";
+export { default as X } from "lucide-react-native/icons/x";

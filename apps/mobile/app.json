@@ -1,0 +1,91 @@
+{
+  "expo": {
+    "name": "Cigua",
+    "slug": "cigua",
+    "scheme": "cigua",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#eeebf5",
+    "ios": {
+      "bundleIdentifier": "app.tywin.cigua",
+      "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "CFBundleLocalizations": [
+          "es",
+          "en"
+        ]
+      }
+    },
+    "android": {
+      "package": "app.tywin.cigua",
+      "adaptiveIcon": {
+        "backgroundColor": "#4a1f8c",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": true,
+      "allowBackup": false
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "backgroundColor": "#4a1f8c",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#4a1f8c"
+          }
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Archivo-Regular.ttf",
+            "./assets/fonts/Archivo-Medium.ttf",
+            "./assets/fonts/Archivo-SemiBold.ttf",
+            "./assets/fonts/Archivo-Bold.ttf",
+            "./assets/fonts/Archivo-ExtraBold.ttf",
+            "./assets/fonts/ArchivoSemiExpanded-SemiBold.ttf",
+            "./assets/fonts/ArchivoSemiExpanded-Bold.ttf",
+            "./assets/fonts/ArchivoSemiExpanded-ExtraBold.ttf",
+            "./assets/fonts/ArchivoExpanded-SemiBold.ttf",
+            "./assets/fonts/ArchivoExpanded-Bold.ttf",
+            "./assets/fonts/ArchivoExpanded-ExtraBold.ttf",
+            "./assets/fonts/ArchivoExpanded-Black.ttf"
+          ]
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {}
+    }
+  }
+}
