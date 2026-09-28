@@ -1,12 +1,10 @@
 import { getTranslations } from "#/i18n";
 import { createClient } from "#/lib/supabase/server";
 import { dbError } from "#/lib/errors";
-import { extractStatementText } from "#/lib/statements/extract";
-import { scrubPii } from "#/lib/statements/llm/scrub-pii";
 import { extractWithLLM, toParsedStatement } from "#/lib/statements/llm/extract";
 import { validateChecksums } from "#/lib/statements/validate";
 import { centsToDecimal } from "#/lib/statements/money";
-import { MAX_STATEMENT_BYTES } from "@cigua/core/statements/limits";
+import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import { takeStatementParseToken } from "#/lib/statements/rate-limit";
 import { suggestAccountMappings, type CardAccountOption } from "#/lib/statements/mapping";
 import { cardBackfillFromSection } from "#/lib/statements/backfill";
@@ -37,8 +35,6 @@ export interface SectionPreview {
 }
 export interface StatementPreviewResult {
   error?: string;
-  needsPassword?: boolean;
-  passwordIncorrect?: boolean;
   preview?: {
     parserId: string;
     cardLast4: string | null;
@@ -49,7 +45,7 @@ export interface StatementPreviewResult {
     accountOptions: { id: string; name: string; currency: string }[];
   };
   /** JSON-serialized ParsedStatement. The client echoes this back on Import
-   *  (confirmStatementImport) so confirm never re-extracts the PDF or re-calls
+   *  (confirmStatementImport) so confirm never re-reads the statement or re-calls
    *  the LLM — see design spec §1. */
   parsedStatement?: string;
 }
@@ -170,49 +166,46 @@ async function loadAccountContext(supabase: Supabase, accountId: string, parserI
   return { account, options, saved } as const;
 }
 
-/** Expensive half of the old runPipeline: PDF extraction, PII scrub, and the
- *  Gemini call. Only ever run on parse — see design spec §1: this step used
- *  to be a cheap local regex (detectParser) and confirm re-ran it for free;
- *  it's an LLM network call now, so confirm must not repeat it. */
-async function extractAndParse(formData: FormData) {
+/** What the app sends to read a statement: the text it pulled out of the PDF on
+ *  the phone (the PDF and its password never leave the device), the file's name
+ *  for the import record, and the card it belongs to. */
+export type StatementTextInput = { text: string; fileName: string; accountId: string };
+
+function statementTextInput(raw: unknown): StatementTextInput | null {
+  if (!raw || typeof raw !== "object") return null;
+  const { text, fileName, accountId } = raw as Record<string, unknown>;
+  if (typeof text !== "string" || typeof fileName !== "string" || typeof accountId !== "string") return null;
+  if (!text.trim() || text.length > MAX_STATEMENT_TEXT_CHARS || !accountId) return null;
+  return { text, fileName: fileName.slice(0, 255) || "statement.pdf", accountId };
+}
+
+/** Expensive half of the old runPipeline: the Gemini call. Only
+ *  ever run on parse — see design spec §1: this step used to be a cheap local
+ *  regex (detectParser) and confirm re-ran it for free; it's an LLM network call
+ *  now, so confirm must not repeat it. */
+async function extractAndParse({ text, fileName }: StatementTextInput) {
   const t = await getTranslations("Statements");
   const { supabase, user } = await requireUser();
   if (!user) return { error: (await getTranslations("Common"))("notSignedIn") } as const;
 
-  const file = formData.get("file");
-  const password = String(formData.get("password") ?? "") || undefined;
-  if (!(file instanceof File)) return { error: t("invalidUpload") } as const;
-  // Checked before the bytes are read, not after: an oversize upload should
-  // cost nothing and leave no failed-import row for an attempt never made. The
-  // panel checks the same limit first, so reaching this is a forged request.
-  if (file.size > MAX_STATEMENT_BYTES) {
-    return { error: t("fileTooLarge", { limit: MAX_STATEMENT_BYTES / (1024 * 1024) }) } as const;
-  }
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const extracted = await extractStatementText(bytes, password);
-  if (!extracted.ok) {
-    if (extracted.reason === "unreadable") return { error: t("unreadablePdf") } as const;
-    if (extracted.reason === "bad_password") return { needsPassword: true, passwordIncorrect: true } as const;
-    return { needsPassword: true } as const;
-  }
-
-  // Taken only now that the PDF has opened, right before the model call: a
-  // password prompt or a wrong password doesn't spend it, so the upload
-  // dialog's re-tries for a protected statement don't lock the person out of
-  // their own import. A refused request here still costs nothing and leaves
-  // no failed-import row.
+  // Taken right before the model call. Password prompts happen on the phone
+  // and never reach here, so re-tries for a protected statement don't spend it.
+  // A refused request still costs nothing and leaves no failed-import row.
   if (!takeStatementParseToken(user.id, Date.now())) {
     return { error: t("llmRateLimited") } as const;
   }
 
 
-  const llmResult = await extractWithLLM(scrubPii(extracted.text));
+  // Already scrubbed of personal details on the phone (lib/statements/pdf-text in
+  // the app). Not repeated here: scrubbing protects a person's own details from
+  // the model, so a client that skipped it would only expose its own, and the
+  // scrubber is slow on pathological input that only a forged request can send.
+  const llmResult = await extractWithLLM(text);
   if (!llmResult.ok) {
     await supabase.from("statement_imports").insert({
       user_id: user.id,
       parser_id: "unknown",
-      file_name: file.name,
+      file_name: fileName,
       status: "failed_detection",
       error: llmResult.detail,
     });
@@ -239,7 +232,7 @@ async function extractAndParse(formData: FormData) {
     await supabase.from("statement_imports").insert({
       user_id: user.id,
       parser_id: "unknown",
-      file_name: file.name,
+      file_name: fileName,
       status: "failed_detection",
       error: String(e),
     });
@@ -254,23 +247,24 @@ async function extractAndParse(formData: FormData) {
     await supabase.from("statement_imports").insert({
       user_id: user.id,
       parser_id: parsed.parserId,
-      file_name: file.name,
+      file_name: fileName,
       status: "failed_validation",
       error: detail,
     });
     return { error: t("checksumFailed", { detail }) } as const;
   }
 
-  return { supabase, fileName: file.name, parsed } as const;
+  return { supabase, fileName, parsed } as const;
 }
 
-export async function parseStatement(formData: FormData): Promise<StatementPreviewResult> {
+export async function parseStatement(raw: unknown): Promise<StatementPreviewResult> {
   const t = await getTranslations("Statements");
-  const accountId = String(formData.get("account_id") ?? "");
-  if (!accountId) return { error: t("invalidUpload") };
+  const input = statementTextInput(raw);
+  if (!input) return { error: t("invalidUpload") };
+  const { accountId } = input;
 
-  const ctx = await extractAndParse(formData);
-  if ("error" in ctx || "needsPassword" in ctx) return ctx as StatementPreviewResult;
+  const ctx = await extractAndParse(input);
+  if ("error" in ctx) return { error: ctx.error };
   const { supabase, parsed, fileName } = ctx;
 
   const accountCtx = await loadAccountContext(supabase, accountId, parsed.parserId);

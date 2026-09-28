@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Mock } from "vitest";
 
-vi.mock("#/lib/statements/extract", () => ({ extractStatementText: vi.fn() }));
 vi.mock("#/lib/statements/llm/extract", () => ({
   extractWithLLM: vi.fn(),
   toParsedStatement: vi.fn(),
@@ -21,11 +20,10 @@ vi.mock("#/i18n", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }));
 
-import { extractStatementText } from "#/lib/statements/extract";
 import { extractWithLLM } from "#/lib/statements/llm/extract";
 import { createClient } from "#/lib/supabase/server";
 import { confirmStatementImport, listImportTargets, parseStatement } from "./statements";
-import { MAX_STATEMENT_BYTES } from "@cigua/core/statements/limits";
+import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import {
   resetStatementParseRateLimit,
   STATEMENT_PARSE_MAX_PER_WINDOW,
@@ -72,6 +70,7 @@ function makeSupabaseStub(
     ...accountOverrides,
   };
   const accountUpdate = vi.fn(() => chainable({ error: null }));
+  const importInsert = vi.fn(async () => ({ error: null }));
   const byTable: Record<string, () => unknown> = {
     accounts: () => chainable({ data: account }, { update: accountUpdate }),
     statement_section_mappings: () =>
@@ -79,12 +78,14 @@ function makeSupabaseStub(
     categories: () => chainable({ data: [{ id: "cat-other", name: "Other" }] }),
     category_rules: () => chainable({ data: [] }),
     profiles: () => chainable({ data: { base_currency: "DOP" } }),
+    statement_imports: () => chainable({ error: null }, { insert: importInsert }),
   };
   return {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: "user-1" } } })) },
     from: vi.fn((table: string) => (byTable[table] ?? (() => chainable({ data: null })))()),
     rpc: vi.fn(async () => ({ error: null })),
     accountUpdate,
+    importInsert,
   };
 }
 
@@ -147,10 +148,9 @@ describe("confirmStatementImport", () => {
     (createClient as unknown as Mock).mockResolvedValue(makeSupabaseStub());
   });
 
-  it("does not re-extract the PDF or call the LLM given a valid parsed_statement payload", async () => {
+  it("does not call the LLM again given a valid parsed_statement payload", async () => {
     const result = await confirmStatementImport(buildConfirmFormData());
     expect(result.error).toBeUndefined();
-    expect(extractStatementText).not.toHaveBeenCalled();
     expect(extractWithLLM).not.toHaveBeenCalled();
   });
 
@@ -242,47 +242,40 @@ describe("parseStatement", () => {
     (createClient as unknown as Mock).mockResolvedValue(makeSupabaseStub());
   });
 
-  function buildUploadFormData(size: number) {
-    const fd = new FormData();
-    fd.set("account_id", "acc-1");
-    fd.set("file", new File([new Uint8Array(size)], "statement.pdf", { type: "application/pdf" }));
-    return fd;
-  }
+  const input = (text: string) => ({ text, fileName: "statement.pdf", accountId: "acc-1" });
 
-  it("rejects a file past the size limit without reading it", async () => {
-    const result = await parseStatement(buildUploadFormData(MAX_STATEMENT_BYTES + 1));
-    expect(result.error).toBe("fileTooLarge");
-    // The point of checking here rather than downstream: the bytes never reach
-    // pdfjs, and no failed-import row is written for something never attempted.
-    expect(extractStatementText).not.toHaveBeenCalled();
-  });
-
-  it("lets a file at the limit through to extraction", async () => {
-    (extractStatementText as unknown as Mock).mockResolvedValue({ ok: false, reason: "unreadable" });
-    const result = await parseStatement(buildUploadFormData(MAX_STATEMENT_BYTES));
-    expect(extractStatementText).toHaveBeenCalled();
-    expect(result.error).toBe("unreadablePdf");
-  });
-
-  it("refuses the model call once the person's parse budget is spent", async () => {
-    (extractStatementText as unknown as Mock).mockResolvedValue({ ok: true, text: "x" });
-    for (let i = 0; i < STATEMENT_PARSE_MAX_PER_WINDOW; i++) {
-      takeStatementParseToken("user-1", Date.now());
-    }
-    const result = await parseStatement(buildUploadFormData(1024));
-    expect(result.error).toBe("llmRateLimited");
+  it("rejects text past the size limit without calling the model", async () => {
+    const result = await parseStatement(input("x".repeat(MAX_STATEMENT_TEXT_CHARS + 1)));
+    expect(result.error).toBe("invalidUpload");
     expect(extractWithLLM).not.toHaveBeenCalled();
   });
 
-  it("does not spend the parse budget on a password prompt", async () => {
-    (extractStatementText as unknown as Mock).mockResolvedValue({
-      ok: false,
-      reason: "password_required",
-    });
-    for (let i = 0; i < STATEMENT_PARSE_MAX_PER_WINDOW + 1; i++) {
-      await parseStatement(buildUploadFormData(1024));
+  it("rejects a malformed body, and empty text", async () => {
+    expect((await parseStatement({ fileName: "s.pdf", accountId: "acc-1" })).error).toBe("invalidUpload");
+    expect((await parseStatement(null)).error).toBe("invalidUpload");
+    expect((await parseStatement(input("   "))).error).toBe("invalidUpload");
+    expect(extractWithLLM).not.toHaveBeenCalled();
+  });
+
+  it("sends text at the limit to the model as the phone scrubbed it", async () => {
+    (extractWithLLM as unknown as Mock).mockResolvedValue({ ok: false, reason: "llm_error", detail: "boom" });
+    const supabase = makeSupabaseStub();
+    (createClient as unknown as Mock).mockResolvedValue(supabase);
+    const text = "x".repeat(MAX_STATEMENT_TEXT_CHARS);
+    const result = await parseStatement(input(text));
+    expect(extractWithLLM).toHaveBeenCalledWith(text);
+    expect(result.error).toBe("unsupportedBank");
+    // The model's own error is kept on the failed import, not a fixed string.
+    expect(supabase.importInsert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed_detection", error: "boom" }));
+  });
+
+  it("refuses the model call once the person's parse budget is spent", async () => {
+    for (let i = 0; i < STATEMENT_PARSE_MAX_PER_WINDOW; i++) {
+      takeStatementParseToken("user-1", Date.now());
     }
-    expect(takeStatementParseToken("user-1", Date.now())).toBe(true);
+    const result = await parseStatement(input("15/08  UBER  100.00"));
+    expect(result.error).toBe("llmRateLimited");
+    expect(extractWithLLM).not.toHaveBeenCalled();
   });
 });
 

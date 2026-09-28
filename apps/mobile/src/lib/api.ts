@@ -1,4 +1,4 @@
-import type { Actions, ActionModule, ScreenData, ScreenName, StatementPreviewResult } from "@cigua/worker/api";
+import type { Actions, ActionModule, ScreenData, ScreenName } from "@cigua/worker/api";
 import { ENV } from "./env";
 import { currentLocale } from "./i18n";
 import { auth } from "./supabase";
@@ -91,26 +91,8 @@ export async function callAction<M extends ActionModule, F extends ActionName<M>
   return (await json<{ data: ActionResult<M, F> }>(res)).data;
 }
 
-/** A picked PDF, as React Native's FormData takes a file. */
+/** A picked PDF: where it is on the device, and its name. */
 export type PickedFile = { uri: string; name: string; mimeType?: string | null };
-
-/** The import dialog's parse step: the PDF and the account it belongs to. */
-export async function parseStatement(input: {
-  file: PickedFile;
-  accountId: string;
-  password?: string;
-}): Promise<StatementPreviewResult> {
-  const form = new FormData();
-  form.append("file", {
-    uri: input.file.uri,
-    name: input.file.name,
-    type: input.file.mimeType ?? "application/pdf",
-  } as unknown as Blob);
-  form.append("account_id", input.accountId);
-  if (input.password) form.append("password", input.password);
-  const res = await authedFetch("/v1/statements/parse", { method: "POST", body: form });
-  return json<StatementPreviewResult>(res);
-}
 
 /** The import dialog's confirm step: the echoed preview plus the section mappings. */
 export async function confirmStatement(fields: Record<string, string>): Promise<{

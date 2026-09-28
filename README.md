@@ -34,9 +34,15 @@ packages/core    Shared pure logic: money, periods, statements, schemas, message
 - **Supabase on the device is Auth only** (`@supabase/auth-js`): sign-in, token
   refresh, sign-out. The session lives in the keychain.
 
-Other routes: `POST /v1/statements/parse` and `/confirm` (PDF import, multipart),
-`POST /v1/ask` (streamed answers), `POST /v1/recommendation`, `GET /v1/fx`,
-`GET /v1/health`.
+- **Statement PDFs are read on the phone.** pdfjs (unpdf's serverless build)
+  extracts the text on the device, including password-protected statements, and
+  scrubs personal details from it. Only that text goes to the Worker
+  (`statements.parseStatement`), so the PDF and its password never leave the
+  phone. Confirming an import posts the reviewed rows as a form to
+  `POST /v1/statements/confirm`.
+
+Other routes: `POST /v1/ask` (streamed answers), `POST /v1/recommendation`,
+`GET /v1/fx`, `GET /v1/health`.
 
 ## Setup
 
@@ -65,8 +71,10 @@ npx wrangler secret put OWNER_EMAIL        # optional
 npm run deploy
 ```
 
-Reading a statement PDF takes more CPU per request than the Workers Free plan
-allows, so deploy on Workers Paid.
+The Worker does no PDF work (the app reads statements), so its requests are
+light: mostly waiting on Supabase and Gemini, which does not count as CPU time.
+Workers Free fits a personal deployment; move to Workers Paid if you outgrow its
+daily request limit.
 
 ### App
 

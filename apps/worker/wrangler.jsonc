@@ -11,11 +11,7 @@
   "placement": { "mode": "smart" },
   "observability": { "enabled": true },
   // The Ask schema document stays markdown in the repo and ships as a string.
-  // pdfjs's standard font programs ship as bytes (src/lib/statements/standard-fonts).
-  "rules": [
-    { "type": "Text", "globs": ["**/*.md"], "fallthrough": true },
-    { "type": "Data", "globs": ["**/*.pfb", "**/*.ttf"], "fallthrough": true }
-  ],
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "vars": {
     "SUPABASE_URL": "",
     "SUPABASE_PUBLISHABLE_KEY": "",

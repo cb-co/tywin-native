@@ -7,7 +7,7 @@ import { baseCurrencyOf } from "@cigua/core/profile";
 import { actions } from "#/api";
 import { screens } from "#/screens";
 import { ask } from "#/routes/ask";
-import { parseStatement, confirmStatementImport } from "#/actions/statements";
+import { confirmStatementImport } from "#/actions/statements";
 import { refreshRecommendation } from "#/actions/recommendation";
 
 /**
@@ -16,7 +16,6 @@ import { refreshRecommendation } from "#/actions/recommendation";
  *   GET  /v1/health
  *   GET  /v1/screens/:screen?…          one screen's data, in one response
  *   POST /v1/actions/:module/:name       { args: [...] } -> { data }
- *   POST /v1/statements/parse            multipart: file, account_id, password?
  *   POST /v1/statements/confirm          multipart: the echoed preview + mappings
  *   POST /v1/recommendation              regenerate today's take if stale
  *   GET  /v1/fx                          live rates into the caller's base currency
@@ -65,8 +64,8 @@ app.get("/v1/screens/:screen", async (c) => {
   return c.json({ data }, 200, noStore);
 });
 
-/** Functions that take a file upload are served by the multipart routes below, not as JSON. */
-const MULTIPART_ONLY = new Set(["statements.parseStatement", "statements.confirmStatementImport"]);
+/** Functions that take a form are served by the multipart route below, not as JSON. */
+const MULTIPART_ONLY = new Set(["statements.confirmStatementImport"]);
 
 app.post("/v1/actions/:module/:name", async (c) => {
   const moduleName = c.req.param("module");
@@ -83,12 +82,6 @@ app.post("/v1/actions/:module/:name", async (c) => {
 
   const result = await (fn as (...args: unknown[]) => Promise<unknown>)(...body.args);
   return c.json({ data: result ?? null }, 200, noStore);
-});
-
-app.post("/v1/statements/parse", async (c) => {
-  const form = await c.req.formData().catch(() => null);
-  if (!form) return c.json({ error: "invalid_form" }, 400);
-  return c.json(await parseStatement(form), 200, noStore);
 });
 
 app.post("/v1/statements/confirm", async (c) => {

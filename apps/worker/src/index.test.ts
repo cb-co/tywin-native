@@ -29,7 +29,7 @@ vi.mock("#/screens", () => ({
 vi.mock("#/routes/ask", () => ({ ask: vi.fn(async () => new Response("stream")) }));
 
 import app from "./index";
-import { parseStatement } from "#/actions/statements";
+import { confirmStatementImport, parseStatement } from "#/actions/statements";
 import { createTransaction } from "#/actions/transactions";
 
 const signedIn = () => getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
@@ -55,7 +55,7 @@ describe("API router", () => {
   it.each([
     ["GET", "/v1/screens/session"],
     ["POST", "/v1/actions/transactions/createTransaction"],
-    ["POST", "/v1/statements/parse"],
+    ["POST", "/v1/statements/confirm"],
     ["POST", "/v1/recommendation"],
     ["GET", "/v1/fx"],
   ])("%s %s answers 401 when signed out", async (method, path) => {
@@ -99,7 +99,7 @@ describe("API router", () => {
     expect((await post("/v1/actions/nope/createTransaction")).status).toBe(404);
     expect((await post("/v1/actions/transactions/toString")).status).toBe(404);
     expect((await post("/v1/actions/__proto__/constructor")).status).toBe(404);
-    expect((await post("/v1/actions/statements/parseStatement")).status).toBe(404);
+    expect((await post("/v1/actions/statements/confirmStatementImport")).status).toBe(404);
     expect((await post("/v1/actions/statements/deleteCardStatement")).status).toBe(200);
   });
 
@@ -113,14 +113,25 @@ describe("API router", () => {
     expect(res.status).toBe(400);
   });
 
-  it("hands the multipart statement form to the parser", async () => {
+  it("reads a statement's text through the actions route", async () => {
+    signedIn();
+    const input = { text: "15/08  UBER  100.00", fileName: "s.pdf", accountId: "a1" };
+    const res = await call("/v1/actions/statements/parseStatement", {
+      method: "POST",
+      body: JSON.stringify({ args: [input] }),
+      headers: { "content-type": "application/json" },
+    });
+    expect(res.status).toBe(200);
+    expect(parseStatement).toHaveBeenCalledWith(input);
+  });
+
+  it("hands the multipart confirm form to the importer", async () => {
     signedIn();
     const fd = new FormData();
     fd.append("account_id", "a1");
-    const res = await call("/v1/statements/parse", { method: "POST", body: fd });
+    const res = await call("/v1/statements/confirm", { method: "POST", body: fd });
     expect(res.status).toBe(200);
-    expect(parseStatement).toHaveBeenCalledOnce();
-    expect((vi.mocked(parseStatement).mock.calls[0][0] as FormData).get("account_id")).toBe("a1");
+    expect(confirmStatementImport).toHaveBeenCalledOnce();
   });
 
   it("serves rates in the caller's base currency", async () => {

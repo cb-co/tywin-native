@@ -12,7 +12,8 @@ import { isInstallmentSection, suggestLineName } from "@cigua/core/statements/li
 import { NAME_MAX_LENGTH } from "@cigua/core/accounts/schema";
 import { MAX_STATEMENT_BYTES } from "@cigua/core/statements/limits";
 import { formatDate, formatMoney } from "@cigua/core/format";
-import { callAction, confirmStatement, parseStatement, type PickedFile } from "~/lib/api";
+import { callAction, confirmStatement, type PickedFile } from "~/lib/api";
+import { extractStatementText, readPdf } from "~/lib/statements/pdf-text";
 import { act, invalidateAfterImport } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
@@ -111,13 +112,25 @@ export function StatementImportSheet({
       setParsedStatement(null);
       setPending(true);
       try {
-        const result = await parseStatement({ file: f, accountId: targetId, password: pw || undefined });
-        if (result.needsPassword) {
+        // Read on the phone first: a password prompt or a wrong password is
+        // answered here, and only the statement's text goes to the API.
+        const extracted = await extractStatementText(await readPdf(f.uri), pw || undefined);
+        if (!extracted.ok) {
+          if (extracted.reason === "unreadable") {
+            toast.error(t("unreadablePdf"));
+            playError();
+            return;
+          }
           setNeedsPassword(true);
-          setPasswordIncorrect(!!result.passwordIncorrect);
-          if (result.passwordIncorrect) setPassword("");
+          setPasswordIncorrect(extracted.reason === "bad_password");
+          if (extracted.reason === "bad_password") setPassword("");
           return;
         }
+        const result = await callAction("statements", "parseStatement", {
+          text: extracted.text,
+          fileName: f.name,
+          accountId: targetId,
+        });
         if (result.error || !result.preview) {
           toast.error(result.error ?? t("parseFailed"));
           playError();
