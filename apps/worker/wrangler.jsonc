@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cigua-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // AsyncLocalStorage, for the per-request scope (hono/context-storage). Nothing else from Node.
+  "compatibility_flags": ["nodejs_als"],
+  // A screen is several Postgres round trips. Smart Placement runs the Worker next to
+  // the Supabase region rather than next to the phone, so those trips cost ~1ms each
+  // and the phone pays one trip across the internet per screen.
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+  // The Ask schema document stays markdown in the repo and ships as a string.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
+  "vars": {
+    "SUPABASE_URL": "",
+    "SUPABASE_PUBLISHABLE_KEY": "",
+    "GOOGLE_MODEL": "gemini-3.5-flash-lite",
+    "GOOGLE_ASK_MODEL": "gemini-3.5-flash-lite",
+    "OWNER_MODEL": "gemini-3.7-flash"
+  }
+  // Secrets (`wrangler secret put`): GOOGLE_GENERATIVE_AI_API_KEY, OWNER_EMAIL
+}

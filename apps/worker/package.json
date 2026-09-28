@@ -1,0 +1,38 @@
+{
+  "name": "@cigua/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cigua's API on Cloudflare Workers: screen data, every write, statement import, Ask and today's take.",
+  "type": "module",
+  "exports": {
+    "./api": "./src/api.ts"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "4.0.23",
+    "@cigua/core": "0.1.0",
+    "@supabase/supabase-js": "2.110.8",
+    "ai": "7.0.70",
+    "hono": "^4.13.10",
+    "simple-icons": "16.28.0",
+    "unpdf": "^1.8.1",
+    "use-intl": "4.13.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260928.1",
+    "@types/node": "^22",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.2",
+    "wrangler": "^4.142.0"
+  },
+  "imports": {
+    "#/*": "./src/*.ts"
+  }
+}

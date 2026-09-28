@@ -1,0 +1,5 @@
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+GOOGLE_GENERATIVE_AI_API_KEY=
+# Runs Ask and today's take on OWNER_MODEL for this one account. Leave unset otherwise.
+OWNER_EMAIL=
