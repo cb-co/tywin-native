@@ -4,12 +4,10 @@ import { SWATCHES } from "@cigua/core/palette";
 import { ACCOUNT_TYPE_META } from "@cigua/core/accounts/meta";
 import { barPct, meterArgs } from "@cigua/core/budgets/bar";
 import { formatMoney, formatPercent } from "@cigua/core/format";
-import { readableForeground } from "@cigua/core/color";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
 import { Text } from "~/components/ui/text";
-import { BrandGlyph } from "~/components/brand/brand-glyph";
 import { CardFace } from "~/components/papel/card-face";
 import { LedgerBlock, LedgerRow, SectionLegend } from "~/components/papel/ledger";
 import { Note } from "~/components/papel/note";
@@ -31,7 +29,6 @@ import { makeStyles, useColors } from "~/theme/theme";
  * person's own numbers. Nothing here is interactive.
  */
 
-const SPOTIFY = { hex: "#1ED760", path: "M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" };
 
 function MockLabel({ children }: { children: string }) {
   return (
@@ -425,15 +422,13 @@ export function SubscriptionsMock(p: {
   transferNext: string;
   addCharge: string;
 }) {
-  const c = useColors();
   const splitNext = (x: string) => {
     const i = x.indexOf(" · ");
     return i < 0 ? { next: x, account: null } : { next: x.slice(0, i), account: x.slice(i + 3) };
   };
-  const spotifyInk = readableForeground(SPOTIFY.hex);
   const rows = [
-    { name: p.streaming, cycle: p.streamingCycle, ...splitNext(p.streamingNext), amt: 15.99, active: true, bg: SPOTIFY.hex, fg: spotifyInk, logo: true },
-    { name: p.transfer, cycle: p.transferCycle, ...splitNext(p.transferNext), amt: 250, active: false, bg: c.accent, fg: c.accentForeground, logo: false },
+    { name: p.streaming, cycle: p.streamingCycle, ...splitNext(p.streamingNext), amt: 15.99, active: true, emoji: "🎬", color: SWATCHES[3] },
+    { name: p.transfer, cycle: p.transferCycle, ...splitNext(p.transferNext), amt: 250, active: false, emoji: "🏦", color: SWATCHES[2] },
   ];
   return (
     <SpecimenFrame>
@@ -447,17 +442,7 @@ export function SubscriptionsMock(p: {
                 head={
                   <LedgerRow
                     rule={false}
-                    lead={
-                      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: row.bg }}>
-                        {row.logo ? (
-                          <BrandGlyph path={SPOTIFY.path} size={22} color={row.fg} />
-                        ) : (
-                          <Text size="sm" weight={600} color={row.fg}>
-                            {row.name[0]?.toUpperCase()}
-                          </Text>
-                        )}
-                      </View>
-                    }
+                    lead={<Stamp color={row.color} emoji={row.emoji} name={row.name} size="md" />}
                     title={row.name}
                     subtitle={row.cycle}
                     amount={<MoneyDisplay amount={row.amt} currency="USD" size="inline" />}

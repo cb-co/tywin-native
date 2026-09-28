@@ -16,9 +16,9 @@ import { Switch } from "~/components/ui/switch";
 import { Text } from "~/components/ui/text";
 import { toast } from "~/components/ui/toast";
 import { DoubleRule, LedgerBlock, LedgerRow, SectionLegend } from "~/components/papel/ledger";
+import { Stamp } from "~/components/papel/stamp";
 import { MaskedMoney, MoneyDisplay } from "~/components/money/money-display";
 import { makeStyles, useColors } from "~/theme/theme";
-import { BrandMark } from "./brand-mark";
 import { RecordChargeSheet, type RecordAmounts } from "./record-charge-sheet";
 import { SubscriptionFormSheet } from "./subscription-form-sheet";
 
@@ -120,7 +120,7 @@ export function SubscriptionsView({ subscriptions, data }: { subscriptions: Subs
           head={
             <LedgerRow
               rule={false}
-              lead={<BrandMark name={sub.name} color={sub.color} logoPath={sub.logoPath} />}
+              lead={<Stamp color={sub.color} emoji={sub.emoji} name={sub.name} size="md" />}
               title={sub.name}
               subtitle={`${sub.kind !== "expense" ? `${tType(sub.kind)} · ` : ""}${tCycle(sub.billing_cycle as BillingCycle)}`}
               amount={<MoneyDisplay amount={sub.amount} currency={sub.currency} size="inline" />}

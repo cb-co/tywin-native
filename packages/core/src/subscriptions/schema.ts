@@ -7,6 +7,9 @@ export const subscriptionInput = z
   .object({
     kind: z.enum(RECURRING_KINDS).default("expense"),
     name: z.string().trim().min(1, "Name is required").max(60),
+    // Chosen by the person, like a category's: nothing is inferred from the name.
+    emoji: z.string().trim().max(8).optional().or(z.literal("")),
+    color: z.string().trim().max(9).optional().or(z.literal("")),
     amount: z.coerce.number().min(0),
     currency: z.string().trim().length(3).toUpperCase(),
     billing_cycle: z.enum(BILLING_CYCLE_VALUES),

@@ -1040,6 +1040,7 @@ export type Database = {
           color: string | null
           created_at: string
           currency: string
+          emoji: string | null
           id: string
           include_commission: boolean
           include_tax: boolean
@@ -1061,6 +1062,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           currency: string
+          emoji?: string | null
           id?: string
           include_commission?: boolean
           include_tax?: boolean
@@ -1082,6 +1084,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           currency?: string
+          emoji?: string | null
           id?: string
           include_commission?: boolean
           include_tax?: boolean

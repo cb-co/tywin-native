@@ -20,7 +20,6 @@
     "@supabase/supabase-js": "2.110.8",
     "ai": "7.0.70",
     "hono": "^4.13.10",
-    "simple-icons": "16.28.0",
     "use-intl": "4.13.2",
     "zod": "4.4.3"
   },

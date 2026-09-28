@@ -93,7 +93,6 @@ const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   "rules.deleteRule": ["rules"],
   "recurring.createSubscription": ["overview", "recurring"],
   "recurring.updateSubscription": ["overview", "recurring"],
-  "recurring.resolveSubscriptionBrand": ["overview", "recurring"],
   "recurring.deleteSubscription": ["overview", "recurring"],
   "recurring.setSubscriptionActive": ["overview", "recurring"],
   "recurring.addCharge": ["overview", "accounts", "account", "recurring", "transactions"],

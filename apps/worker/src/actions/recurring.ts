@@ -8,8 +8,6 @@ import { recordedFlags, type RecurringKind } from "@cigua/core/subscriptions/tem
 import { mapIncomeCycleToPayCycle } from "#/lib/subscriptions/pay-cycle-sync";
 import { setPayCycle } from "#/actions/settings";
 import { resolveBaseRate } from "@cigua/core/transactions/money";
-import { hasBrandColor } from "@cigua/core/subscriptions/brand-color";
-import { inferBrand } from "#/lib/subscriptions/llm/brand";
 import { dbError } from "#/lib/errors";
 import { baseCurrencyOf } from "@cigua/core/profile";
 
@@ -29,6 +27,8 @@ function toRow(v: SubscriptionInput) {
   return {
     kind: v.kind,
     name: v.name,
+    emoji: v.emoji || null,
+    color: v.color || null,
     amount: v.amount,
     billing_cycle: v.billing_cycle,
     // One anchor per cycle, never both: a stale day number left over from a
@@ -102,108 +102,13 @@ export async function updateSubscription(id: string, input: unknown): Promise<Re
   const { supabase, user } = await requireUser();
   if (!user) return { error: t("notSignedIn") };
 
-  /* The stored name decides two things: whether the brand on this row is still
-     the right brand, and whether inference has anything new to work from. Read
-     before the write, because after it the old name is gone. A read that FAILS
-     is treated as "not renamed" — leaving a brand in place is a smaller error
-     than clearing one over a question we could not answer. */
-  const { data: existing } = await supabase
-    .from("subscriptions")
-    .select("name")
-    .eq("id", id)
-    .maybeSingle();
-  const renamed = !!existing && existing.name !== parsed.data.name;
-
-  /* `color` and `logo_url` are not form fields, and resolveSubscriptionBrand is
-     normally the only thing that writes them. A RENAME is the exception, and it
-     has to be: both were inferred from the old name, so "Netflix" edited to
-     "Spotify" would otherwise keep Netflix's red and Netflix's mark. Clearing
-     them here both removes the wrong answer immediately and re-opens the gate
-     below, which is what makes the new name resolve. */
   const { error } = await supabase
     .from("subscriptions")
-    .update({
-      ...toRow(parsed.data),
-      currency: parsed.data.currency,
-      ...(renamed ? { color: null, logo_url: null } : {}),
-    })
+    .update({ ...toRow(parsed.data), currency: parsed.data.currency })
     .eq("id", id);
   if (error) return { error: await dbError(error, "updateSubscription") };
   await syncPayCycleFromIncome(supabase, parsed.data);
   return { id };
-}
-
-/**
- * Resolve and store this subscription's brand colour and logo.
- *
- * Called by the form dialog AFTER a save has already returned, never during one.
- * That separation is the whole point. Inference used to run inside
- * create/updateSubscription, and it could not work there: the call answers in
- * ~600ms once the process is warm but takes 9-70 SECONDS when it is cold, so a
- * budget short enough to keep the dialog responsive threw away the answer on
- * every cold call — saves completed with the colour silently unwritten — and a
- * budget long enough to catch it hung the dialog for over a minute. Off the save
- * path there is no such trade: the save returns immediately and the colour can
- * take as long as it needs, arriving on the refresh that follows.
- *
- * The gate is the stored COLOUR, matching the one cards use (see
- * accounts/actions resolveArtFor). A subscription that has a usable colour skips
- * the model entirely and saves like any other row; one that has none asks.
- *
- *   - a resolved subscription costs nothing on save, so editing an amount does
- *     not each burn an inference call;
- *   - a subscription created BEFORE any of this has no colour, so it resolves
- *     the first time it is saved — no backfill flag, no migration;
- *   - a RENAME clears the colour (see updateSubscription), so the new name gets
- *     its own call rather than keeping the old service's red;
- *   - a value present but UNUSABLE — not a 6-digit hex — counts as empty and
- *     re-resolves, since nothing renders it.
- *
- * The cost this accepts, deliberately: a name the model cannot place stores no
- * colour, so it asks again on every later edit of that row. A hidden "we already
- * tried" marker would stop that, and it was tried — it also meant a column whose
- * value no screen could explain, and a subscription that could never pick up a
- * better answer from a later prompt. One visible field, one rule.
- *
- * The name is read from the ROW rather than taken as an argument: this is a
- * public endpoint reachable with any id, so it should decide what to judge from
- * data RLS has already scoped to the caller. The name is also what people type
- * the service into — `brand` is an optional legal-entity field ("Netflix, Inc.")
- * that is usually empty and never more identifying than the name beside it.
- *
- * Every failure is silent and returns `resolved: false`. Nothing here is worth
- * surfacing: the save the person actually asked for has already succeeded, and
- * an unresolved brand is a cosmetic gap the next save tries again on.
- */
-export async function resolveSubscriptionBrand(id: string): Promise<{ resolved: boolean }> {
-  const { supabase, user } = await requireUser();
-  if (!user) return { resolved: false };
-
-  const { data: existing, error: readError } = await supabase
-    .from("subscriptions")
-    .select("name, color, logo_url")
-    .eq("id", id)
-    .maybeSingle();
-
-  // A failed read is not the same as an empty row. Guessing over it would
-  // overwrite good values we simply could not see.
-  if (readError || !existing) return { resolved: false };
-  if (hasBrandColor(existing.color)) return { resolved: false };
-
-  const { color, logoUri } = await inferBrand(existing.name);
-  if (!color && !logoUri) return { resolved: false };
-
-  /* Only what came back is written. The two resolve independently — a service
-     with a mark but no usable colour is normal — and a null means "no answer",
-     never "clear what is there". */
-  const patch: { color?: string; logo_url?: string } = {};
-  if (color) patch.color = color;
-  if (logoUri) patch.logo_url = logoUri;
-
-  const { error } = await supabase.from("subscriptions").update(patch).eq("id", id);
-  if (error) return { resolved: false };
-
-  return { resolved: true };
 }
 
 export async function deleteSubscription(id: string): Promise<Result> {

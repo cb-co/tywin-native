@@ -387,7 +387,7 @@ export default function HelpScreen() {
           {chapter("recurring", 7, Repeat, t("subscriptionsTitle"), t("subscriptionsIntro"), (
             <>
               <View>
-                <Bullets items={[t("subName"), t("subCycle"), t("subLink"), t("subFees"), t("subViews"), t("subBrand")]} />
+                <Bullets items={[t("subName"), t("subCycle"), t("subLink"), t("subFees"), t("subViews"), t("subLook")]} />
                 <P>{t("subLogCharge")}</P>
               </View>
               <SubscriptionsMock

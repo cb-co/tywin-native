@@ -57,8 +57,7 @@ describe("inferCardArt", () => {
     expect(await inferCardArt("Card")).toBeNull();
   });
 
-  /* Same bound as the subscription brand colour, for the same reason: this runs
-     inside a save, and the endpoint is occasionally tens of seconds slow. */
+  /* This runs inside a save, and the endpoint is occasionally tens of seconds slow. */
   it("bounds the call with an abort signal", async () => {
     mockReturn({ accent: "#1B4B8F", network: "visa" });
     await inferCardArt("BHD León Visa Infinite");

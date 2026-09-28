@@ -10,14 +10,13 @@ import type { RecentRecommendation } from "./history";
 /**
  * One short piece of coaching about a person's own numbers.
  *
- * The third sibling of `lib/subscriptions/llm/brand.ts` and
- * `lib/accounts/llm/card-art.ts`: same provider, same call shape, same refusal
- * to trust the answer as given. What differs is the input. Those two are handed
- * a NAME and asked to recognise it; this one is handed a redacted table of
- * figures and asked to read it — see `snapshot.ts` for what is deliberately
- * absent from that table and why.
+ * The sibling of `lib/accounts/llm/card-art.ts`: same provider, same call
+ * shape, same refusal to trust the answer as given. What differs is the input.
+ * That one is handed a NAME and asked to recognise it; this one is handed a
+ * redacted table of figures and asked to read it — see `snapshot.ts` for what
+ * is deliberately absent from that table and why.
  *
- * The model gets one call and returns all three fields. As with brand identity,
+ * The model gets one call and returns all three fields. As with card art,
  * a second call to "pick a tone" would double a worst case measured in tens of
  * seconds to buy a field the first call returns for free.
  */

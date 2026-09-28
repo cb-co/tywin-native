@@ -9,15 +9,16 @@ import { SEMIMONTHLY_MAX_ANCHOR, semimonthlyStarts } from "@cigua/core/period/cy
 import { subscriptionInput } from "@cigua/core/subscriptions/schema";
 import { RECURRING_KINDS, templateAllowsFees, type RecurringKind } from "@cigua/core/subscriptions/template";
 import { resolveFeeDefaults } from "@cigua/core/transactions/defaults";
-import { callAction } from "~/lib/api";
-import { act, invalidateAfter } from "~/lib/query";
+import { SWATCHES } from "@cigua/core/palette";
+import { act } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
-import { Field } from "~/components/ui/field";
-import { FormDate, FormSelect, FormSwitch, FormText } from "~/components/ui/form";
+import { Field, Label } from "~/components/ui/field";
+import { FieldRow, FormDate, FormSelect, FormSwitch, FormText } from "~/components/ui/form";
 import { Sheet } from "~/components/ui/overlay";
 import { Select } from "~/components/ui/select";
 import { Segmented } from "~/components/ui/segmented";
+import { SwatchPicker } from "~/components/ui/swatch-picker";
 import { Text } from "~/components/ui/text";
 import { toast } from "~/components/ui/toast";
 import { useAccountOptions } from "~/components/transactions/account-options";
@@ -29,6 +30,7 @@ const LABEL_OFFSET = 28;
 
 type Values = {
   kind: RecurringKind;
+  emoji: string;
   name: string;
   amount: string;
   currency: string;
@@ -46,6 +48,7 @@ type Values = {
 function defaults(sub: SubscriptionWithRefs | undefined, baseCurrency: string): Values {
   return {
     kind: (sub?.kind as RecurringKind) ?? "expense",
+    emoji: sub?.emoji ?? "",
     name: sub?.name ?? "",
     amount: sub ? String(sub.amount) : "",
     currency: sub?.currency ?? baseCurrency,
@@ -96,6 +99,7 @@ export function SubscriptionFormSheet({
   const accountOptions = useAccountOptions();
   const { playSuccess, playError } = useFeedback();
   const [pending, setPending] = useState(false);
+  const [color, setColor] = useState<string>(subscription?.color ?? SWATCHES[0]);
 
   const { control, handleSubmit, reset, setValue, getValues } = useForm<Values>({
     // Validated against cleaned values; `raw` hands onSubmit the form's own shape back.
@@ -109,7 +113,9 @@ export function SubscriptionFormSheet({
   });
 
   useEffect(() => {
-    if (open) reset(defaults(subscription, baseCurrency));
+    if (!open) return;
+    reset(defaults(subscription, baseCurrency));
+    setColor(subscription?.color ?? SWATCHES[0]);
     // Seeded on open only: a background refetch must not wipe a half-typed edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -143,7 +149,7 @@ export function SubscriptionFormSheet({
   async function onSubmit(values: Values) {
     setPending(true);
     try {
-      const payload = clean(values);
+      const payload = { ...clean(values), color };
       const result =
         mode === "create"
           ? await act("recurring", "createSubscription", payload)
@@ -156,14 +162,6 @@ export function SubscriptionFormSheet({
       toast.success(mode === "create" ? t("toastAdded") : t("toastUpdated"));
       playSuccess();
       onClose();
-      // Brand colour and logo resolve after the save, never awaited: a cold model
-      // call can take a minute, and the template is already listed.
-      if (result.id)
-        void callAction("recurring", "resolveSubscriptionBrand", result.id)
-          .then(({ resolved }) => {
-            if (resolved) void invalidateAfter("recurring.resolveSubscriptionBrand");
-          })
-          .catch(() => undefined);
     } finally {
       setPending(false);
     }
@@ -204,13 +202,20 @@ export function SubscriptionFormSheet({
         </Text>
       ) : null}
 
-      <FormText
-        control={control}
-        name="name"
-        label={t("nameLabel")}
-        required
-        placeholder={payment ? t("namePlaceholderPayment") : income ? t("namePlaceholderIncome") : t("namePlaceholder")}
-      />
+      <FieldRow>
+        <View style={{ width: 72 }}>
+          <FormText control={control} name="emoji" label={t("emojiLabel")} placeholder={payment ? "🏦" : income ? "💼" : "🎬"} style={{ textAlign: "center" }} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <FormText
+            control={control}
+            name="name"
+            label={t("nameLabel")}
+            required
+            placeholder={payment ? t("namePlaceholderPayment") : income ? t("namePlaceholderIncome") : t("namePlaceholder")}
+          />
+        </View>
+      </FieldRow>
 
       <Controller
         control={control}
@@ -312,6 +317,11 @@ export function SubscriptionFormSheet({
           <FormSwitch control={control} name="include_commission" label={tTxn("applyFeeLabel")} muted={false} />
         </View>
       ) : null}
+
+      <View style={{ gap: 8 }}>
+        <Label>{t("colorLabel")}</Label>
+        <SwatchPicker value={color} onChange={setColor} labelFor={(sw) => t("colorSwatchAria", { color: sw })} />
+      </View>
 
       <View style={s.box}>
         <FormSwitch control={control} name="is_active" label={t("activeLabel")} muted={false} />
