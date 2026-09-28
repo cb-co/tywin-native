@@ -8,7 +8,7 @@ import type { ParsedLine, ParsedSection, ParsedStatement } from "@cigua/core/sta
 
 export type LlmExtractResult =
   | { ok: true; statement: LlmStatement }
-  | { ok: false; reason: "rate_limited" | "llm_error" };
+  | { ok: false; reason: "rate_limited" | "unavailable" | "llm_error"; detail: string };
 
 // generateObject retries a retryable failure itself before giving up, then throws
 // RetryError wrapping the last underlying error — unwrap it so a rate limit is still
@@ -16,6 +16,22 @@ export type LlmExtractResult =
 export function isRateLimitError(error: unknown): boolean {
   const cause = RetryError.isInstance(error) ? error.lastError : error;
   return APICallError.isInstance(cause) && cause.statusCode === 429;
+}
+
+/** Google's own outage/overload signal (503 "high demand", or any transport
+ *  failure the SDK judged worth retrying) — indistinguishable from a genuine
+ *  extraction failure at the call site, but the two need different messages:
+ *  "try again shortly" versus "this statement can't be read". Checked after
+ *  isRateLimitError so a 429 (which the SDK also marks retryable) keeps its
+ *  own, more specific reason. */
+export function isUnavailableError(error: unknown): boolean {
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+  return APICallError.isInstance(cause) && cause.isRetryable === true;
+}
+
+function errorDetail(error: unknown): string {
+  const cause = RetryError.isInstance(error) ? error.lastError : error;
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 export async function extractWithLLM(text: string): Promise<LlmExtractResult> {
@@ -36,7 +52,12 @@ export async function extractWithLLM(text: string): Promise<LlmExtractResult> {
     });
     return { ok: true, statement: object };
   } catch (e) {
-    return { ok: false, reason: isRateLimitError(e) ? "rate_limited" : "llm_error" };
+    const detail = errorDetail(e);
+    // Only the message/status, never requestBodyValues — those carry the
+    // (already PII-scrubbed, but still real) statement text.
+    console.error("[statements] llm extraction failed:", detail);
+    const reason = isRateLimitError(e) ? "rate_limited" : isUnavailableError(e) ? "unavailable" : "llm_error";
+    return { ok: false, reason, detail };
   }
 }
 

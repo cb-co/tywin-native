@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { APICallError, RetryError } from "ai";
-import { isRateLimitError, toParsedStatement } from "./extract";
+import { isRateLimitError, isUnavailableError, toParsedStatement } from "./extract";
 import { StatementSchema } from "./schema";
 import { validateChecksums } from "../validate";
 import type { LlmStatement } from "./schema";
@@ -371,5 +371,48 @@ describe("isRateLimitError", () => {
 
   it("rejects a plain, non-AI-SDK error", () => {
     expect(isRateLimitError(new Error("boom"))).toBe(false);
+  });
+});
+
+/* Google returns 503 "This model is currently experiencing high demand" as a
+   retryable APICallError — the exact shape that motivated this check (see
+   lib/statements/llm/extract.ts): it must read as "try again shortly", not as
+   a statement this app can't parse. */
+describe("isUnavailableError", () => {
+  const retryableError = (statusCode: number) =>
+    new APICallError({
+      message: "high demand",
+      url: "https://example.com",
+      requestBodyValues: {},
+      statusCode,
+      isRetryable: true,
+    });
+
+  it("recognizes a retryable 503 APICallError", () => {
+    expect(isUnavailableError(retryableError(503))).toBe(true);
+  });
+
+  it("recognizes one buried in a RetryError once the SDK's own retries are exhausted", () => {
+    const retry = new RetryError({
+      message: "max retries exceeded",
+      reason: "maxRetriesExceeded",
+      errors: [retryableError(503)],
+    });
+    expect(isUnavailableError(retry)).toBe(true);
+  });
+
+  it("rejects a non-retryable APICallError", () => {
+    const notRetryable = new APICallError({
+      message: "bad request",
+      url: "https://example.com",
+      requestBodyValues: {},
+      statusCode: 400,
+      isRetryable: false,
+    });
+    expect(isUnavailableError(notRetryable)).toBe(false);
+  });
+
+  it("rejects a plain, non-AI-SDK error", () => {
+    expect(isUnavailableError(new Error("boom"))).toBe(false);
   });
 });

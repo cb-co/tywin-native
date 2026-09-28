@@ -284,6 +284,7 @@
     "fileTooLarge": "Ese PDF supera los {limit} MB. Los estados de cuenta suelen pesar mucho menos — comprueba que elegiste el archivo correcto.",
     "unsupportedBank": "El formato de estado de cuenta de este banco aún no está soportado.",
     "llmRateLimited": "Se están procesando demasiados estados de cuenta en este momento. Intenta de nuevo en un minuto.",
+    "llmUnavailable": "El servicio de extracción no está disponible en este momento. Intenta de nuevo en un minuto.",
     "parseFailed": "No se pudo procesar el estado de cuenta.",
     "parseFailedDetail": "No se pudo procesar el estado de cuenta ({detail}). No se importó nada.",
     "checksumFailed": "Los totales del propio estado de cuenta no cuadran ({detail}). No se importó nada.",

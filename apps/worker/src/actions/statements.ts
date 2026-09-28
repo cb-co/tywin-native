@@ -214,9 +214,15 @@ async function extractAndParse(formData: FormData) {
       parser_id: "unknown",
       file_name: file.name,
       status: "failed_detection",
-      error: llmResult.reason === "rate_limited" ? "llm rate limited" : "llm extraction failed",
+      error: llmResult.detail,
     });
-    return { error: llmResult.reason === "rate_limited" ? t("llmRateLimited") : t("unsupportedBank") } as const;
+    const message =
+      llmResult.reason === "rate_limited"
+        ? t("llmRateLimited")
+        : llmResult.reason === "unavailable"
+          ? t("llmUnavailable")
+          : t("unsupportedBank");
+    return { error: message } as const;
   }
 
 

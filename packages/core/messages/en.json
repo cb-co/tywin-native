@@ -284,6 +284,7 @@
     "fileTooLarge": "That PDF is larger than {limit} MB. Statements are usually well under that — check you picked the right file.",
     "unsupportedBank": "This bank's statement layout isn't supported yet.",
     "llmRateLimited": "Too many statements are being processed right now. Please try again in a minute.",
+    "llmUnavailable": "The extraction service is temporarily unavailable. Please try again in a minute.",
     "parseFailed": "The statement couldn't be parsed.",
     "parseFailedDetail": "The statement couldn't be parsed ({detail}). Nothing was imported.",
     "checksumFailed": "The statement's own totals don't add up ({detail}). Nothing was imported.",
