@@ -23,7 +23,9 @@
     "title": "Quick add"
   },
   "Theme": {
-    "toggle": "Toggle theme"
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark"
   },
   "Login": {
     "heroTitle": "Your statement, read. Your cuotas, on track. Your quincena, clear.",

@@ -16,14 +16,18 @@ export const Seal = memo(function Seal({
   size = 32,
   tone = "note",
   rosette = false,
+  fine = false,
   style,
 }: {
   size?: number;
   tone?: "note" | "ink";
   rosette?: boolean;
+  /** Hairline weight, for a small seal set inside finer line work (the splash's plate). */
+  fine?: boolean;
   style?: ViewStyle;
 }) {
   const c = useColors();
+  const w = fine ? 0.6 : 1;
   const ink = tone === "note" ? c.noteInk : c.foreground;
   const scale = 31 / RING_EXTENT;
   return (
@@ -44,9 +48,9 @@ export const Seal = memo(function Seal({
             ))}
           </G>
         ) : null}
-        <Circle cx={32} cy={32} r={30.5} stroke={ink} strokeWidth={1.8} />
-        <Circle cx={32} cy={32} r={22} stroke={ink} strokeWidth={1.4} />
-        <G transform="translate(-0.8 0.2)" stroke={ink} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+        <Circle cx={32} cy={32} r={30.5} stroke={ink} strokeWidth={1.8 * w} />
+        <Circle cx={32} cy={32} r={22} stroke={ink} strokeWidth={1.4 * w} />
+        <G transform="translate(-0.8 0.2)" stroke={ink} strokeWidth={2.3 * w} strokeLinecap="round" strokeLinejoin="round">
           <Path d={BIRD_WING} />
           {rosette ? <Path d={BIRD_FEATHER} strokeWidth={1} /> : null}
           <Path d={BIRD_BODY} />

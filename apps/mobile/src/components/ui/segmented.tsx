@@ -11,6 +11,7 @@ export function Segmented<T extends string>({
   size = "xs",
   stretch,
   style,
+  accessibilityLabel,
 }: {
   value: T;
   onChange: (v: T) => void;
@@ -20,10 +21,11 @@ export function Segmented<T extends string>({
   /** Equal-width positions across the full row. */
   stretch?: boolean;
   style?: ViewStyle;
+  accessibilityLabel?: string;
 }) {
   const s = useStyles();
   return (
-    <View accessibilityRole="radiogroup" style={[s.track, stretch ? null : { alignSelf: "flex-start" }, style]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={accessibilityLabel} style={[s.track, stretch ? null : { alignSelf: "flex-start" }, style]}>
       {items.map((item) => {
         const on = item.value === value;
         return (

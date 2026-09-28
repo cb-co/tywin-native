@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { Check, CircleHelp, LogOut, Moon, Sun, Tag, Trash2 } from "~/components/ui/icons";
+import { Check, CircleHelp, LogOut, Tag, Trash2 } from "~/components/ui/icons";
 import { useTranslations } from "use-intl";
 import type { ScreenData } from "@cigua/worker/api";
 import { LOCALES, LOCALE_LABEL } from "@cigua/core/i18n/locale";
@@ -36,11 +36,28 @@ const WEEKDAY_KEYS = {
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
-function Row({ title, description, children, last }: { title: string; description: string; children: React.ReactNode; last?: boolean }) {
+/**
+ * One settings line. `inline` keeps a compact control (a switch, a two-way
+ * choice, a button) beside its title instead of stranding it on a line of its
+ * own; wide controls (a text field, a select, the pay cycle) stack below.
+ */
+function Row({
+  title,
+  description,
+  children,
+  last,
+  inline,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  last?: boolean;
+  inline?: boolean;
+}) {
   const s = useStyles();
   return (
-    <View style={[s.row, last ? null : s.rowRule]}>
-      <View style={{ gap: 2 }}>
+    <View style={[s.row, inline ? s.rowInline : null, last ? null : s.rowRule]}>
+      <View style={inline ? { gap: 2, flex: 1 } : { gap: 2 }}>
         <Text size="sm" weight={500}>
           {title}
         </Text>
@@ -64,7 +81,7 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
   const tc = useTranslations("Common");
   const tTheme = useTranslations("Theme");
   const s = useStyles();
-  const { scheme, toggle } = useTheme();
+  const { scheme, setPreference } = useTheme();
   const { locale, setLocale } = useAppLocale();
   const { enabled, setEnabled, playSuccess, playError } = useFeedback();
   const { payCycle, payAnchorDay, baseCurrency } = data;
@@ -286,39 +303,48 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
           </View>
         </Row>
 
-        <Row title={t("themeTitle")} description={t("themeDescription")}>
-          <Button variant="outline" size="icon" icon={scheme === "dark" ? Moon : Sun} accessibilityLabel={tTheme("toggle")} onPress={toggle} />
+        <Row inline title={t("themeTitle")} description={t("themeDescription")}>
+          <Segmented
+            size="sm"
+            value={scheme}
+            onChange={setPreference}
+            accessibilityLabel={tTheme("toggle")}
+            items={[
+              { value: "light", label: tTheme("light") },
+              { value: "dark", label: tTheme("dark") },
+            ]}
+          />
         </Row>
 
-        <Row title={t("languageTitle")} description={t("languageDescription")}>
-          <Segmented stretch size="sm" value={locale} onChange={setLocale} items={LOCALES.map((l) => ({ value: l, label: LOCALE_LABEL[l] }))} />
+        <Row inline title={t("languageTitle")} description={t("languageDescription")}>
+          <Segmented size="sm" value={locale} onChange={setLocale} items={LOCALES.map((l) => ({ value: l, label: LOCALE_LABEL[l] }))} />
         </Row>
 
-        <Row title={t("soundEffectsTitle")} description={t("soundEffectsDescription")}>
+        <Row inline title={t("soundEffectsTitle")} description={t("soundEffectsDescription")}>
           <Switch checked={enabled} onCheckedChange={setEnabled} accessibilityLabel={t("soundEffectsTitle")} />
         </Row>
 
-        <Row title={t("helpTitle")} description={t("helpDescription")}>
-          <Button variant="outline" size="sm" icon={CircleHelp} onPress={() => router.push("/help")} style={{ alignSelf: "flex-start" }}>
+        <Row inline title={t("helpTitle")} description={t("helpDescription")}>
+          <Button variant="outline" size="sm" icon={CircleHelp} onPress={() => router.push("/help")}>
             {t("helpButton")}
           </Button>
         </Row>
 
-        <Row title={t("rulesTitle")} description={t("rulesDescription")}>
-          <Button variant="outline" size="sm" icon={Tag} onPress={() => router.push("/settings/rules")} style={{ alignSelf: "flex-start" }}>
+        <Row inline title={t("rulesTitle")} description={t("rulesDescription")}>
+          <Button variant="outline" size="sm" icon={Tag} onPress={() => router.push("/settings/rules")}>
             {t("rulesLink")}
           </Button>
         </Row>
 
-        <Row title={t("sessionTitle")} description={t("sessionDescription")} last>
-          <Button variant="outline" size="sm" icon={LogOut} onPress={() => void auth.signOut()} style={{ alignSelf: "flex-start" }}>
+        <Row inline title={t("sessionTitle")} description={t("sessionDescription")} last>
+          <Button variant="outline" size="sm" icon={LogOut} onPress={() => void auth.signOut()}>
             {t("signOutButton")}
           </Button>
         </Row>
       </View>
 
-      <View style={s.danger}>
-        <View style={{ gap: 2 }}>
+      <View style={[s.danger, s.rowInline]}>
+        <View style={{ gap: 2, flex: 1 }}>
           <Text legend tone="destructive" style={{ fontSize: 11 }}>
             {t("dangerZoneTitle")}
           </Text>
@@ -326,7 +352,7 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
             {t("deleteAccountDescription")}
           </Text>
         </View>
-        <Button variant="destructive" size="sm" icon={Trash2} onPress={() => setDeleteOpen(true)} style={{ alignSelf: "flex-start" }}>
+        <Button variant="destructive" size="sm" icon={Trash2} onPress={() => setDeleteOpen(true)} >
           {t("deleteAccountButton")}
         </Button>
       </View>
@@ -354,6 +380,7 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
 const useStyles = makeStyles((c) => ({
   table: { borderTopWidth: 2, borderBottomWidth: 2, borderColor: c.rule },
   row: { gap: 12, paddingVertical: 20 },
+  rowInline: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 },
   rowRule: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.paperLine },
   danger: {
     gap: 12,

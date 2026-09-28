@@ -23,7 +23,9 @@
     "title": "Agregar rápido"
   },
   "Theme": {
-    "toggle": "Cambiar tema"
+    "toggle": "Cambiar tema",
+    "light": "Claro",
+    "dark": "Oscuro"
   },
   "Login": {
     "heroTitle": "Tu estado de cuenta, leído. Tus cuotas, al día. Tu quincena, clara.",
