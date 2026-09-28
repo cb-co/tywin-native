@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cigua-api",
+  "name": "tywin-native-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
   // AsyncLocalStorage, for the per-request scope (hono/context-storage). Nothing else from Node.
@@ -13,8 +13,8 @@
   // The Ask schema document stays markdown in the repo and ships as a string.
   "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
   "vars": {
-    "SUPABASE_URL": "",
-    "SUPABASE_PUBLISHABLE_KEY": "",
+    "SUPABASE_URL": "https://sbqrinswuevjsyarwpue.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_pLAQnnfKEyL1SeulkEc2FA_nkAEXkuY",
     "GOOGLE_MODEL": "gemini-3.5-flash-lite",
     "GOOGLE_ASK_MODEL": "gemini-3.5-flash-lite",
     "OWNER_MODEL": "gemini-3.7-flash"
