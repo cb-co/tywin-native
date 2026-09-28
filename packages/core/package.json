@@ -1,0 +1,25 @@
+{
+  "name": "@cigua/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cigua's platform-free domain logic, copy and design tokens, shared by the app and the API.",
+  "type": "module",
+  "exports": {
+    "./messages/*": "./messages/*",
+    "./tokens.json": "./design/tokens.json",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
+    "react-hook-form": "^7.81.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.2"
+  }
+}

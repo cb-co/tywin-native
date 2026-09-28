@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+
+# testing
+coverage/
+
+# expo
+.expo/
+dist/
+expo-env.d.ts
+apps/mobile/ios/
+apps/mobile/android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.kotlin/
+.metro-health-check*
+
+# cloudflare
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# real bank statements must never be committed
+*.pdf
+extracted-statement.txt
+extracted-statement.json
+
+# debug
+npm-debug.log*
+
+# env files
+.env*
+!.env.example

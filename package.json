@@ -1,0 +1,19 @@
+{
+  "name": "tywin-native",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "dev:worker": "npm run dev -w @cigua/worker",
+    "dev:mobile": "npm run start -w @cigua/mobile",
+    "deploy:worker": "npm run deploy -w @cigua/worker"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
