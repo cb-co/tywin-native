@@ -11,6 +11,21 @@
  * polyfills and the in-process pdf worker already wired in.
  */
 import { getResolvedPDFJS } from "unpdf";
+import { STANDARD_FONTS } from "./standard-fonts";
+
+/**
+ * Hands pdfjs a standard font program from the bundle when a statement names one
+ * without embedding it (see ./standard-fonts). pdfjs constructs it with its data
+ * URLs, which there are none of here, and asks for files by name.
+ */
+class BundledFontData {
+  async fetch({ kind, filename }: { kind: string; filename: string }): Promise<Uint8Array> {
+    const font = kind === "standardFontDataUrl" ? STANDARD_FONTS[filename] : undefined;
+    if (!font) throw new Error(`No bundled ${kind} data for ${filename}`);
+    // A copy: pdfjs may transfer it to its worker, and the bundled bytes serve every request.
+    return new Uint8Array(font.slice(0));
+  }
+}
 
 export type ExtractResult =
   | { ok: true; text: string }
@@ -30,7 +45,13 @@ export async function extractStatementText(
   // same in-memory bytes) throws DataCloneError: "Cannot transfer object of
   // unsupported type." Pass pdfjs a private copy so the caller's buffer is
   // never consumed and repeated calls on the same input keep working.
-  const loadingTask = getDocument({ data: data.slice(), password });
+  const loadingTask = getDocument({
+    data: data.slice(),
+    password,
+    // Fonts come from the bundle, through the in-process worker's message port.
+    BinaryDataFactory: BundledFontData,
+    useWorkerFetch: false,
+  });
   let doc;
   try {
     doc = await loadingTask.promise;
