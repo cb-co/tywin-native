@@ -7,7 +7,7 @@ import { formatDate, formatDayOfMonth, formatMoney, formatPercent } from "@cigua
 import { useScreen } from "~/lib/query";
 import { Card } from "~/components/ui/card";
 import { Progress } from "~/components/ui/progress";
-import { Screen, ScreenError, ScreenSkeleton, EmptyState } from "~/components/ui/screen";
+import { Screen, ScreenError, EmptyState, Skeleton, SkeletonPage, SkeletonText, useSettled } from "~/components/ui/screen";
 import { Text } from "~/components/ui/text";
 import { CardFace } from "~/components/papel/card-face";
 import { Perforation } from "~/components/papel/perforation";
@@ -28,6 +28,7 @@ export default function AccountDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const tApp = useTranslations("App");
   const { data, refetch, isError, isSuccess } = useScreen("account", { id });
+  const settled = useSettled();
 
   if (!data) {
     // A loaded screen with no account: it was deleted, or never existed.
@@ -38,9 +39,42 @@ export default function AccountDetailScreen() {
         </View>
       );
     }
-    return isError ? <ScreenError onRetry={() => void refetch()} /> : <ScreenSkeleton />;
+    if (isError) return <ScreenError onRetry={() => void refetch()} />;
   }
+  if (!data || !settled) return <AccountDetailSkeleton />;
   return <AccountDetail data={data} onRefresh={refetch} />;
+}
+
+/**
+ * The header (stamp, name, type line, actions) and the panels below it.
+ *
+ * It reserves no card face: the account's type is unknown until it loads, and
+ * a face is right for cards only, so every chequing account and loan would get
+ * a large block that then collapses. The face resolves in instead.
+ */
+function AccountDetailSkeleton() {
+  const s = useStyles();
+  return (
+    <SkeletonPage>
+      <View style={s.header}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Skeleton height={44} width={44} style={{ borderRadius: 22 }} />
+          <View style={{ flex: 1 }}>
+            <SkeletonText size="2xl" width="60%" />
+            <SkeletonText size="sm" width="40%" />
+          </View>
+        </View>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Skeleton height={32} width={80} />
+          <Skeleton height={32} width={96} />
+          <Skeleton height={32} width={88} />
+        </View>
+      </View>
+      <Skeleton height={144} style={{ borderRadius: 4 }} />
+      <Skeleton height={256} style={{ borderRadius: 4 }} />
+      <Skeleton height={192} style={{ borderRadius: 4 }} />
+    </SkeletonPage>
+  );
 }
 
 function AccountDetail({ data, onRefresh }: { data: ScreenData<"account">; onRefresh: () => Promise<unknown> }) {

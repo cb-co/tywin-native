@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, RefreshControl, TextInput, View } from "react-native";
+import { RefreshControl, TextInput, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { keepPreviousData, useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { ArrowLeftRight, Search } from "~/components/ui/icons";
@@ -10,7 +10,16 @@ import { groupLedger } from "@cigua/core/transactions/display";
 import { callAction } from "~/lib/api";
 import { act, keys, queryClient, useScreen } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
-import { PageHeader, EmptyState, TAB_CLEARANCE } from "~/components/ui/screen";
+import {
+  PageHeader,
+  PageHeaderSkeleton,
+  EmptyState,
+  RowsSkeleton,
+  Skeleton,
+  SkeletonPage,
+  TAB_CLEARANCE,
+  useSettled,
+} from "~/components/ui/screen";
 import { Select } from "~/components/ui/select";
 import { DateField } from "~/components/ui/date-field";
 import { Button } from "~/components/ui/button";
@@ -39,6 +48,7 @@ export default function TransactionsScreen() {
   const { playDelete, playError } = useFeedback();
   const { data: quickAdd } = useScreen("quickAdd");
   const accountOptions = useAccountOptions();
+  const settled = useSettled();
 
   const [type, setType] = useState("all");
   const [accountId, setAccountId] = useState("all");
@@ -196,9 +206,7 @@ export default function TransactionsScreen() {
     ) : null;
 
   const empty = query.isPending ? (
-    <View style={{ paddingVertical: 40, alignItems: "center" }}>
-      <ActivityIndicator color={c.mutedForeground} />
-    </View>
+    <LedgerSkeleton />
   ) : (
     <EmptyState
       icon={<ArrowLeftRight size={24} color={c.accentForeground} />}
@@ -206,6 +214,8 @@ export default function TransactionsScreen() {
       description={hasFilters ? t("emptyDescriptionFiltered") : t("emptyDescriptionNone")}
     />
   );
+
+  if (!settled) return <TransactionsSkeleton />;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -239,5 +249,58 @@ export default function TransactionsScreen() {
       />
       <TransactionSheet open={!!editing} onClose={() => setEditing(null)} mode="edit" transaction={editing ?? undefined} />
     </View>
+  );
+}
+
+/** Two months of ledger, unprinted: each month's legend over its rule, a day, its rows. */
+function LedgerSkeleton() {
+  const c = useColors();
+  return (
+    <View>
+      {[0, 1].map((month) => (
+        <View key={month}>
+          <View style={{ paddingTop: 20, paddingBottom: 12 }}>
+            <View style={{ borderBottomWidth: 2, borderBottomColor: c.paperLine, paddingBottom: 6 }}>
+              <Skeleton height={10} width={112} />
+            </View>
+          </View>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: c.paperLine, paddingVertical: 8 }}>
+            <Skeleton height={8} width={72} />
+          </View>
+          <RowsSkeleton rows={4} card={false} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** The page above, unprinted: the header, the three rows of filters, the ledger. */
+function TransactionsSkeleton() {
+  const field = (flex: number, height = 40) => (
+    <View style={{ flex }}>
+      <Skeleton height={height} />
+    </View>
+  );
+  return (
+    <SkeletonPage tab gap={0}>
+      <View style={{ gap: 24, paddingBottom: 16 }}>
+        <PageHeaderSkeleton title="45%" />
+        <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {field(2)}
+            {field(1)}
+          </View>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            {field(1)}
+            {field(1)}
+          </View>
+          <View style={{ flexDirection: "row", gap: 20 }}>
+            {field(1, 36)}
+            {field(1, 36)}
+          </View>
+        </View>
+      </View>
+      <LedgerSkeleton />
+    </SkeletonPage>
   );
 }

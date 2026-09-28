@@ -2,7 +2,6 @@ import { Stack } from "expo-router";
 import { useTranslations } from "use-intl";
 import { QuickAddProvider } from "~/components/quick-add/quick-add";
 import { QuickAddSheet } from "~/components/quick-add/quick-add-sheet";
-import { Splash } from "~/components/shell/splash";
 import { useColors } from "~/theme/theme";
 import { face } from "~/theme/fonts";
 
@@ -32,7 +31,6 @@ export default function AppLayout() {
         <Stack.Screen name="settings/rules" options={{ title: "" }} />
       </Stack>
       <QuickAddSheet />
-      <Splash />
     </QuickAddProvider>
   );
 }

@@ -1,10 +1,13 @@
-import { forwardRef, useCallback, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View, type ScrollViewProps, type ViewStyle } from "react-native";
+import { forwardRef, startTransition, useCallback, useEffect, useState } from "react";
+import { Animated, Easing, RefreshControl, ScrollView, StyleSheet, View, type ScrollViewProps, type ViewStyle } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslations } from "use-intl";
 import { Text } from "./text";
 import { Button } from "./button";
+import { useReduceMotion } from "~/components/papel/guilloche";
 import { makeStyles, useColors } from "~/theme/theme";
+import { scale, type Size } from "~/theme/fonts";
 
 /** Room the tab screens leave for the bottom band and the quick-add seal above it. */
 export const TAB_CLEARANCE = 152;
@@ -146,25 +149,216 @@ export function ScreenError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** Paper-coloured blocks where a screen's content will land. */
-export function Skeleton({ height = 16, width = "100%", style }: { height?: number; width?: number | `${number}%`; style?: ViewStyle }) {
-  const c = useColors();
-  return <View style={[{ height, width, borderRadius: 3, backgroundColor: c.muted }, style]} />;
+/* ------------------------------------------------------------ skeletons -- */
+
+/**
+ * False for a screen's first frame, true from the next.
+ *
+ * A screen mounts in the same commit as the tap that opened it, so a screen that
+ * renders its real content straight away (charts, card faces, engraving) holds
+ * the tap until all of it is built, and the old page just sits there. Returning
+ * the screen's skeleton until this settles paints the new page at once; the
+ * content follows a frame later, as a transition, so it never blocks a touch.
+ * A tab stays mounted once visited, so this only plays on the first visit.
+ */
+export function useSettled(): boolean {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => startTransition(() => setSettled(true)));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return settled;
 }
 
-export function ScreenSkeleton({ tab }: { tab?: boolean }) {
+const SWEEP_MS = 1600;
+
+/* One sweep drives every block on screen, so a skeleton moves as one sheet
+ * instead of each block keeping its own time. It runs only while a block is up. */
+const sweep = new Animated.Value(0);
+let sweepers = 0;
+let sweepLoop: Animated.CompositeAnimation | null = null;
+
+function useSweep(on: boolean): void {
+  useEffect(() => {
+    if (!on) return;
+    if (sweepers++ === 0) {
+      sweep.setValue(0);
+      sweepLoop = Animated.loop(
+        // CSS's default `ease`, which the web's sweep runs on.
+        Animated.timing(sweep, { toValue: 1, duration: SWEEP_MS, easing: Easing.bezier(0.25, 0.1, 0.25, 1), useNativeDriver: true }),
+      );
+      sweepLoop.start();
+    }
+    return () => {
+      if (--sweepers === 0) {
+        sweepLoop?.stop();
+        sweepLoop = null;
+      }
+    };
+  }, [on]);
+}
+
+/**
+ * A muted block where content will land, with a faint band of ink sweeping
+ * across it in reading order (the web's `.skeleton`). Under Reduce Motion the
+ * block stays still.
+ */
+export function Skeleton({
+  height = 16,
+  width = "100%",
+  ratio,
+  style,
+}: {
+  height?: number;
+  width?: number | `${number}%`;
+  /** Width over height, in place of `height`, for blocks that stand in for a card face or a chart. */
+  ratio?: number;
+  style?: ViewStyle;
+}) {
   const c = useColors();
+  const reduce = useReduceMotion();
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  useSweep(!reduce);
+  const { w, h } = box;
   return (
-    <View style={{ flex: 1, backgroundColor: c.background, padding: 16, gap: 24, paddingBottom: tab ? TAB_CLEARANCE : 48 }}>
-      <View style={{ gap: 8, paddingBottom: 20 }}>
-        <Skeleton height={28} width="55%" />
-        <Skeleton height={14} width="80%" />
+    <View
+      onLayout={(e) => setBox({ w: Math.round(e.nativeEvent.layout.width), h: Math.round(e.nativeEvent.layout.height) })}
+      style={[
+        { width, borderRadius: 3, backgroundColor: c.muted, overflow: "hidden" },
+        ratio ? { aspectRatio: ratio } : { height },
+        style,
+      ]}
+    >
+      {!reduce && w > 0 && h > 0 ? (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-w, w] }) }] },
+          ]}
+        >
+          <Svg width={w} height={h}>
+            <Defs>
+              <LinearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={c.foreground} stopOpacity={0} />
+                <Stop offset="0.5" stopColor={c.foreground} stopOpacity={0.06} />
+                <Stop offset="1" stopColor={c.foreground} stopOpacity={0} />
+              </LinearGradient>
+            </Defs>
+            <Rect width={w} height={h} fill="url(#sweep)" />
+          </Svg>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+/** One line of text: the line's full height, with a bar the height of its type. */
+export function SkeletonText({ size = "sm", width = "100%" }: { size?: Size; width?: number | `${number}%` }) {
+  const [font, line] = scale[size];
+  return (
+    <View style={{ height: line, justifyContent: "center" }}>
+      <Skeleton height={Math.round(font * 0.8)} width={width} />
+    </View>
+  );
+}
+
+/**
+ * The sheet a skeleton is laid out on: `Screen`'s padding, gap, clearance and
+ * width, so every block lands where the real content will. It never scrolls.
+ */
+export function SkeletonPage({ tab, gap = 32, children }: { tab?: boolean; gap?: number; children: React.ReactNode }) {
+  const c = useColors();
+  const insets = useSafeAreaInsets();
+  const t = useTranslations("Common");
+  return (
+    // One element to a screen reader: the page is loading, not a stack of blank blocks.
+    <View
+      accessible
+      accessibilityLabel={t("loading")}
+      accessibilityState={{ busy: true }}
+      style={{ flex: 1, backgroundColor: c.background, overflow: "hidden" }}
+    >
+      <View
+        style={{
+          padding: 16,
+          paddingBottom: tab ? TAB_CLEARANCE : insets.bottom + 48,
+          gap,
+          width: "100%",
+          maxWidth: 960,
+          alignSelf: "center",
+        }}
+      >
+        {children}
       </View>
+    </View>
+  );
+}
+
+/** `PageHeader`'s skeleton: the title, its one action when it has one, the description. */
+export function PageHeaderSkeleton({ title = "50%", action }: { title?: `${number}%`; action?: number }) {
+  const s = useStyles();
+  return (
+    <View style={s.header}>
+      <View style={s.headerRow}>
+        <View style={{ flex: 1 }}>
+          <SkeletonText size="2xl" width={title} />
+        </View>
+        {action ? <Skeleton height={40} width={action} style={{ borderRadius: 4 }} /> : null}
+      </View>
+      <SkeletonText size="sm" width="80%" />
+    </View>
+  );
+}
+
+/** `SectionLegend`'s skeleton: a short caps line on the legend's baseline. */
+export function SectionLegendSkeleton({ width = 112, aside }: { width?: number; aside?: React.ReactNode }) {
+  return (
+    <View style={{ minHeight: 32, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 16 }}>
+      <Skeleton height={10} width={width} />
+      {aside}
+    </View>
+  );
+}
+
+/** A varied but stable bar width for the `i`th line of a list, so the bars read
+ *  as lines of text rather than a stack of identical slabs. */
+export function lineWidth(i: number, base: number, spread: number): `${number}%` {
+  return `${base + ((i * 17) % spread)}%`;
+}
+
+/**
+ * `LedgerRow`s' skeleton: a round mark, a title over a subtitle, a figure, with
+ * the ledger's hairline between rows. `card` prints them on a card; without it
+ * they sit on the page, as the transaction ledger does.
+ */
+export function RowsSkeleton({ rows = 3, mark = 36, card = true, subtitle = true }: { rows?: number; mark?: number | false; card?: boolean; subtitle?: boolean }) {
+  const s = useStyles();
+  return (
+    <View style={card ? s.skeletonCard : null}>
+      {Array.from({ length: rows }, (_, i) => (
+        <View key={i} style={[s.skeletonRow, card ? { paddingHorizontal: 16 } : null, i < rows - 1 ? s.skeletonRule : null]}>
+          {mark ? <Skeleton height={mark} width={mark} style={{ borderRadius: mark / 2 }} /> : null}
+          <View style={{ flex: 1 }}>
+            <SkeletonText size="sm" width={lineWidth(i, 45, 35)} />
+            {subtitle ? <SkeletonText size="xs" width={lineWidth(i + 2, 30, 25)} /> : null}
+          </View>
+          <Skeleton height={12} width={64} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** A generic page, for screens with no skeleton of their own. */
+export function ScreenSkeleton({ tab }: { tab?: boolean }) {
+  return (
+    <SkeletonPage tab={tab} gap={24}>
+      <PageHeaderSkeleton />
       <Skeleton height={180} style={{ borderRadius: 6 }} />
       <Skeleton height={64} />
       <Skeleton height={64} />
       <Skeleton height={64} />
-    </View>
+    </SkeletonPage>
   );
 }
 
@@ -193,4 +387,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.accent,
   },
   error: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24, backgroundColor: c.background },
+  skeletonCard: { backgroundColor: c.card, borderColor: c.paperLine, borderWidth: StyleSheet.hairlineWidth, borderRadius: 4, overflow: "hidden" },
+  skeletonRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 },
+  skeletonRule: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.paperLine },
 }));

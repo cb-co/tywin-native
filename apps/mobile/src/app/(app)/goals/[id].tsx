@@ -4,7 +4,7 @@ import { useTranslations } from "use-intl";
 import { formatMoney } from "@cigua/core/format";
 import { useScreen } from "~/lib/query";
 import { Card } from "~/components/ui/card";
-import { EmptyState, Screen, ScreenError, ScreenSkeleton } from "~/components/ui/screen";
+import { EmptyState, Screen, ScreenError, Skeleton, SkeletonPage, SkeletonText, useSettled } from "~/components/ui/screen";
 import { Text } from "~/components/ui/text";
 import { Stamp } from "~/components/papel/stamp";
 import { ContributionsList } from "~/components/goals/contributions-list";
@@ -20,6 +20,7 @@ export default function GoalDetailScreen() {
   const tApp = useTranslations("App");
   const s = useStyles();
   const { data, refetch, isError, isSuccess } = useScreen("goal", { id });
+  const settled = useSettled();
 
   if (!data) {
     if (isSuccess) {
@@ -29,8 +30,9 @@ export default function GoalDetailScreen() {
         </View>
       );
     }
-    return isError ? <ScreenError onRetry={() => void refetch()} /> : <ScreenSkeleton />;
+    if (isError) return <ScreenError onRetry={() => void refetch()} />;
   }
+  if (!data || !settled) return <GoalDetailSkeleton />;
 
   const { goal, contributions, history, baseCurrency, accounts } = data;
 
@@ -62,6 +64,28 @@ export default function GoalDetailScreen() {
 
       <ContributionsList goal={goal} contributions={contributions} accounts={accounts} baseCurrency={baseCurrency} />
     </Screen>
+  );
+}
+
+/** The header (stamp and name, saved of target, the strip, the pace line), the chart, the contributions. */
+function GoalDetailSkeleton() {
+  const s = useStyles();
+  return (
+    <SkeletonPage>
+      <View style={s.header}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Skeleton height={44} width={44} style={{ borderRadius: 22 }} />
+          <View style={{ flex: 1 }}>
+            <SkeletonText size="2xl" width="55%" />
+          </View>
+        </View>
+        <SkeletonText size="lg" width="50%" />
+        <Skeleton height={12} />
+        <SkeletonText size="sm" width="60%" />
+      </View>
+      <Skeleton height={256} style={{ borderRadius: 4 }} />
+      <Skeleton height={192} style={{ borderRadius: 4 }} />
+    </SkeletonPage>
   );
 }
 

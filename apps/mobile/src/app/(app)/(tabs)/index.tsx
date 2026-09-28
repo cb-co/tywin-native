@@ -4,7 +4,18 @@ import { CalendarClock, PieChart, Repeat, Wallet } from "~/components/ui/icons";
 import { useFormatter, useTranslations } from "use-intl";
 import { greetingName } from "@cigua/core/profile";
 import { useScreen } from "~/lib/query";
-import { Screen, PageHeader, ScreenError, ScreenSkeleton } from "~/components/ui/screen";
+import {
+  Screen,
+  PageHeader,
+  PageHeaderSkeleton,
+  RowsSkeleton,
+  ScreenError,
+  SectionLegendSkeleton,
+  Skeleton,
+  SkeletonPage,
+  SkeletonText,
+  useSettled,
+} from "~/components/ui/screen";
 import { Card } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
 import { LedgerRow } from "~/components/papel/ledger";
@@ -29,8 +40,10 @@ export default function OverviewScreen() {
   const f = useFormatter();
   const c = useColors();
   const { data: o, refetch, isError } = useScreen("overview");
+  const settled = useSettled();
 
-  if (!o) return isError ? <ScreenError onRetry={() => void refetch()} /> : <ScreenSkeleton tab />;
+  if (!o && isError) return <ScreenError onRetry={() => void refetch()} />;
+  if (!o || !settled) return <OverviewSkeleton />;
 
   // A name turns the header into a greeting; without one it stays the plain title.
   const name = greetingName(o.displayName, null);
@@ -108,5 +121,30 @@ export default function OverviewScreen() {
         )}
       </View>
     </Screen>
+  );
+}
+
+/** The page above, unprinted: the note and its stub, the margin note, Ask, Upcoming. */
+function OverviewSkeleton() {
+  const c = useColors();
+  return (
+    <SkeletonPage tab>
+      <PageHeaderSkeleton title="60%" action={40} />
+      <View>
+        <Skeleton height={248} style={{ borderTopLeftRadius: 6, borderTopRightRadius: 6, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} />
+        <RowsSkeleton rows={3} mark={false} subtitle={false} />
+      </View>
+      <View style={{ borderLeftWidth: 2, borderLeftColor: c.paperLine, paddingLeft: 16 }}>
+        <SkeletonText size="base" width="55%" />
+        <SkeletonText size="sm" width="90%" />
+      </View>
+      <View style={{ height: 52, justifyContent: "center", borderBottomWidth: 2, borderBottomColor: c.paperLine }}>
+        <Skeleton height={14} width="60%" />
+      </View>
+      <View style={{ gap: 8 }}>
+        <SectionLegendSkeleton width={88} />
+        <RowsSkeleton rows={3} mark={16} />
+      </View>
+    </SkeletonPage>
   );
 }

@@ -13,7 +13,7 @@ import { auth } from "~/lib/supabase";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/field";
 import { Dialog } from "~/components/ui/overlay";
-import { Screen, ScreenError, ScreenSkeleton } from "~/components/ui/screen";
+import { Screen, ScreenError, Skeleton, SkeletonPage, SkeletonText, lineWidth, useSettled } from "~/components/ui/screen";
 import { Segmented } from "~/components/ui/segmented";
 import { Select } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
@@ -72,8 +72,46 @@ function Row({
 
 export default function SettingsScreen() {
   const { data, refetch, isError } = useScreen("settings");
-  if (!data) return isError ? <ScreenError onRetry={() => void refetch()} /> : <ScreenSkeleton />;
+  const settled = useSettled();
+  if (!data && isError) return <ScreenError onRetry={() => void refetch()} />;
+  if (!data || !settled) return <SettingsSkeleton />;
   return <SettingsPanel data={data} onRefresh={refetch} />;
+}
+
+/**
+ * The description, then the ruled table: the wide controls (name, currency,
+ * pay cycle) stacked under their titles, the compact ones (theme, language,
+ * sound) beside theirs.
+ */
+function SettingsSkeleton() {
+  const s = useStyles();
+  const stacked = 3;
+  const inline = 3;
+  return (
+    <SkeletonPage gap={24}>
+      <SkeletonText size="sm" width="85%" />
+      <View style={s.table}>
+        {Array.from({ length: stacked }, (_, i) => (
+          <View key={`s${i}`} style={[s.row, s.rowRule]}>
+            <View style={{ gap: 2 }}>
+              <SkeletonText size="sm" width={lineWidth(i, 30, 25)} />
+              <SkeletonText size="sm" width={lineWidth(i + 1, 60, 30)} />
+            </View>
+            <Skeleton height={40} />
+          </View>
+        ))}
+        {Array.from({ length: inline }, (_, i) => (
+          <View key={`i${i}`} style={[s.row, s.rowInline, i < inline - 1 ? s.rowRule : null]}>
+            <View style={{ gap: 2, flex: 1 }}>
+              <SkeletonText size="sm" width={lineWidth(i + stacked, 35, 25)} />
+              <SkeletonText size="sm" width={lineWidth(i + stacked + 1, 70, 25)} />
+            </View>
+            <Skeleton height={32} width={112} />
+          </View>
+        ))}
+      </View>
+    </SkeletonPage>
+  );
 }
 
 function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRefresh: () => Promise<unknown> }) {

@@ -9,7 +9,7 @@ import { act, useScreen } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/field";
-import { EmptyState, PageHeader, Screen, ScreenError, ScreenSkeleton } from "~/components/ui/screen";
+import { EmptyState, PageHeader, PageHeaderSkeleton, Screen, ScreenError, Skeleton, SkeletonPage, SkeletonText, useSettled } from "~/components/ui/screen";
 import { Select } from "~/components/ui/select";
 import { Text } from "~/components/ui/text";
 import { toast } from "~/components/ui/toast";
@@ -23,11 +23,12 @@ export default function RulesScreen() {
   const t = useTranslations("Rules");
   const rules = useScreen("rules");
   const quickAdd = useScreen("quickAdd");
-  if (!rules.data || !quickAdd.data) {
-    return rules.isError || quickAdd.isError ? (
+  const settled = useSettled();
+  if (!rules.data || !quickAdd.data || !settled) {
+    return (!rules.data && rules.isError) || (!quickAdd.data && quickAdd.isError) ? (
       <ScreenError onRetry={() => void Promise.all([rules.refetch(), quickAdd.refetch()])} />
     ) : (
-      <ScreenSkeleton />
+      <RulesSkeleton />
     );
   }
   return (
@@ -149,6 +150,35 @@ function RulesList({ rules, categories }: { rules: Rule[]; categories: QuickAddC
         );
       })}
     </View>
+  );
+}
+
+/** The header, the note, then the ruled list: each rule a pattern, its category, its save row. */
+function RulesSkeleton() {
+  const s = useStyles();
+  const rows = 3;
+  return (
+    <SkeletonPage>
+      <PageHeaderSkeleton title="45%" />
+      <SkeletonText size="sm" width="85%" />
+      <View style={s.list}>
+        {Array.from({ length: rows }, (_, i) => (
+          <View key={i} style={[{ paddingVertical: 16, gap: 12 }, i < rows - 1 ? s.rule : null]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Skeleton height={40} />
+              </View>
+              <Skeleton height={40} width={40} />
+            </View>
+            <Skeleton height={40} />
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 }}>
+              <Skeleton height={10} width={72} />
+              <Skeleton height={32} width={64} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </SkeletonPage>
   );
 }
 

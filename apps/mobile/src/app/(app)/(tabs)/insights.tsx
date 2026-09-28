@@ -6,7 +6,16 @@ import { useLocale, useTranslations } from "use-intl";
 import { addMonths, monthLabel } from "@cigua/core/budgets/month";
 import { useScreen } from "~/lib/query";
 import { Button } from "~/components/ui/button";
-import { PageHeader, Screen, ScreenError, ScreenSkeleton, Skeleton } from "~/components/ui/screen";
+import {
+  PageHeader,
+  PageHeaderSkeleton,
+  Screen,
+  ScreenError,
+  SectionLegendSkeleton,
+  Skeleton,
+  SkeletonPage,
+  useSettled,
+} from "~/components/ui/screen";
 import { Text } from "~/components/ui/text";
 import { SectionLegend } from "~/components/papel/ledger";
 import { Plate } from "~/components/papel/plate";
@@ -38,7 +47,10 @@ export default function InsightsScreen() {
     placeholderData: keepPreviousData,
   });
 
-  if (!data) return isError ? <ScreenError onRetry={() => void refetch()} /> : <ScreenSkeleton tab />;
+  const settled = useSettled();
+
+  if (!data && isError) return <ScreenError onRetry={() => void refetch()} />;
+  if (!data || !settled) return <InsightsSkeleton />;
 
   const cur = data.insights.baseCurrency;
   const shown = data.month;
@@ -98,5 +110,37 @@ export default function InsightsScreen() {
         </Section>
       </View>
     </Screen>
+  );
+}
+
+/**
+ * The three bands above, unprinted, with the month stepper in the second
+ * band's legend where the real one sits, so nothing moves when the plates land.
+ * Each plate is the same block the month band shows while it steps.
+ */
+function InsightsSkeleton() {
+  const plate = <Skeleton height={300} style={{ borderRadius: 4 }} />;
+  const stepper = (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <Skeleton height={32} width={32} />
+      <Skeleton height={14} width={112} />
+      <Skeleton height={32} width={32} />
+    </View>
+  );
+  return (
+    <SkeletonPage tab>
+      <PageHeaderSkeleton title="40%" />
+      <View style={{ gap: 40 }}>
+        {[undefined, stepper, undefined].map((aside, i) => (
+          <View key={i} style={{ gap: 16 }}>
+            <SectionLegendSkeleton width={96} aside={aside} />
+            <View style={{ gap: 24 }}>
+              {plate}
+              {plate}
+            </View>
+          </View>
+        ))}
+      </View>
+    </SkeletonPage>
   );
 }
