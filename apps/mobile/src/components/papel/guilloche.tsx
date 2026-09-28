@@ -79,6 +79,8 @@ type Props = {
   style?: ViewStyle;
   /** Ink the plate in on first appearance. */
   animate?: boolean;
+  /** How long the plate takes to cut itself, in ms. */
+  duration?: number;
 };
 
 export const Guilloche = memo(function Guilloche({
@@ -88,6 +90,7 @@ export const Guilloche = memo(function Guilloche({
   opacity = 1,
   style,
   animate = true,
+  duration = 1800,
 }: Props) {
   const reduce = useReduceMotion();
   const progress = useRef(new Animated.Value(animate ? 0 : 1)).current;
@@ -99,11 +102,11 @@ export const Guilloche = memo(function Guilloche({
     }
     Animated.timing(progress, {
       toValue: 1,
-      duration: 1800,
+      duration,
       easing: Easing.out(Easing.exp),
       useNativeDriver: true,
     }).start();
-  }, [animate, reduce, progress]);
+  }, [animate, reduce, progress, duration]);
 
   if (variant === "field") {
     return <Field color={color} lineWidth={lineWidth} opacity={opacity} style={style} progress={progress} />;

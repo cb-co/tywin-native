@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Guilloche, useReduceMotion } from "~/components/papel/guilloche";
 import { Seal } from "~/components/papel/seal";
 import { Wordmark } from "~/components/papel/wordmark";
@@ -17,6 +17,7 @@ let shown = false;
 export function Splash() {
   const c = useColors();
   const reduce = useReduceMotion();
+  const { width } = useWindowDimensions();
   const [mounted, setMounted] = useState(!shown);
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -34,6 +35,7 @@ export function Splash() {
   }, [mounted, reduce, opacity]);
 
   if (!mounted) return null;
+  const plate = Math.min(width * 0.8, 448);
   return (
     <Animated.View
       pointerEvents="none"
@@ -41,11 +43,14 @@ export function Splash() {
       importantForAccessibility="no-hide-descendants"
       style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: c.note, opacity }]}
     >
-      <Guilloche color={c.noteInk} opacity={0.3} lineWidth={0.6} style={styles.rosette} />
-      <View style={styles.center}>
-        <Seal size={84} rosette />
-        <View style={{ marginTop: 16 }}>
-          <Wordmark height={30} color={c.noteInk} />
+      <Guilloche color={c.noteInk} opacity={0.4} duration={700} style={{ position: "absolute", width: plate, height: plate }} />
+      {/* The seal alone is centred, so it sits in the plate's hollow; the
+          wordmark hangs below it rather than sharing a column that would push
+          the seal above the plate's centre. */}
+      <View>
+        <Seal size={80} />
+        <View style={styles.wordmark}>
+          <Wordmark height={22} color={c.noteInk} />
         </View>
       </View>
     </Animated.View>
@@ -54,5 +59,5 @@ export function Splash() {
 
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
-  rosette: { position: "absolute", width: 520, height: 520 },
+  wordmark: { position: "absolute", top: "100%", left: -60, right: -60, alignItems: "center", marginTop: 16 },
 });
