@@ -41,3 +41,7 @@ npm-debug.log*
 # env files
 .env*
 !.env.example
+
+# installed agent-skill packages (vendored from skills-lock.json)
+.agents/skills/
+.claude/skills/
