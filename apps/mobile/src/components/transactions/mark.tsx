@@ -20,7 +20,7 @@ export function Mark({ children, icon }: { children: React.ReactNode; icon?: Rea
       }}
     >
       {icon}
-      <Text legend tone="muted" style={{ fontSize: 9, lineHeight: 11 }}>
+      <Text legend tone="muted" numberOfLines={1} style={{ fontSize: 9, lineHeight: 11 }}>
         {children}
       </Text>
     </View>

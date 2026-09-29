@@ -45,7 +45,7 @@ export function AccountActivity({ accountId, transactions }: { accountId: string
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <Text size="lg" weight={500} accessibilityRole="header">
+        <Text size="lg" weight={500} accessibilityRole="header" style={{ flexShrink: 1 }}>
           {t("recentActivity")}
         </Text>
         <Button size="sm" icon={Plus} onPress={() => setAdding(true)}>

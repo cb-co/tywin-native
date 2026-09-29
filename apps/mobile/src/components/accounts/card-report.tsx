@@ -97,8 +97,10 @@ export function CardReport({ currency, report }: { currency: string; report: Rep
                 rows.length > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border, paddingTop: 12 } : null,
               ]}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text size="sm">{t("welcomeBonusProgress")}</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+                <Text size="sm" style={{ flexShrink: 1 }}>
+                  {t("welcomeBonusProgress")}
+                </Text>
                 <Text size="sm" figure>
                   {formatPercent(bonusPct)}
                 </Text>

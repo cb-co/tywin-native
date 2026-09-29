@@ -116,57 +116,75 @@ export function StatementsPanel({
             const last = i === statements.length - 1;
             return (
               <View key={st.id} style={last ? null : s.rule}>
+                {/* Title and figure share a line, the due date and minimum share theirs with
+                    the actions, and the triage link gets its own: side by side they overran
+                    each other on a phone. */}
                 <LedgerRow
                   rule={false}
                   lead={
-                    triage ? (
-                      <Pressable
-                        accessibilityRole="link"
-                        hitSlop={6}
-                        onPress={() => router.push({ pathname: "/imports/[id]", params: { id: triage.importId } })}
-                      >
-                        <ProofMark tone="flag">{t("categorizeCount", { count: triage.count })}</ProofMark>
-                      </Pressable>
-                    ) : (
-                      <View accessibilityLabel={tc("done")}>
-                        <ProofMark tone="ok">{""}</ProofMark>
-                      </View>
-                    )
-                  }
-                  title={
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Text size="sm" weight={500}>
-                        {formatDate(st.period_end, locale)}
-                      </Text>
-                      <View style={s.badge}>
-                        <Text size="2xs" tone="muted" tracking={0.05} style={{ fontSize: 10, textTransform: "uppercase" }}>
-                          {st.source === "import" ? t("sourceImport") : t("sourceManual")}
-                        </Text>
-                      </View>
+                    <View accessibilityLabel={triage ? undefined : tc("done")}>
+                      <ProofMark tone={triage ? "flag" : "ok"}>{""}</ProofMark>
                     </View>
                   }
-                  subtitle={[
-                    st.due_date ? t("dueLabel", { date: formatDate(st.due_date, locale) }) : null,
-                    st.minimum_payment != null ? t("minimumLabel", { amount: formatMoney(Number(st.minimum_payment), currency) }) : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                  amount={
-                    <Text size="sm" figure>
-                      {formatMoney(Number(st.total_balance), currency)}
-                    </Text>
-                  }
-                  meta={
-                    <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 4, marginTop: 4 }}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        icon={expanded === st.id ? ChevronDown : ChevronRight}
-                        isLoading={busyId === st.id}
-                        accessibilityLabel={expanded === st.id ? t("hideLinesAria") : t("viewLinesAria")}
-                        onPress={() => void onToggleLines(st.id)}
-                      />
-                      <Button variant="ghost" size="icon" icon={Trash2} disabled={busyId !== null} onPress={() => setDeleteTarget(st.id)} accessibilityLabel={tc("delete")} />
+                  title={
+                    <View style={{ gap: 2 }}>
+                      <View style={s.line}>
+                        <View style={[s.line, s.grow, { gap: 8 }]}>
+                          <Text size="sm" weight={500} numberOfLines={1} style={{ flexShrink: 1 }}>
+                            {formatDate(st.period_end, locale)}
+                          </Text>
+                          <View style={s.badge}>
+                            <Text size="2xs" tone="muted" tracking={0.05} numberOfLines={1} style={{ fontSize: 10, textTransform: "uppercase" }}>
+                              {st.source === "import" ? t("sourceImport") : t("sourceManual")}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text size="sm" figure numberOfLines={1} style={{ flexShrink: 0 }}>
+                          {formatMoney(Number(st.total_balance), currency)}
+                        </Text>
+                      </View>
+                      <View style={s.line}>
+                        <Text size="xs" tone="muted" style={s.grow}>
+                          {[
+                            st.due_date ? t("dueLabel", { date: formatDate(st.due_date, locale) }) : null,
+                            st.minimum_payment != null ? t("minimumLabel", { amount: formatMoney(Number(st.minimum_payment), currency) }) : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </Text>
+                        <View style={s.actions}>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            icon={expanded === st.id ? ChevronDown : ChevronRight}
+                            isLoading={busyId === st.id}
+                            hitSlop={HIT}
+                            accessibilityLabel={expanded === st.id ? t("hideLinesAria") : t("viewLinesAria")}
+                            onPress={() => void onToggleLines(st.id)}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            icon={Trash2}
+                            disabled={busyId !== null}
+                            hitSlop={HIT}
+                            onPress={() => setDeleteTarget(st.id)}
+                            accessibilityLabel={tc("delete")}
+                          />
+                        </View>
+                      </View>
+                      {triage ? (
+                        <Pressable
+                          accessibilityRole="link"
+                          hitSlop={8}
+                          onPress={() => router.push({ pathname: "/imports/[id]", params: { id: triage.importId } })}
+                          style={{ alignSelf: "flex-start", paddingTop: 4 }}
+                        >
+                          <Text size="xs" weight={600} tone="red" style={{ textDecorationLine: "underline" }}>
+                            {t("categorizeCount", { count: triage.count })}
+                          </Text>
+                        </Pressable>
+                      ) : null}
                     </View>
                   }
                 />
@@ -231,10 +249,17 @@ export function StatementsPanel({
   );
 }
 
+/** 32dp buttons reach 48dp tall and meet in the 8dp between them. */
+const HIT = { top: 8, bottom: 8, left: 4, right: 4 };
+
 const useStyles = makeStyles((c) => ({
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.border, marginVertical: 24 },
   list: { borderRadius: radius.sheet, borderWidth: StyleSheet.hairlineWidth, borderColor: c.paperLine },
   rule: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.paperLine },
-  badge: { borderRadius: 3, backgroundColor: c.muted, paddingHorizontal: 6, paddingVertical: 2 },
+  line: { flexDirection: "row", alignItems: "center", gap: 12, minWidth: 0 },
+  grow: { flex: 1, minWidth: 0 },
+  // The buttons overhang the text line and their icons' right edge meets the figure's.
+  actions: { flexDirection: "row", gap: 8, flexShrink: 0, marginVertical: -6, marginRight: -8 },
+  badge: { flexShrink: 0, borderRadius: 3, backgroundColor: c.muted, paddingHorizontal: 6, paddingVertical: 2 },
   lines: { paddingHorizontal: 16, paddingBottom: 12, paddingTop: 4, gap: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.paperLine },
 }));

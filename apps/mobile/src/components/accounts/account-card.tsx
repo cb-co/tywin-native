@@ -102,8 +102,8 @@ function CardBody({ owed, limit, util, dueDay, currency }: { owed: number; limit
   const t = useTranslations("Accounts");
   return (
     <View style={{ marginTop: 20, gap: 12 }}>
-      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
-        <View>
+      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", gap: 12 }}>
+        <View style={{ flexShrink: 1 }}>
           <MoneyDisplay amount={owed} currency={currency} size="stat" />
           <Text size="xs" tone="muted" style={{ marginTop: 4 }}>
             {t("owed")}
@@ -112,8 +112,8 @@ function CardBody({ owed, limit, util, dueDay, currency }: { owed: number; limit
         {util !== null ? <ProofMark tone={util >= 80 ? "flag" : "neutral"}>{formatPercent(util)}</ProofMark> : null}
       </View>
       {util !== null ? <Progress value={Math.min(Math.max(util, 0), 100)} /> : null}
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text size="xs" tone="muted">
+      <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+        <Text size="xs" tone="muted" style={{ flexShrink: 1 }}>
           {limit ? t("limitAmount", { amount: formatMoney(limit, currency) }) : t("noLimitSet")}
         </Text>
         {dueDay ? (
@@ -137,8 +137,8 @@ function LoanBody({ outstanding, paid, term, installment, currency }: { outstand
         </Text>
       </View>
       {term ? <Perforation total={term} paid={paid} label={t("paidOfTerm", { paid, term })} decorative /> : null}
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text size="xs" tone="muted">
+      <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+        <Text size="xs" tone="muted" style={{ flexShrink: 1 }}>
           {term ? t("paidOfTerm", { paid, term }) : t("paidOnly", { paid })}
         </Text>
         {installment ? (

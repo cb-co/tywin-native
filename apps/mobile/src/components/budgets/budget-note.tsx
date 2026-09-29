@@ -44,13 +44,13 @@ export function BudgetNote({
       />
       <View style={{ marginTop: 20, gap: 6, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.pesoLine, paddingTop: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
-          <Text size="sm" color={ink} style={{ opacity: 0.9 }}>
+          <Text size="sm" color={ink} style={{ opacity: 0.9, flexShrink: 1 }}>
             {t("usedLabel")}
           </Text>
           <MoneyDisplay amount={totalUsed} currency={currency} size="inline" color={ink} centsOpacity={0.9} />
         </View>
         <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
-          <Text size="sm" weight={600} color={ink}>
+          <Text size="sm" weight={600} color={ink} style={{ flexShrink: 1 }}>
             {t("remainingLabel")}
           </Text>
           <MoneyDisplay amount={remaining} currency={currency} size="inline" color={ink} centsOpacity={0.9} />

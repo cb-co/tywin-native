@@ -96,7 +96,8 @@ export const Button = forwardRef<RNView, ButtonProps>(function Button(
       accessibilityState={{ disabled: !!isDisabled, busy: isLoading }}
       accessibilityLabel={accessibilityLabel}
       disabled={isDisabled}
-      hitSlop={iconOnly && s.h < 44 ? (44 - s.h) / 2 : undefined}
+      // Icon buttons draw small but always answer a 48dp touch (Material; above iOS's 44pt).
+      hitSlop={iconOnly && s.h < 48 ? (48 - s.h) / 2 : undefined}
       {...props}
       style={({ pressed }) => {
         const p = palette(c, variant, scheme === "dark", pressed);

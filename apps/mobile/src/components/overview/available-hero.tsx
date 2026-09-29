@@ -109,7 +109,7 @@ export function AvailableHero({
       {open ? (
         <View style={{ marginTop: 24, gap: 6 }}>
           <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
-            <Text size="sm" color={ink} style={{ opacity: 0.9 }}>
+            <Text size="sm" color={ink} style={{ opacity: 0.9, flexShrink: 1 }}>
               {t("availableLiquid")}
             </Text>
             <MoneyDisplay amount={a.liquid} currency={currency} size="inline" color={ink} centsOpacity={0.9} />
@@ -120,7 +120,7 @@ export function AvailableHero({
           {a.cardBasis.length > 0 ? (
             <>
               <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
-                <Text size="sm" color={ink} style={{ opacity: 0.9 }}>
+                <Text size="sm" color={ink} style={{ opacity: 0.9, flexShrink: 1 }}>
                   {t("availableCards")}
                 </Text>
                 <MoneyDisplay amount={-a.cardsMinimum} currency={currency} size="inline" color={ink} centsOpacity={0.9} />
@@ -145,11 +145,12 @@ export function AvailableHero({
           justifyContent: "space-between",
           gap: 16,
           borderTopWidth: 1,
-          borderTopColor: "rgba(31, 14, 34, 0.2)",
+          // The peso ink at 20%: the note never inverts, so neither does its rule.
+          borderTopColor: `${ink}33`,
           paddingTop: 16,
         }}
       >
-        <Text size="sm" color={ink} style={{ opacity: 0.9 }}>
+        <Text size="sm" color={ink} style={{ opacity: 0.9, flexShrink: 1 }}>
           {t("netWorthSecondary")}
         </Text>
         <MoneyDisplay amount={netWorth} currency={currency} size="stat" color={ink} centsOpacity={0.9} />
