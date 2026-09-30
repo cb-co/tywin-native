@@ -90,7 +90,7 @@ export function GoalGrid({ overview }: { overview: GoalsOverview }) {
               head={
                 <LedgerRow
                   rule={false}
-                  onPress={() => router.push({ pathname: "/goals/[id]", params: { id: goal.id } })}
+                  onPress={() => router.push({ pathname: "/budgets/goals/[id]", params: { id: goal.id } })}
                   accessibilityLabel={goal.name}
                   lead={<Stamp color={goal.color} emoji={goal.emoji} name={goal.name} size="md" />}
                   title={goal.name}

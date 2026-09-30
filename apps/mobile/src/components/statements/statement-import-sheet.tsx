@@ -221,7 +221,7 @@ export function StatementImportSheet({
       onClose();
       // Only land on triage when there is something to triage.
       if (openTriage && result.importId && (result.uncategorized ?? 0) > 0) {
-        router.push({ pathname: "/imports/[id]", params: { id: result.importId, fresh: "1" } });
+        router.push({ pathname: "/accounts/imports/[id]", params: { id: result.importId, fresh: "1" } });
       }
     } catch {
       toast.error(t("parseFailed"));

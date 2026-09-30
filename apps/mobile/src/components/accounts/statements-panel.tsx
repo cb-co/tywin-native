@@ -177,7 +177,7 @@ export function StatementsPanel({
                         <Pressable
                           accessibilityRole="link"
                           hitSlop={8}
-                          onPress={() => router.push({ pathname: "/imports/[id]", params: { id: triage.importId } })}
+                          onPress={() => router.push({ pathname: "/accounts/imports/[id]", params: { id: triage.importId } })}
                           style={{ alignSelf: "flex-start", paddingTop: 4 }}
                         >
                           <Text size="xs" weight={600} tone="red" style={{ textDecorationLine: "underline" }}>

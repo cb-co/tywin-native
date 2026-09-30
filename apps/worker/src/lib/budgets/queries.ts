@@ -33,10 +33,10 @@ export type BudgetOverview = {
   totalBudget: number;
   totalUsed: number;
   baseCurrency: string;
-  /** Spend with no category in the period — expense/payment rows excluded from
-   *  budget stay out, mirroring category_usage's inclusion rule exactly (see
-   *  uncategorized_spend in 20260819131444_null_category_triage.sql), so the
-   *  two figures can never disagree about what counts as spending. */
+  /** Spend with no category in the period. Rows excluded from budget stay out,
+   *  as in category_usage_range, and so does a payment into one of the user's
+   *  own accounts other than a loan: a card payment or a transfer is money
+   *  moved, not spent (see 20260930130000_uncategorized_skips_own_transfers.sql). */
   uncategorized: number;
   /** The newest import that still has an uncategorised line, so the figure
    *  above can link somewhere useful. Null when every leftover is a

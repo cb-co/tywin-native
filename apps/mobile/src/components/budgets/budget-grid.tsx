@@ -135,7 +135,7 @@ export function BudgetGrid({
               tone="muted"
               accessibilityRole="link"
               style={{ textDecorationLine: "underline" }}
-              onPress={() => router.push({ pathname: "/imports/[id]", params: { id: overview.pendingTriageImportId! } })}
+              onPress={() => router.push({ pathname: "/accounts/imports/[id]", params: { id: overview.pendingTriageImportId! } })}
             >
               {t("uncategorizedAction")}
             </Text>
