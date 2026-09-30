@@ -1,0 +1,91 @@
+---
+import { Car, Check, HeartPulse, RotateCcw, ShoppingCart, Smartphone, Sofa, Tv } from "lucide-static";
+import type { Locale } from "@cigua/core/i18n/locale";
+import { translator } from "../i18n/t";
+import { icon } from "../lib/icon";
+import s from "../styles/papel.module.css";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = translator(locale, "Marketing");
+const k = t as unknown as (key: string, values?: Record<string, number>) => string;
+
+/* Illustrative data only, labelled on the sheet as made up. The five RD$ lines add
+   to the printed total, so the "matches the statement" seal is true of the example. */
+const ROWS = [
+  { date: "02/09", raw: "SUPERMERCADOS NACIONAL 0217", name: "Supermercados Nacional", cat: "Groceries", icon: ShoppingCart, color: "#0E6E60", amount: "4,382.10" },
+  { date: "03/09", raw: "CLARO RECARGA *8093", name: "Claro", cat: "Phone", icon: Smartphone, color: "#1D4FB8", amount: "1,200.00" },
+  { date: "05/09", raw: "LA SIRENA CUOTA 04/12", name: "La Sirena", cat: "Home", icon: Sofa, color: "#C4531A", amount: "3,250.00", cuota: [4, 12] as const },
+  { date: "06/09", raw: "UBER *TRIP HELP.UBER", name: "Uber", cat: "Transport", icon: Car, color: "#5B2E91", amount: "486.50" },
+  { date: "08/09", raw: "FARMACIA CAROL 0112", name: "Farmacia Carol", cat: "Health", icon: HeartPulse, color: "#A52A2A", amount: "22.50" },
+  { date: "10/09", raw: "NETFLIX.COM 866-579", name: "Netflix", cat: "Subs", icon: Tv, color: "#B0144F", amount: "15.49", usd: true },
+] as const;
+---
+
+<figure class={s.specimen} aria-label={t("specimenLabel")} data-specimen>
+  <div class={s.statement} aria-hidden="true">
+    <div class={s.statementHead}>
+      <span class={s.legend}>{t("statementTitle")}</span>
+      <span>{t("statementCard")}</span>
+      <span>{t("statementCut")}</span>
+    </div>
+    <ol class={s.statementRows}>
+      {
+        ROWS.map((r, i) => (
+          <li class={s.statementRow} style={`--i: ${i}`}>
+            <span>{r.date}</span>
+            <span class={s.statementRaw}>{r.raw}</span>
+            <span class={s.num}>
+              {"usd" in r ? "US$" : ""}
+              {r.amount}
+            </span>
+          </li>
+        ))
+      }
+    </ol>
+    <div class={s.statementTotal}>
+      <span>{t("statementTotal")}</span>
+      <span class={s.num}>RD$ 9,341.10</span>
+      <span class={s.num}>US$ 15.49</span>
+    </div>
+    <p class={s.sampleTag}>{t("sampleData")}</p>
+  </div>
+
+  <div class={s.ledger}>
+    <p class={s.ledgerTitle}>{t("ledgerTitle")}</p>
+    <ul class={s.ledgerRows}>
+      {
+        ROWS.map((r, i) => (
+          <li class={s.ledgerRow} style={`--i: ${i}`}>
+            <span class={s.tile} style={`background: ${r.color}`} set:html={icon(r.icon, 2.2)} />
+            <span class={s.ledgerName}>
+              <span>{r.name}</span>
+              <span class={s.ledgerMeta}>
+                {k(`cat${r.cat}`)}
+                {"cuota" in r && <span class={s.cuota}>{t("cuotaBadge", { n: r.cuota[0], total: r.cuota[1] })}</span>}
+              </span>
+            </span>
+            <span class={s.num}>
+              <span class={s.cur}>{"usd" in r ? "US$" : "RD$"}</span> {r.amount}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+    <div class={s.ledgerFoot}>
+      <span class={s.seal}><Fragment set:html={icon(Check, 3)} />{t("balanced")}</span>
+      <span class={s.safe}>
+        <span class={s.safeLabel}>{t("safeLabel")}</span>
+        <span class={s.safeFigure}>RD$ 12,480</span>
+      </span>
+    </div>
+  </div>
+
+  <button type="button" class={s.replay} data-replay><Fragment set:html={icon(RotateCcw)} />{t("replay")}</button>
+</figure>
+
+<script>
+  import "../scripts/specimen";
+</script>

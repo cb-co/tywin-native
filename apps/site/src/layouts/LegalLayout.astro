@@ -19,7 +19,7 @@ const t = translator(locale, "Legal");
 const home = pathFor(locale, "home");
 ---
 
-<Base locale={locale} page={page} title={`${title} · Cigua`} description={title}>
+<Base locale={locale} page={page} title={`${title} · Cigua`} description={title} noindex={updated === "—"}>
   <main class="legal">
     <header class="bar">
       <a href={home} class="brand"><Logo /><Wordmark class="word" /></a>
@@ -27,7 +27,7 @@ const home = pathFor(locale, "home");
     <div class="sheet">
       <a href={home} class="back"><Fragment set:html={icon(ArrowLeft)} />{t("back")}</a>
       <h1>{title}</h1>
-      <p class="updated">{t("updated", { date: updated })}</p>
+      {updated !== "—" && <p class="updated">{t("updated", { date: updated })}</p>}
       <div class="body"><slot /></div>
     </div>
   </main>

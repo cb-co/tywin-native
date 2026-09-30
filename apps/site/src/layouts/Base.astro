@@ -10,9 +10,10 @@ interface Props {
   page: Page;
   title: string;
   description: string;
+  noindex?: boolean;
 }
 
-const { locale, page, title, description } = Astro.props;
+const { locale, page, title, description, noindex = false } = Astro.props;
 const abs = (path: string) => new URL(path, Astro.site).href;
 ---
 
@@ -23,6 +24,7 @@ const abs = (path: string) => new URL(path, Astro.site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={abs(pathFor(locale, page))} />
     <link rel="alternate" hreflang="en" href={abs(pathFor("en", page))} />
     <link rel="alternate" hreflang="es" href={abs(pathFor("es", page))} />

@@ -1,0 +1,227 @@
+---
+import { ArrowRight, Check } from "lucide-static";
+import type { Locale } from "@cigua/core/i18n/locale";
+import Base from "../layouts/Base.astro";
+import CardFace from "../components/CardFace.astro";
+import Guilloche from "../components/Guilloche.astro";
+import LocaleToggle from "../components/LocaleToggle.astro";
+import Logo from "../components/Logo.astro";
+import Microprint from "../components/Microprint.astro";
+import Serial from "../components/Serial.astro";
+import StatementSpecimen from "../components/StatementSpecimen.astro";
+import StoreBadges from "../components/StoreBadges.astro";
+import Wordmark from "../components/Wordmark.astro";
+import { pathFor } from "../i18n/paths";
+import { translator } from "../i18n/t";
+import { icon } from "../lib/icon";
+import s from "../styles/papel.module.css";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+/* Direction contract, emitted into the markup so it survives the build. */
+const CONTRACT = `<!--
+THESIS: Money's own print language. The statement is re-issued as an engraved, checkable document; refuses the headline + phone mockup + feature-card grid.
+OWN-WORLD: RD$50-note violet field, peso orange, intaglio ink on lilac security paper; live guilloche rosettes and wave fields, bilingual microprint frames, serial numbers; Archivo expanded caps and tabular numerals, one family; state as ink density.
+STORY: A Dominican visitor sees their own estado de cuenta become a sorted ledger with cuotas and one Disponible figure, believes it reads their bank without typing, and gets the app.
+FIRST VIEWPORT: Full-bleed violet note inside a microprint frame; two-line expanded headline left with Get the app CTA; statement sheet under a ledger sheet right, printing row by row over a rosette.
+FORM: Papel Moneda (banknote security print), candidate 3 of 7, seed 101aa86f.
+-->`;
+
+const BILLS = [
+  { day: 21, label: "Claro", amount: "1,200" },
+  { day: 25, label: "La Sirena · 5/12", amount: "3,250" },
+  { day: 27, label: "Netflix", amount: "US$15.49" },
+];
+
+const CUOTAS = [
+  { name: "La Sirena", item: "cuotaItemFridge" as const, n: 4, total: 12, amount: "RD$ 3,250.00" },
+  { name: "Plaza Lama", item: "cuotaItemLaptop" as const, n: 9, total: 18, amount: "US$ 62.50" },
+];
+
+const t = translator(locale, "Marketing");
+const micro = t("microprint");
+const home = pathFor(locale, "home");
+---
+
+<Base locale={locale} page="home" title={t("metaTitle")} description={t("metaDescription")}>
+  <div class={s.page}>
+    <Fragment set:html={CONTRACT} />
+    <main>
+      <section class={s.hero} aria-labelledby="hero-title">
+        <Guilloche class={s.heroRosette} />
+        <Guilloche variant="field" class={s.heroField} lineWidth={0.6} duration={2400} />
+        <Microprint text={micro} />
+        <Serial value="CL 2026 000417 A" class={s.serialTop} />
+        <Serial value="CL 2026 000417 A" class={s.serialBottom} />
+
+        <nav class={s.nav} aria-label={t("navLabel")}>
+          <a href={home} class={s.brand}><Logo /><Wordmark /></a>
+          <div class={s.navEnd}>
+            <LocaleToggle locale={locale} page="home" />
+            {/* CHANGED: was "Log in" → /login */}
+            <a href="#get-the-app" class={s.navLink}>{t("getApp")}</a>
+          </div>
+        </nav>
+
+        <div class={s.heroGrid}>
+          <div class={s.heroCopy}>
+            <h1 id="hero-title" class={s.display}>
+              <span>{t("heroTitleA")}</span> <span class={s.displayB}>{t("heroTitleB")}</span>
+            </h1>
+            <p class={s.lede}>{t("heroBody")}</p>
+            <div class={s.actions}>
+              {/* CHANGED: was "Create a free account" → /login?mode=up, plus an "I have an account" link */}
+              <a href="#get-the-app" class={s.cta}>{t("getApp")}<Fragment set:html={icon(ArrowRight)} /></a>
+            </div>
+          </div>
+          <StatementSpecimen locale={locale} />
+        </div>
+      </section>
+
+      <section class={s.paper} aria-labelledby="read-title">
+        <div class={s.wrap}>
+          <div class={s.sectionHead}>
+            <h2 id="read-title" class={s.h2}>{t("readTitle")}</h2>
+            <p class={s.sectionBody}>{t("readBody")}</p>
+          </div>
+
+          <div class={s.proofs}>
+            <article class={s.proof}>
+              <div class={s.proofDemo} aria-hidden="true">
+                <div class={s.columnsDemo}>
+                  <span>05/09<i>{t("colDate")}</i></span>
+                  <span>LA SIRENA CUOTA 04/12<i>{t("colDesc")}</i></span>
+                  <span class={s.num}>3,250.00<i>{t("colAmount")}</i></span>
+                </div>
+              </div>
+              <h3 class={s.h3}>{t("col1Title")}</h3>
+              <p>{t("col1Body")}</p>
+            </article>
+
+            <article class={s.proof}>
+              <div class={s.proofDemo} aria-hidden="true">
+                <dl class={s.redactDemo}>
+                  <div><dt>{t("redactName")}</dt><dd><b></b></dd></div>
+                  <div><dt>{t("redactEmail")}</dt><dd><b style="width: 72%"></b></dd></div>
+                  <div><dt>{t("redactPhone")}</dt><dd><b style="width: 46%"></b></dd></div>
+                </dl>
+              </div>
+              <h3 class={s.h3}>{t("col2Title")}</h3>
+              <p>{t("col2Body")}</p>
+            </article>
+
+            <article class={s.proof}>
+              <div class={s.proofDemo} aria-hidden="true">
+                <dl class={s.sumDemo}>
+                  <div><dt>{t("demoSum")}</dt><dd class={s.num}>9,341.10</dd></div>
+                  <div><dt>{t("demoTotal")}</dt><dd class={s.num}>9,341.10</dd></div>
+                  <div class={s.sumRule}>
+                    <dt>{t("demoDiff")}</dt>
+                    <dd class={s.num}>0.00 <Fragment set:html={icon(Check, 3)} /></dd>
+                  </div>
+                </dl>
+              </div>
+              <h3 class={s.h3}>{t("col3Title")}</h3>
+              <p>{t("col3Body")}</p>
+            </article>
+          </div>
+          <p class={s.note}>{t("pdfNote")}</p>
+        </div>
+      </section>
+
+      <section class={s.peso} aria-labelledby="quincena-title">
+        <Guilloche variant="field" class={s.pesoField} lineWidth={0.6} duration={2000} />
+        <div class:list={[s.wrap, s.pesoGrid]}>
+          <div>
+            <h2 id="quincena-title" class={s.h2}>{t("quincenaTitle")}</h2>
+            <p class={s.sectionBody}>{t("quincenaBody")}</p>
+          </div>
+          <figure class={s.denomination} aria-label={t("denominationLabel")}>
+            <span class={s.denomLabel}>{t("availableLabel")}</span>
+            <span class={s.denomFigure}><span class={s.denomCur}>RD$</span>12,480</span>
+            <div class={s.timeline}>
+              <div class={s.track}>
+                <span class={s.pay} style="left: 0%">{t("payday15")}</span>
+                <span class={s.today} style="left: 20%">{t("today")}</span>
+                {
+                  BILLS.map((b) => (
+                    <span class={s.bill} style={`left: ${((b.day - 15) / 15) * 100}%`}>
+                      <b>{b.day}</b>
+                      <span class={s.billLabel}>{b.label}</span>
+                      <em class={s.num}>{b.amount}</em>
+                    </span>
+                  ))
+                }
+                <span class={s.pay} style="left: 100%">{t("payday30")}</span>
+              </div>
+            </div>
+            <figcaption class={s.sampleTagLight}>{t("sampleData")}</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class={s.paper} aria-labelledby="cards-title">
+        <div class:list={[s.wrap, s.cardsGrid]}>
+          <div class={s.wallet} aria-hidden="true">
+            <CardFace name="Visa Oro" last4="4417" network="visa" accent="#e4b64a" class={s.cardGold} />
+            <CardFace name="Mastercard Black" last4="0932" network="mastercard" accent="#2a2733" class={s.cardBlack} />
+            <p class={s.sampleTag}>{t("cardsTyped")}</p>
+          </div>
+
+          <div>
+            <h2 id="cards-title" class={s.h2}>{t("cardsTitle")}</h2>
+            <p class={s.sectionBody}>{t("cardsBody")}</p>
+            <ul class={s.cuotas}>
+              {
+                CUOTAS.map((c) => (
+                  <li>
+                    <div class={s.cuotaHead}>
+                      <span><b>{t(c.item)}</b> · {c.name}</span>
+                      <span class={s.num}>{c.amount}</span>
+                    </div>
+                    <div class={s.perf} role="img" aria-label={t("cuotaBadge", { n: c.n, total: c.total })}>
+                      {Array.from({ length: c.total }, (_, i) => <i data-paid={i < c.n ? "" : undefined} />)}
+                    </div>
+                    <p class={s.cuotaMeta}>
+                      {t("cuotaBadge", { n: c.n, total: c.total })} · {t("cuotaLeft", { n: c.total - c.n })}
+                    </p>
+                  </li>
+                ))
+              }
+            </ul>
+            <ul class={s.facts}>
+              <li>{t("factCurrencies")}</li>
+              <li>{t("factTax")}</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* CHANGED: the close section is the badge target; the badges replace the sign-up CTA */}
+      <section class={s.close} id="get-the-app" aria-labelledby="close-title">
+        <Guilloche class={s.closeRosette} duration={2200} />
+        <Microprint text={micro} />
+        <div class={s.closeInner}>
+          <h2 id="close-title" class={s.closeTitle}>{t("closeTitle")}</h2>
+          <p class={s.lede}>{t("closeBody")}</p>
+          <StoreBadges locale={locale} />
+        </div>
+      </section>
+    </main>
+
+    <footer class={s.footer}>
+      <div class={s.footerInner}>
+        <span class={s.brand}><Logo class={s.footerLogo} /><Wordmark /></span>
+        <span class={s.footerNote}>{t("footerNote")}</span>
+        {/* CHANGED: Help link dropped (help lives in the app); links keep the locale */}
+        <nav aria-label={t("footerNav")} class={s.footerLinks}>
+          <a href={pathFor(locale, "terms")}>{t("termsLink")}</a>
+          <a href={pathFor(locale, "privacy")}>{t("privacyLink")}</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+</Base>

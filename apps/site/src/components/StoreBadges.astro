@@ -1,0 +1,49 @@
+---
+import { siApple, siGoogleplay } from "simple-icons";
+import type { Locale } from "@cigua/core/i18n/locale";
+import { STORE } from "../config";
+import { translator } from "../i18n/t";
+import { storeBadges, type StoreId } from "../lib/stores";
+import s from "../styles/papel.module.css";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const t = translator(locale, "Marketing");
+const MARK: Record<StoreId, string> = { appStore: siApple.path, googlePlay: siGoogleplay.path };
+const LINE: Record<StoreId, string> = { appStore: t("downloadOn"), googlePlay: t("getItOn") };
+const NAME: Record<StoreId, string> = { appStore: t("appStore"), googlePlay: t("googlePlay") };
+---
+
+<ul class={s.stores}>
+  {
+    storeBadges(STORE).map((b) => {
+      const inner = (
+        <>
+          <svg class={s.storeMark} viewBox="0 0 24 24" aria-hidden="true">
+            <path d={MARK[b.id]} fill="currentColor" />
+          </svg>
+          <span class={s.storeText}>
+            <span class={s.storeLine}>{LINE[b.id]}</span>
+            <span class={s.storeName}>{NAME[b.id]}</span>
+            {!b.href && <em class={s.soon}>{t("comingSoon")}</em>}
+          </span>
+        </>
+      );
+      return (
+        <li>
+          {b.href ? (
+            <a class={s.store} href={b.href} rel="noopener">
+              {inner}
+            </a>
+          ) : (
+            <span class={s.store} aria-disabled="true">
+              {inner}
+            </span>
+          )}
+        </li>
+      );
+    })
+  }
+</ul>
