@@ -1,18 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { sealRingPath } from "./rosette-svg";
+import { BRAND_TILE } from "@cigua/core/papel/brand-tile";
+import { tilePlatePath } from "./rosette-svg";
 
-describe("sealRingPath", () => {
-  it("is light enough to inline on every page", () => {
-    expect(sealRingPath().length).toBeLessThan(40_000);
-  });
-
-  it("stays inside the seal's 64 box", () => {
-    const nums = sealRingPath().match(/-?\d+(\.\d+)?/g)!.map(Number);
-    expect(Math.min(...nums)).toBeGreaterThanOrEqual(0);
-    expect(Math.max(...nums)).toBeLessThanOrEqual(64);
-  });
-
-  it("closes one sub-path per lathe layer", () => {
-    expect(sealRingPath().match(/M/g)).toHaveLength(3);
+describe("tilePlatePath", () => {
+  it("draws only the tile's plate layers, inside the 64 box, light enough to inline", () => {
+    const d = tilePlatePath();
+    expect(d.match(/M/g)).toHaveLength(BRAND_TILE.plateLayers);
+    expect(d.length).toBeLessThan(15_000);
+    const nums = d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+    const r = 32 * BRAND_TILE.plate;
+    expect(Math.min(...nums)).toBeGreaterThanOrEqual(32 - r);
+    expect(Math.max(...nums)).toBeLessThanOrEqual(32 + r);
   });
 });
