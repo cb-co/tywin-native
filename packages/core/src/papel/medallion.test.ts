@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MEDALLION, medallionPlatePath, medallionSvg } from "./medallion";
+import { MEDALLION, medallionPlatePath, medallionSeal, medallionSvg } from "./medallion";
 
 const COLOURS = { plate: "#111", disc: "#4a1f8c", ink: "#fff" };
 
@@ -35,5 +35,13 @@ describe("medallionSvg", () => {
 
   it("puts optional CSS first", () => {
     expect(medallionSvg({ ...COLOURS, style: ".plate{stroke:red}" })).toContain("<style>.plate{stroke:red}</style>");
+  });
+});
+
+describe("medallionSeal", () => {
+  it.each(["chrome", "print"] as const)("puts the outer ring's edge on the box edge at %s size", (size) => {
+    const seal = medallionSeal({ disc: COLOURS.disc, ink: COLOURS.ink, size });
+    const [, r, w] = seal.match(/<circle cx="32" cy="32" r="([\d.]+)" stroke-width="([\d.]+)"/)!.map(Number);
+    expect(r + w / 2).toBeCloseTo(32);
   });
 });

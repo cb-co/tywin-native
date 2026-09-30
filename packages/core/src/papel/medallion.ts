@@ -29,9 +29,12 @@ const LINE: Record<MedallionSize, number> = { chrome: 0.7, print: 0.16 };
  *  page); at print size every point is kept so the curves stay smooth. */
 const STEP: Record<MedallionSize, number> = { chrome: 12, print: 1 };
 
-/** The bird's line in the seal's own 64 box. Print halves the chrome weight,
- *  which only needs to be that heavy to survive 16–32px. */
-const BIRD_LINE: Record<MedallionSize, number> = { chrome: 2.3, print: 1.15 };
+/** The seal's lines in its own 64 box. Chrome is only this heavy to survive
+ *  16–32px; print is fine engraving, the rings a little heavier than the bird. */
+const SEAL_LINE: Record<MedallionSize, { outer: number; inner: number; bird: number }> = {
+  chrome: { outer: 1.8, inner: 1.4, bird: 2.3 },
+  print: { outer: 1.2, inner: 0.9, bird: 1.15 },
+};
 
 /** The live plate maps its 176 half-width onto the box, so the ring does too. */
 const EXTENT = 176;
@@ -51,6 +54,23 @@ export function medallionPlatePath(size: MedallionSize): string {
     .join("");
 }
 
+/** The seal alone in its own 64 box: the disc, its two rings and the bird. The
+ *  outer ring's edge is the disc's edge, so a plate behind runs straight into
+ *  it; the disc stops under the ring to leave no antialiased fringe. */
+export function medallionSeal({ disc, ink, size = "chrome" }: { disc: string; ink: string; size?: MedallionSize }): string {
+  const line = SEAL_LINE[size];
+  const r = 32 - line.outer / 2;
+  return (
+    `<g stroke="${ink}" fill="none">` +
+    `<circle cx="32" cy="32" r="${r}" fill="${disc}" stroke="none"/>` +
+    `<circle cx="32" cy="32" r="${r}" stroke-width="${line.outer}"/>` +
+    `<circle cx="32" cy="32" r="22" stroke-width="${line.inner}"/>` +
+    `<g transform="translate(-0.8 0.2)" stroke-width="${line.bird}" stroke-linecap="round" stroke-linejoin="round">` +
+    `<path d="${BIRD_WING}"/><path d="${BIRD_BODY}"/>` +
+    `</g></g>`
+  );
+}
+
 /** The mark as one SVG string. Colours are passed in, so a page can use its
  *  tokens and a file its literal values. */
 export function medallionSvg({
@@ -58,6 +78,7 @@ export function medallionSvg({
   disc,
   ink,
   size = "chrome",
+  plateOpacity = MEDALLION.plateOpacity,
   attrs = "",
   style = "",
 }: {
@@ -68,6 +89,9 @@ export function medallionSvg({
   /** The seal's rings and bird. */
   ink: string;
   size?: MedallionSize;
+  /** A light ring on a dark ground can take more than the default and still
+   *  read as line work rather than a flat grey band. */
+  plateOpacity?: number;
   /** Extra attributes on the root <svg> (xmlns, width, x/y when nested). */
   attrs?: string;
   /** CSS inside the SVG; the ring's path carries class="plate". */
@@ -78,15 +102,8 @@ export function medallionSvg({
   return (
     `<svg viewBox="0 0 64 64" fill="none"${attrs ? ` ${attrs}` : ""}>` +
     (style ? `<style>${style}</style>` : "") +
-    `<path class="plate" d="${medallionPlatePath(size)}" stroke="${plate}" stroke-width="${LINE[size]}" stroke-linejoin="round" opacity="${MEDALLION.plateOpacity}"/>` +
-    `<g transform="translate(${o} ${o}) scale(${seal / 64})" stroke="${ink}">` +
-    // The outer ring's edge is the disc's edge, so the plate runs straight
-    // into it; the disc stops under the ring to leave no antialiased fringe.
-    `<circle cx="32" cy="32" r="31.1" fill="${disc}" stroke="none"/>` +
-    `<circle cx="32" cy="32" r="31.1" stroke-width="1.8"/>` +
-    `<circle cx="32" cy="32" r="22" stroke-width="1.4"/>` +
-    `<g transform="translate(-0.8 0.2)" stroke-width="${BIRD_LINE[size]}" stroke-linecap="round" stroke-linejoin="round">` +
-    `<path d="${BIRD_WING}"/><path d="${BIRD_BODY}"/>` +
-    `</g></g></svg>`
+    `<path class="plate" d="${medallionPlatePath(size)}" stroke="${plate}" stroke-width="${LINE[size]}" stroke-linejoin="round" opacity="${plateOpacity}"/>` +
+    `<g transform="translate(${o} ${o}) scale(${seal / 64})">${medallionSeal({ disc, ink, size })}</g>` +
+    `</svg>`
   );
 }

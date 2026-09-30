@@ -30,8 +30,7 @@ registerHooks({
     }
   },
 });
-const { BIRD_BODY, BIRD_WING } = await import("@cigua/core/papel/bird");
-const { MEDALLION, medallionSvg } = await import("@cigua/core/papel/medallion");
+const { MEDALLION, medallionSeal, medallionSvg } = await import("@cigua/core/papel/medallion");
 const { ROSETTE_LAYERS, rosettePoints } = await import("@cigua/core/papel/rosette");
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -71,19 +70,11 @@ function plate(size: number): string {
   return `<g transform="translate(${SIZE / 2} ${SIZE / 2}) scale(${s})" fill="none" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round" opacity="0.4">${paths}</g>`;
 }
 
-/** The Seal without its engraved ring, which only smears at icon sizes. The
- *  disc is filled so the plate stops at its edge. */
+/** The mark's seal (the same drawing as the logo), its disc filled so the
+ *  plate stops at its edge. */
 function seal(size: number): string {
-  const s = size / 64;
   const o = SIZE / 2 - size / 2;
-  return `<g transform="translate(${o} ${o}) scale(${s})" fill="none" stroke="${INK}">
-    <circle cx="32" cy="32" r="32" fill="${DISC}" stroke="none"/>
-    <circle cx="32" cy="32" r="30.5" stroke-width="1.8"/>
-    <circle cx="32" cy="32" r="22" stroke-width="1.4"/>
-    <g transform="translate(-0.8 0.2)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-      <path d="${BIRD_WING}"/><path d="${BIRD_BODY}"/>
-    </g>
-  </g>`;
+  return `<g transform="translate(${o} ${o}) scale(${size / 64})">${medallionSeal({ disc: DISC, ink: INK, size: "print" })}</g>`;
 }
 
 function svg(body: string, background: boolean): string {
@@ -117,9 +108,10 @@ await write(join(ASSETS, "splash-icon.png"), svg(plate(SIZE * splash.plate) + se
 
 // Logo files: the mark alone on a transparent ground, the ring in ink for light
 // backgrounds and in note ink for dark or violet ones, as SVG and 1024px PNG.
+// On dark the ring is a little stronger, so it reads as silver, not grey.
 mkdirSync(LOGO, { recursive: true });
-for (const [name, ring] of [["cigua-logo", PAPER_INK], ["cigua-logo-on-dark", INK]] as const) {
-  const file = medallionSvg({ plate: ring, disc: DISC, ink: INK, size: "print", attrs: `xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}"` });
+for (const [name, ring, plateOpacity] of [["cigua-logo", PAPER_INK, MEDALLION.plateOpacity], ["cigua-logo-on-dark", INK, 0.7]] as const) {
+  const file = medallionSvg({ plate: ring, disc: DISC, ink: INK, size: "print", plateOpacity, attrs: `xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}"` });
   writeFileSync(join(LOGO, `${name}.svg`), file + "\n");
   console.log(`wrote ${join(LOGO, `${name}.svg`)}`);
   await write(join(LOGO, `${name}.png`), file, true);
