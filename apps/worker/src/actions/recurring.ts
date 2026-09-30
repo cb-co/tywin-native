@@ -146,8 +146,11 @@ export async function setSubscriptionActive(id: string, active: boolean): Promis
  */
 export async function addCharge(
   id: string,
-  { settledAmount, toAmount }: { settledAmount?: number; toAmount?: number } = {},
+  amounts?: { settledAmount?: number; toAmount?: number } | null,
 ): Promise<Result> {
+  // Null, not undefined, when the app sends none: JSON has no undefined, so a
+  // default parameter never applies to an argument that came over the wire.
+  const { settledAmount, toAmount } = amounts ?? {};
   const t = await getTranslations("Common");
   const ts = await getTranslations("Subscriptions");
   const { supabase, user } = await requireUser();

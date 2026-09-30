@@ -167,6 +167,15 @@ describe("addCharge records the template", () => {
     });
   });
 
+  it("records on one tap, when the app's missing amounts arrive as null", async () => {
+    const inserts = recordStub(template());
+
+    // JSON has no undefined: the app's `addCharge(id, undefined)` lands as `[id, null]`.
+    const [id, amounts] = JSON.parse(JSON.stringify({ args: ["sub-1", undefined] })).args;
+    expect(await addCharge(id, amounts)).toEqual({ id: "sub-1" });
+    expect(inserts[0]).toMatchObject({ amount: 1500, currency: "DOP" });
+  });
+
   it("keeps a card charge fee-free and off the budget, as before", async () => {
     const inserts = recordStub(template({ account: { currency: "DOP", type: "credit_card" } }));
 
