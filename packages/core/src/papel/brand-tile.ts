@@ -1,8 +1,9 @@
 /**
  * The small brand mark (app header, site nav and footer): the app icon at chrome
- * size. A note-violet tile with rounded corners, the guilloche plate engraved in
- * its centre, and the seal on top. The tile is note violet in both themes, the
- * way a note never goes dark, so it reads on paper and on the dark ground alike.
+ * size. A deep-violet tile (`note-deep`) with rounded corners, the guilloche
+ * plate engraved in its centre, and the note-violet seal on top. Both are fixed
+ * colours, the way a note never goes dark: the deep tile stands off the violet
+ * hero as well as off paper and the dark ground, and the seal stands off it.
  *
  * Shares of the tile's side, drawn in a 64 box.
  */

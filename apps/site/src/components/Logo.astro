@@ -3,8 +3,8 @@ import { BIRD_BODY, BIRD_WING } from "@cigua/core/papel/bird";
 import { BRAND_TILE as T } from "@cigua/core/papel/brand-tile";
 import { tilePlatePath } from "../lib/rosette-svg";
 
-/* The favicon's mark at nav size (and the app header's): a note-violet tile,
-   the guilloche plate engraved in its centre, the seal on top. */
+/* The app's mark at nav size (and the app header's): a deep-violet tile, the
+   guilloche plate engraved in its centre, the note-violet seal on top. */
 interface Props {
   class?: string;
 }
@@ -16,7 +16,7 @@ const offset = 32 - seal / 2;
 
 <span class:list={["logo", className]} aria-hidden="true">
   <svg viewBox="0 0 64 64" fill="none">
-    <rect width="64" height="64" rx={64 * T.radius} fill="var(--note)"></rect>
+    <rect width="64" height="64" rx={64 * T.radius} fill="var(--note-deep)"></rect>
     <path d={PLATE} stroke="var(--note-ink)" stroke-width={T.plateLine} stroke-linejoin="round" opacity={T.plateOpacity}></path>
     <g transform={`translate(${offset} ${offset}) scale(${seal / 64})`} stroke="var(--note-ink)">
       <circle cx="32" cy="32" r="32" fill="var(--note)" stroke="none"></circle>

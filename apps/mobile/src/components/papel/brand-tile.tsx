@@ -7,8 +7,9 @@ import { Seal } from "./seal";
 import { useColors } from "~/theme/theme";
 
 /**
- * The app icon at header size: a note-violet tile, the guilloche plate engraved
- * in its centre and the seal on top. Note violet in both themes, like the notes.
+ * The app icon at header size: a deep-violet tile, the guilloche plate engraved
+ * in its centre and the note-violet seal on top. Fixed colours, so it reads the
+ * same in both themes.
  */
 export const BrandTile = memo(function BrandTile({ size = 32 }: { size?: number }) {
   const c = useColors();
@@ -18,7 +19,7 @@ export const BrandTile = memo(function BrandTile({ size = 32 }: { size?: number 
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[s.tile, { width: size, height: size, borderRadius: size * T.radius, backgroundColor: c.note }]}
+      style={[s.tile, { width: size, height: size, borderRadius: size * T.radius, backgroundColor: c.noteDeep }]}
     >
       <Svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={StyleSheet.absoluteFill}>
         <G transform={`translate(32 32) scale(${scale})`} opacity={T.plateOpacity}>
