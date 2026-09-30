@@ -1,0 +1,17 @@
+-- A fifth statement_line_kind: 'adjustment'.
+--
+-- A line the statement PRINTS but does not apply to its own closing balance.
+-- Banco Santa Cruz's "CREDITO POR PAGO TOTAL" is the case that forced it: the
+-- bank reverses the financing interest it charges when you pay in full, shows
+-- the reversal among the credits, counts it in the printed credit-column total
+-- — and computes the closing balance without it, because the interest being
+-- reversed was never inside the previous balance either. Filed as an ordinary
+-- 'credit' it broke the import's checksum by exactly its own amount on an
+-- otherwise perfect extraction (1,140.08 DOP and 0.07 USD on the statement
+-- that surfaced this), and importing it would have credited the cardholder
+-- money they never received.
+--
+-- Added in its own migration: a new enum value cannot be USED in the same
+-- transaction that adds it, and the next migration replaces a function that
+-- names it.
+alter type public.statement_line_kind add value if not exists 'adjustment';

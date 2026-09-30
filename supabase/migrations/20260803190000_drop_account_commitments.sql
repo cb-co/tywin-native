@@ -1,0 +1,13 @@
+-- The per-(account, goal)-pair clamp rule ("a pair that nets negative
+-- consumes no capacity") used to be encoded twice: once here, in SQL, and
+-- once in computeFunding (lib/goals/funding.ts), in TypeScript. The two
+-- copies already drifted apart once — this view flat-summed every
+-- contribution row while computeFunding clamped per pair — and had to be
+-- corrected in 20260803180000_account_commitments_clamp_pairs.sql. A rule
+-- that exists in two places, one of which no unit test can reach, is a bug
+-- class rather than a single bug, so rather than trust the correction to
+-- hold, the SQL copy is removed. lib/goals/queries.ts now derives account
+-- commitments by calling computeFunding directly, the same as the goals
+-- overview does, so the clamp rule has exactly one definition, covered by
+-- lib/goals/funding.test.ts.
+drop view if exists public.account_commitments;

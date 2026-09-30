@@ -14,7 +14,10 @@
     "deploy:worker": "npm run deploy -w @cigua/worker",
     "dev:site": "npm run dev -w @cigua/site",
     "build:site": "npm run build -w @cigua/site",
-    "deploy:site": "npm run deploy -w @cigua/site"
+    "deploy:site": "npm run deploy -w @cigua/site",
+    "db:new": "supabase migration new",
+    "db:push": "supabase db push",
+    "db:types": "supabase gen types typescript --linked > packages/core/src/supabase/types.ts"
   },
   "overrides": {
     "react": "19.2.3",
@@ -24,5 +27,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "supabase": "^2.118.0"
   }
 }

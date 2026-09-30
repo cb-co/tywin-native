@@ -1,0 +1,29 @@
+-- Drop the net_worth view. It was wrong in two independent ways, and silently,
+-- because a view raises nothing.
+--
+-- 1. It added `account_balances.starting_balance` (the ACCOUNT'S OWN currency)
+--    to `account_balances.base_movement` (the BASE currency), so a single
+--    account's contribution was a hybrid figure valid in neither. Its own
+--    comment admitted this: "starting_balance is treated at par to base
+--    (rate 1)". `account_balances.balance` already carries the coherent
+--    own-currency total; the view ignored it in favour of the mixed one.
+--
+-- 2. It subtracted `card_status.owed` and `loan_status.outstanding_balance`,
+--    both own-currency, at par.
+--
+-- For a base-USD user with a DOP card owing RD$50,000, net worth dropped by
+-- 50,000 instead of ~820. One DOP card was enough to report a deeply negative
+-- net worth.
+--
+-- It is not fixed here because it cannot be, in SQL: a correct figure needs
+-- live FX rates, and those arrive over HTTP (lib/fx.ts, open.er-api.com) where
+-- a view cannot reach. Standing up a rates table plus a refresh job to serve a
+-- view nothing reads is not worth it — net worth is already computed correctly
+-- in TypeScript at lib/overview/queries.ts, converting each account, card and
+-- loan from its own currency via convertToBase. Dropping the view removes the
+-- duplicate and, with it, the chance of someone selecting from it by
+-- autocomplete and shipping the wrong number.
+--
+-- Regenerate lib/supabase/types.ts after applying.
+
+drop view if exists public.net_worth;
