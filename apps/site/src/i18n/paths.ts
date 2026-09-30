@@ -4,9 +4,9 @@ export type Page = "home" | "privacy" | "terms";
 
 const SLUG: Record<Page, string> = { home: "", privacy: "privacy", terms: "terms" };
 
-/** English is unprefixed; every other locale lives under /<locale>. No trailing slash. */
+/** Spanish is unprefixed; every other locale lives under /<locale>. No trailing slash. */
 export function pathFor(locale: Locale, page: Page): string {
-  const prefix = locale === "en" ? "" : `/${locale}`;
+  const prefix = locale === "es" ? "" : `/${locale}`;
   const slug = SLUG[page];
   if (!slug) return prefix || "/";
   return `${prefix}/${slug}`;

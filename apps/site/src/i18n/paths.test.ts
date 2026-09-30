@@ -3,12 +3,12 @@ import { otherLocale, pathFor } from "./paths";
 
 describe("pathFor", () => {
   it.each([
-    ["en", "home", "/"],
-    ["en", "privacy", "/privacy"],
-    ["en", "terms", "/terms"],
-    ["es", "home", "/es"],
-    ["es", "privacy", "/es/privacy"],
-    ["es", "terms", "/es/terms"],
+    ["es", "home", "/"],
+    ["es", "privacy", "/privacy"],
+    ["es", "terms", "/terms"],
+    ["en", "home", "/en"],
+    ["en", "privacy", "/en/privacy"],
+    ["en", "terms", "/en/terms"],
   ] as const)("%s %s → %s", (locale, page, path) => {
     expect(pathFor(locale, page)).toBe(path);
   });

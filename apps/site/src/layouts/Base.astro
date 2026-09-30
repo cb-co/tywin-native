@@ -28,7 +28,7 @@ const abs = (path: string) => new URL(path, Astro.site).href;
     <link rel="canonical" href={abs(pathFor(locale, page))} />
     <link rel="alternate" hreflang="en" href={abs(pathFor("en", page))} />
     <link rel="alternate" hreflang="es" href={abs(pathFor("es", page))} />
-    <link rel="alternate" hreflang="x-default" href={abs(pathFor("en", page))} />
+    <link rel="alternate" hreflang="x-default" href={abs(pathFor("es", page))} />
     <meta name="theme-color" content="#4a1f8c" />
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

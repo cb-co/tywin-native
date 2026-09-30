@@ -9,8 +9,8 @@ describe("legalDoc", () => {
   });
 
   it("links Terms → Privacy inside the reader's language", () => {
-    expect(legalDoc("es", "terms").sections[5].paragraphs[0]).toContain('href="/es/privacy"');
-    expect(legalDoc("en", "terms").sections[5].paragraphs[0]).toContain('href="/privacy"');
+    expect(legalDoc("es", "terms").sections[5].paragraphs[0]).toContain('href="/privacy"');
+    expect(legalDoc("en", "terms").sections[5].paragraphs[0]).toContain('href="/en/privacy"');
   });
 
   it("links the contact email", () => {
