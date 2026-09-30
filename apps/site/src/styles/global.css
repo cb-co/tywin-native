@@ -1,0 +1,40 @@
+/* The site-wide base the web app's globals.css provided. Tokens come from tokens.ts. */
+:root {
+  --font-archivo: "Archivo Variable";
+  --ease-press: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+h1,
+h2,
+h3,
+p,
+figure,
+dl,
+dd,
+ol,
+ul {
+  margin: 0;
+}
+
+:where(a, button, summary):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

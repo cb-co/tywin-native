@@ -1,0 +1,31 @@
+---
+import { LOCALE_LABEL, LOCALES, type Locale } from "@cigua/core/i18n/locale";
+import { pathFor, type Page } from "../i18n/paths";
+import { translator } from "../i18n/t";
+import s from "../styles/papel.module.css";
+
+interface Props {
+  locale: Locale;
+  page: Page;
+  /** "note" on the violet hero; "paper" on the light legal sheet. */
+  tone?: "note" | "paper";
+}
+const { locale, page, tone = "note" } = Astro.props;
+const t = translator(locale, "Marketing");
+---
+
+<nav aria-label={t("languageLabel")} class:list={[s.localeToggle, tone === "paper" && s.localeTogglePaper]}>
+  {
+    LOCALES.map((code) => (
+      <a
+        href={pathFor(code, page)}
+        lang={code}
+        hreflang={code}
+        aria-label={LOCALE_LABEL[code]}
+        aria-current={code === locale ? "page" : undefined}
+      >
+        {code.toUpperCase()}
+      </a>
+    ))
+  }
+</nav>

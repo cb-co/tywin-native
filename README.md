@@ -1,14 +1,14 @@
 # Cigua for iOS and Android
 
-The native Cigua app: an Expo (React Native) client and a Cloudflare Worker API,
-on the same Supabase project as the web app, so a person sees the same accounts,
-budgets and statements wherever they sign in. Every screen of the web app is here,
-built natively; nothing from the web runtime (Next.js, the PWA, the marketing site)
-is shipped.
+Cigua: an Expo (React Native) app, the Cloudflare Worker API behind it, and the
+public website. The app is the only way into Cigua; the Next.js web app it
+replaced (`cb-co/tywin`) is retired. The website is just the landing page and the
+legal pages.
 
 ```
 apps/mobile      Expo SDK 57 app (expo-router, React Compiler, Hermes)
 apps/worker      Cloudflare Worker API (Hono), the app's only backend
+apps/site        Public site (Astro, static): landing, privacy, terms, in en + es
 packages/core    Shared pure logic: money, periods, statements, schemas, messages, design tokens
 ```
 
@@ -114,6 +114,19 @@ The base schema and its migrations live with the web app (`cb-co/tywin`,
 Changes only the native app needs are in `supabase/migrations` here. Apply each
 one to the same project (paste it into the SQL editor) before deploying a Worker
 that relies on it.
+
+### Site
+
+`apps/site` is the public website at https://cigua.quantcoresolutions.com: the
+landing page and the legal pages, static HTML served by a Cloudflare Worker
+(`cigua-site`, static assets only). Legal copy comes from `@cigua/core/messages`,
+the same text the app's legal screens show. Store links are in
+`apps/site/src/config.ts`; an empty one shows a "Coming soon" badge.
+
+```sh
+npm run dev:site      # http://localhost:4321
+npm run deploy:site   # check + tests + build + wrangler deploy
+```
 
 ## Checks
 

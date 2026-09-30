@@ -1,0 +1,11 @@
+---
+import s from "../styles/ornament.module.css";
+
+interface Props {
+  value: string;
+  class?: string;
+}
+const { value, class: className } = Astro.props;
+---
+
+<span aria-hidden="true" class:list={[s.serial, className]}>{value}</span>

@@ -45,3 +45,6 @@ npm-debug.log*
 # installed agent-skill packages (vendored from skills-lock.json)
 .agents/skills/
 .claude/skills/
+
+# astro
+.astro/

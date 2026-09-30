@@ -1,0 +1,51 @@
+---
+import "@fontsource-variable/archivo/wdth.css";
+import "../styles/global.css";
+import type { Locale } from "@cigua/core/i18n/locale";
+import { pathFor, type Page } from "../i18n/paths";
+import { tokensCss } from "../styles/tokens";
+
+interface Props {
+  locale: Locale;
+  page: Page;
+  title: string;
+  description: string;
+  noindex?: boolean;
+}
+
+const { locale, page, title, description, noindex = false } = Astro.props;
+const abs = (path: string) => new URL(path, Astro.site).href;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={abs(pathFor(locale, page))} />
+    <link rel="alternate" hreflang="en" href={abs(pathFor("en", page))} />
+    <link rel="alternate" hreflang="es" href={abs(pathFor("es", page))} />
+    <link rel="alternate" hreflang="x-default" href={abs(pathFor("en", page))} />
+    <meta name="theme-color" content="#4a1f8c" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cigua" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={abs(pathFor(locale, page))} />
+    <meta property="og:locale" content={locale === "es" ? "es_DO" : "en_US"} />
+    <meta property="og:image" content={abs("/og.png")} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Cigua" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style is:inline set:html={tokensCss()} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,1264 @@
+/* ============================================================
+   Papel Moneda — the public Cigua world.
+
+   A Dominican banknote's print language: a violet note field (the RD$50),
+   a peso-orange field, intaglio ink on a cool lilac security paper, live
+   guilloche line work, bilingual microprint frames and serial numbers.
+   One family (Archivo): the expanded cut is the engraved legend and the
+   denomination numerals, the normal cut is the body. State is ink density:
+   what is active prints in full ink, what is not recedes to underprint.
+
+   The note fields never invert (like the app's hero slab). The paper
+   sections do: lilac security paper by day, an ink-dark sheet at night.
+   ============================================================ */
+
+.page {
+  --gutter: clamp(1rem, 4vw, 3rem);
+
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums lining-nums;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+.page ::selection {
+  background: var(--note);
+  color: var(--note-ink);
+}
+
+.page :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── Type ─────────────────────────────────────────────────────── */
+
+.display {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2.5rem, 6.2vw, 5.6rem);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+.displayB {
+  display: block;
+  color: var(--note-line);
+}
+
+.h2 {
+  font-stretch: 118%;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 3.6vw, 3.1rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.h3 {
+  font-stretch: 112%;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.005em;
+  margin: 1.4rem 0 0.4rem;
+}
+
+.lede {
+  font-size: clamp(1.05rem, 1.35vw, 1.2rem);
+  line-height: 1.55;
+  max-width: 34rem;
+  margin: 1.6rem 0 0;
+  color: var(--note-ink-soft);
+}
+
+.sectionBody {
+  font-size: 1.08rem;
+  line-height: 1.6;
+  max-width: 36rem;
+  margin: 1.1rem 0 0;
+  color: var(--ink-soft);
+}
+
+.legend {
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.serialTop {
+  top: 28px;
+  left: 50%;
+  translate: -50% 0;
+}
+.serialBottom {
+  bottom: 26px;
+  right: 34px;
+}
+
+/* ── Hero: the violet note ────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 78% 40%, #5a2aa6 0%, transparent 60%),
+    var(--note);
+  color: var(--note-ink);
+  padding: 0 var(--gutter) clamp(4rem, 8vw, 6rem);
+  min-height: min(100svh, 1000px);
+  display: flex;
+  flex-direction: column;
+}
+
+.heroRosette {
+  position: absolute;
+  z-index: -1;
+  width: min(92vmin, 980px);
+  aspect-ratio: 1;
+  right: max(-18vw, -260px);
+  top: 50%;
+  translate: 0 -46%;
+  color: var(--note-line);
+  opacity: 0.6;
+}
+.heroField {
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 150px;
+  color: var(--note-line);
+  opacity: 0.28;
+  mask-image: linear-gradient(to top, #000 30%, transparent);
+}
+
+.nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2.4rem 0 0;
+  max-width: 88rem;
+  width: 100%;
+  margin: 0 auto;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+}
+.navEnd {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.navLink {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--note-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  text-decoration-color: color-mix(in oklab, var(--note-line) 70%, transparent);
+  padding: 0.5rem 0.25rem;
+  transition: text-decoration-color 200ms, text-underline-offset 200ms;
+}
+.navLink:hover {
+  text-decoration-color: currentColor;
+  text-underline-offset: 7px;
+}
+
+.localeToggle {
+  display: inline-flex;
+  border: 1px solid color-mix(in oklab, var(--note-line) 60%, transparent);
+  border-radius: 999px;
+  padding: 3px;
+}
+.localeToggle a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font: inherit;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  min-width: 2.6rem;
+  min-height: 2rem;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--note-ink-soft);
+  cursor: pointer;
+  transition: background 200ms, color 200ms;
+}
+.localeToggle a[aria-current="page"] {
+  background: var(--note-ink);
+  color: var(--note);
+}
+
+.heroGrid {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+  max-width: 88rem;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: clamp(2.5rem, 6vw, 4rem);
+}
+.heroCopy {
+  max-width: 44rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 1.75rem;
+  margin-top: 2.4rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 3.5rem;
+  padding: 0 1.6rem 0 1.8rem;
+  border-radius: 999px;
+  background: var(--note-ink);
+  color: var(--note-deep);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-decoration: none;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 10px 24px -8px rgb(20 6 50 / 0.55);
+  transition: transform 220ms var(--ease-press), box-shadow 220ms var(--ease-press);
+}
+.cta svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  transition: transform 220ms var(--ease-press);
+}
+.cta:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.6) inset,
+    0 16px 30px -10px rgb(20 6 50 / 0.6);
+}
+.cta:hover svg {
+  transform: translateX(3px);
+}
+.cta:active {
+  transform: translateY(1px);
+}
+
+.quiet {
+  font-weight: 600;
+  color: var(--note-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  text-decoration-color: color-mix(in oklab, var(--note-line) 70%, transparent);
+}
+.quiet:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ── Specimen: statement → ledger ─────────────────────────────── */
+
+.specimen {
+  position: relative;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  padding-bottom: 3rem;
+}
+
+.statement {
+  grid-column: 1 / span 9;
+  grid-row: 1;
+  align-self: start;
+  background: #f4f1ea;
+  color: #2a2438;
+  padding: 1.2rem 1.3rem 1rem;
+  border-radius: 3px;
+  rotate: -3deg;
+  box-shadow: 0 18px 40px -18px rgb(10 0 30 / 0.7);
+  font-size: 0.7rem;
+  line-height: 1.3;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0 21px,
+    rgb(60 40 100 / 0.06) 21px 22px
+  );
+}
+.statementHead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.3rem 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1.5px solid #2a2438;
+  font-weight: 600;
+}
+.statementRows {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem 0;
+}
+.statementRow {
+  display: grid;
+  grid-template-columns: 3.1rem 1fr auto;
+  gap: 0.6rem;
+  padding: 0.3rem 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+}
+.statementRaw {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.statementTotal {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #2a2438;
+  font-weight: 700;
+}
+.statementTotal span:last-child {
+  grid-column: 2;
+}
+.sampleTag {
+  margin: 0.8rem 0 0;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.ledger {
+  grid-column: 4 / span 9;
+  grid-row: 1 / span 2;
+  margin-top: 8.5rem;
+  position: relative;
+  background: var(--paper-2);
+  color: var(--ink);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem 1rem;
+  rotate: 1.5deg;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.5) inset,
+    0 30px 60px -24px rgb(10 0 30 / 0.75),
+    0 8px 18px -10px rgb(10 0 30 / 0.4);
+}
+.ledgerTitle {
+  margin: 0 0 0.4rem;
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.ledgerRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ledgerRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--paper-line);
+  font-size: 0.9rem;
+}
+.tile {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9px;
+  color: #fff;
+}
+.tile svg {
+  width: 1rem;
+  height: 1rem;
+}
+.ledgerName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.ledgerName > span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ledgerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+.cuota {
+  font-weight: 700;
+  font-size: 0.66rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--peso) 18%, transparent);
+  color: color-mix(in oklab, var(--peso) 55%, var(--ink));
+}
+.cur {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.ledgerRow > .num {
+  font-weight: 700;
+}
+.ledgerFoot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+}
+.seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border: 1.5px solid var(--teal);
+  border-radius: 999px;
+  color: var(--teal);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  rotate: -4deg;
+}
+.seal svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+.safe {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.safeLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.safeFigure {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--note);
+}
+@media (prefers-color-scheme: dark) {
+  .safeFigure {
+    color: var(--note-line);
+  }
+}
+
+.replay {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.25rem;
+  padding: 0 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--note-ink-soft);
+  background: transparent;
+  border: 1px solid color-mix(in oklab, var(--note-line) 50%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 200ms, border-color 200ms;
+}
+.replay:hover {
+  color: var(--note-ink);
+  border-color: var(--note-line);
+}
+.replay svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* The press pass. Content is fully printed by default; only with
+   data-play="on" (set by script, never under reduced motion) do the rows
+   start as underprint and print in, one line of the statement at a time. */
+@media (prefers-reduced-motion: no-preference) {
+  .specimen[data-play="on"] .statementRow {
+    animation: scan 520ms ease-out both;
+    animation-delay: calc(300ms + var(--i) * 420ms);
+  }
+  .specimen[data-play="on"] .ledgerRow {
+    animation: print 760ms var(--ease-press) both;
+    animation-delay: calc(460ms + var(--i) * 420ms);
+  }
+  .specimen[data-play="on"] .seal {
+    animation: stamp 520ms var(--ease-press) both;
+    animation-delay: 3200ms;
+  }
+  .specimen[data-play="on"] .safe {
+    animation: print 900ms var(--ease-press) both;
+    animation-delay: 3500ms;
+  }
+  .specimen[data-play="on"] .replay {
+    animation: fade 400ms ease-out both;
+    animation-delay: 4200ms;
+  }
+}
+
+@keyframes scan {
+  0% {
+    background: transparent;
+  }
+  30% {
+    background: rgb(164 136 236 / 0.45);
+  }
+  100% {
+    background: rgb(164 136 236 / 0.12);
+  }
+}
+@keyframes print {
+  from {
+    clip-path: inset(0 100% 0 0);
+    filter: blur(3px);
+    opacity: 0.2;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+@keyframes stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.35) rotate(-6deg);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Paper sections ───────────────────────────────────────────── */
+
+.wrap {
+  max-width: 88rem;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.paper {
+  position: relative;
+  padding: clamp(5rem, 10vw, 8.5rem) 0;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    115deg,
+    transparent 0 5px,
+    color-mix(in oklab, var(--paper-line) 22%, transparent) 5px 6px
+  );
+}
+
+.sectionHead {
+  max-width: 48rem;
+}
+
+.proofs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: clamp(3rem, 6vw, 4.5rem);
+  border-top: 2px solid var(--rule);
+}
+.proof {
+  padding: 2rem 2rem 0 0;
+}
+.proof + .proof {
+  padding-left: 2rem;
+  border-left: 1px solid var(--paper-line);
+}
+.proof p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 30rem;
+}
+
+.proofDemo {
+  min-height: 8.5rem;
+  display: flex;
+  align-items: center;
+  padding: 1.1rem;
+  background: var(--paper-2);
+  border: 1px solid var(--paper-line);
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.columnsDemo {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.9rem;
+  width: 100%;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.columnsDemo span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  white-space: nowrap;
+  min-width: 0;
+}
+.columnsDemo span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.columnsDemo i {
+  font-style: normal;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding-top: 0.35rem;
+  border-top: 2px solid var(--note);
+  color: var(--note);
+}
+@media (prefers-color-scheme: dark) {
+  .columnsDemo i {
+    color: var(--note-line);
+    border-color: var(--note-line);
+  }
+}
+
+.redactDemo,
+.sumDemo {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.redactDemo div,
+.sumDemo div {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+.redactDemo dt,
+.sumDemo dt {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.redactDemo dd,
+.sumDemo dd {
+  margin: 0;
+}
+.redactDemo b {
+  display: block;
+  width: 88%;
+  height: 0.8rem;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.sumDemo dd {
+  text-align: right;
+  font-weight: 700;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+}
+.sumRule {
+  padding-top: 0.55rem;
+  border-top: 1.5px solid var(--rule);
+}
+.sumRule dd {
+  color: var(--teal);
+}
+.sumDemo svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.note {
+  margin: 3rem 0 0;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  max-width: 44rem;
+}
+
+/* ── Peso section: Disponible ─────────────────────────────────── */
+
+.peso {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--peso);
+  color: var(--peso-ink);
+  padding: clamp(5rem, 10vw, 8rem) 0;
+}
+.peso .sectionBody {
+  color: var(--peso-ink-soft);
+}
+.pesoField {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  color: var(--peso-line);
+  opacity: 0.4;
+}
+.pesoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: center;
+}
+
+.denomination {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.denomLabel {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.denomFigure {
+  font-stretch: 125%;
+  font-weight: 900;
+  font-size: clamp(4rem, 8.6vw, 8rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  margin-top: 0.4rem;
+  color: var(--peso-ink);
+}
+.denomCur {
+  font-size: 0.32em;
+  letter-spacing: 0;
+  vertical-align: 0.95em;
+  margin-right: 0.12em;
+}
+
+.timeline {
+  margin-top: 2.2rem;
+  padding: 0 1.6rem 0 0.2rem;
+}
+.track {
+  position: relative;
+  height: 7.5rem;
+  border-bottom: 2px solid var(--peso-ink);
+}
+.pay,
+.today,
+.bill {
+  position: absolute;
+  bottom: -2px;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.pay {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-bottom: 0.7rem;
+}
+.pay::after,
+.today::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--peso-ink);
+}
+.pay:first-child {
+  translate: 0 0;
+  align-items: flex-start;
+}
+.pay:first-child::after {
+  left: 0;
+}
+.pay:last-child {
+  translate: -100% 0;
+  align-items: flex-end;
+}
+.pay:last-child::after {
+  right: 0;
+}
+.today {
+  top: calc(100% + 0.9rem);
+  bottom: auto;
+  font-weight: 700;
+}
+.today::after {
+  top: -1.3rem;
+  bottom: auto;
+  background: var(--peso);
+  border: 3px solid var(--peso-ink);
+}
+.bill {
+  padding-bottom: 0.9rem;
+  gap: 0.05rem;
+}
+.bill b {
+  font-stretch: 125%;
+  font-weight: 900;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.bill em {
+  font-style: normal;
+  font-weight: 700;
+  opacity: 0.8;
+}
+.bill::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  width: 1.5px;
+  height: 0.75rem;
+  background: var(--peso-ink);
+}
+.sampleTagLight {
+  margin-top: 3.6rem;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Cards + cuotas ───────────────────────────────────────────── */
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(3rem, 7vw, 7rem);
+  align-items: center;
+}
+
+.wallet {
+  position: relative;
+  display: grid;
+  padding-bottom: 1rem;
+}
+.cardGold {
+  grid-area: 1 / 1;
+  rotate: -5deg;
+}
+.cardBlack {
+  grid-area: 1 / 1;
+  rotate: 4deg;
+  margin: 5.5rem 0 0 min(28%, 9rem);
+}
+.wallet .sampleTag {
+  color: var(--ink-soft);
+  opacity: 1;
+  margin-top: 1.4rem;
+}
+
+.cuotas {
+  list-style: none;
+  margin: 2.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1.6rem;
+}
+.cuotaHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 1rem;
+}
+.cuotaHead b {
+  font-weight: 700;
+}
+.cuotaHead .num {
+  font-weight: 700;
+}
+.perf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  margin-top: 0.7rem;
+}
+.perf i {
+  height: 14px;
+  border-radius: 3px;
+  border: 1.5px dashed color-mix(in oklab, var(--ink) 35%, transparent);
+}
+.perf i[data-paid] {
+  border: 0;
+  background: var(--note);
+}
+@media (prefers-color-scheme: dark) {
+  .perf i[data-paid] {
+    background: var(--note-line);
+  }
+}
+.cuotaMeta {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.facts {
+  list-style: none;
+  margin: 2.2rem 0 0;
+  padding: 1.2rem 0 0;
+  border-top: 2px solid var(--rule);
+  display: grid;
+  gap: 0.7rem;
+  color: var(--ink-soft);
+}
+.facts li {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  gap: 0.6rem;
+  line-height: 1.5;
+}
+.facts li::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: 0.55em;
+  rotate: 45deg;
+  background: var(--peso);
+}
+
+/* ── Close ────────────────────────────────────────────────────── */
+
+.close {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--note-deep);
+  color: var(--note-ink);
+  padding: clamp(6rem, 12vw, 10rem) var(--gutter);
+  text-align: center;
+}
+.closeRosette {
+  position: absolute;
+  z-index: -1;
+  width: min(120vmin, 1100px);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  color: var(--note-line);
+  opacity: 0.3;
+}
+.closeInner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 50rem;
+  margin: 0 auto;
+}
+.closeTitle {
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  margin: 0;
+}
+.close .lede {
+  margin: 1.4rem auto 2.4rem;
+}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+
+.footer {
+  background: var(--paper);
+  color: var(--ink-soft);
+  border-top: 1px solid var(--paper-line);
+}
+.footerInner {
+  max-width: 88rem;
+  margin: 0 auto;
+  padding: 2rem var(--gutter);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  font-size: 0.9rem;
+}
+.footer .brand {
+  color: var(--ink);
+  font-size: 1rem;
+}
+.footerNote {
+  flex: 1;
+}
+.footerLinks {
+  display: flex;
+  gap: 1.5rem;
+}
+.footerLinks a {
+  color: inherit;
+  text-decoration: none;
+}
+.footerLinks a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .heroGrid,
+  .pesoGrid,
+  .cardsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .heroRosette {
+    width: 120vmin;
+    right: -40vmin;
+    top: 62%;
+  }
+  .specimen {
+    max-width: 34rem;
+  }
+  .proofs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .proof,
+  .proof + .proof {
+    padding: 2rem 0 0;
+    border-left: 0;
+  }
+  .proof + .proof {
+    margin-top: 1.2rem;
+    border-top: 1px solid var(--paper-line);
+  }
+  .cardsGrid > :first-child {
+    order: 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .serialTop {
+    display: none;
+  }
+  .serialBottom {
+    right: 24px;
+    bottom: 22px;
+    font-size: 0.62rem;
+  }
+  .nav {
+    padding-top: 1.9rem;
+  }
+  .navEnd {
+    gap: 0.4rem;
+  }
+  .statement {
+    grid-column: 1 / span 11;
+  }
+  .ledger {
+    grid-column: 1 / span 12;
+    margin-top: 9.5rem;
+    rotate: 1deg;
+  }
+  .ledgerRow {
+    font-size: 0.85rem;
+  }
+  .ledgerFoot {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .safe {
+    align-items: flex-start;
+    text-align: left;
+  }
+  /* Too narrow for bill names: the day numbers stay on the line, the
+     paydays drop below it, and "today" is carried by its ringed dot. */
+  .billLabel,
+  .bill em,
+  .today {
+    font-size: 0;
+  }
+  .pay {
+    bottom: auto;
+    top: calc(100% + 0.9rem);
+    padding-bottom: 0;
+  }
+  .pay::after {
+    bottom: auto;
+    top: -1.3rem;
+  }
+  .card {
+    width: 80%;
+  }
+  .cardBlack {
+    margin: 4rem 0 0 20%;
+  }
+  .footerLinks {
+    width: 100%;
+  }
+}
+
+/* ── Footer seal size (was a Tailwind class on the web) ─────────── */
+.footerLogo {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* ── Store badges ─────────────────────────────────────────────── */
+.stores {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.store {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 3.4rem;
+  padding: 0.55rem 1.3rem 0.55rem 1rem;
+  border-radius: 0.8rem;
+  background: var(--note-ink);
+  color: var(--note);
+  text-decoration: none;
+  transition: transform 220ms var(--ease-press);
+}
+a.store:hover {
+  transform: translateY(-2px);
+}
+.store[aria-disabled="true"] {
+  background: transparent;
+  color: var(--note-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--note-line) 70%, transparent);
+}
+.storeMark {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex-shrink: 0;
+}
+.storeText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+.storeLine {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.storeName {
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.soon {
+  font-style: normal;
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--peso-line);
+}
+
+/* ── Locale toggle on paper (legal pages) ─────────────────────── */
+.localeTogglePaper {
+  border-color: var(--paper-line);
+}
+.localeTogglePaper a {
+  color: var(--ink-soft);
+}
+.localeTogglePaper a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper);
+}

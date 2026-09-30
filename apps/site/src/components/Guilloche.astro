@@ -1,0 +1,25 @@
+---
+interface Props {
+  variant?: "rosette" | "field";
+  class?: string;
+  lineWidth?: number;
+  duration?: number;
+  [attr: string]: unknown;
+}
+const { variant = "rosette", class: className, lineWidth = 0.7, duration = 1800, ...rest } = Astro.props;
+---
+
+<!-- Engraved line work, drawn live on a canvas (src/scripts/guilloche.ts), as on the web.
+     Decoration only: aria-hidden, never holds content. -->
+<canvas
+  class={className}
+  aria-hidden="true"
+  data-guilloche={variant}
+  data-line-width={lineWidth}
+  data-duration={duration}
+  {...rest}
+></canvas>
+
+<script>
+  import "../scripts/guilloche";
+</script>

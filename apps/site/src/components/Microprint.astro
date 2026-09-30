@@ -1,0 +1,17 @@
+---
+import s from "../styles/ornament.module.css";
+
+interface Props {
+  text: string;
+  class?: string;
+}
+const { text, class: className } = Astro.props;
+const run = text.repeat(12);
+---
+
+<div aria-hidden="true" class:list={[s.microprint, className]}>
+  <span class={s.mpTop}>{run}</span>
+  <span class={s.mpBottom}>{run}</span>
+  <span class={s.mpLeft}>{run}</span>
+  <span class={s.mpRight}>{run}</span>
+</div>
