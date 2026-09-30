@@ -1,0 +1,55 @@
+/* ── Microprint frame + serials ───────────────────────────────── */
+
+.microprint {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  border: 1px solid color-mix(in oklab, var(--note-line) 55%, transparent);
+  z-index: 1;
+}
+.microprint span {
+  position: absolute;
+  overflow: hidden;
+  white-space: nowrap;
+  font-stretch: 125%;
+  font-weight: 600;
+  font-size: 5.5px;
+  letter-spacing: 0.22em;
+  line-height: 1;
+  color: var(--note-line);
+  opacity: 0.8;
+}
+.mpTop {
+  top: -9px;
+  left: 0;
+  right: 0;
+}
+.mpBottom {
+  bottom: -9px;
+  left: 0;
+  right: 0;
+}
+.mpLeft,
+.mpRight {
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  writing-mode: vertical-rl;
+}
+.mpLeft {
+  left: -9px;
+  transform: rotate(180deg);
+}
+.mpRight {
+  right: -9px;
+}
+
+.serial {
+  position: absolute;
+  z-index: 1;
+  font-stretch: 100%;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--peso-line);
+}
