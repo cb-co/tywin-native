@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { medallionSvg } from "../lib/medallion";
+import { medallionSvg } from "@cigua/core/papel/medallion";
 
 /* The logo as the favicon. The ring is ink on a light tab bar and note ink on a
    dark one; the seal keeps its fixed note colours. */

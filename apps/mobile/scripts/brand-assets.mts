@@ -1,7 +1,9 @@
 /**
- * Draws the app icon, the Android adaptive foreground and the launch splash
- * image from the brand geometry in @cigua/core, so they can be redrawn here
- * instead of in the retired web app (which rendered them with next/og).
+ * Draws the app icon, the Android adaptive foreground, the launch splash image
+ * and the logo files in packages/core/design/logo from the brand geometry in
+ * @cigua/core, so they can be redrawn here instead of in the retired web app
+ * (which rendered them with next/og). The icon and the logo files are the mark
+ * (@cigua/core/papel/medallion), the same drawing as the app header and the site.
  *
  *   node apps/mobile/scripts/brand-assets.mts
  *
@@ -10,20 +12,38 @@
  * (Astro), hoisted to the root node_modules.
  * Icons and splash only change with a new native build, not an OTA update.
  */
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { registerHooks } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
-import { BIRD_BODY, BIRD_WING } from "@cigua/core/papel/bird";
-import { ROSETTE_LAYERS, rosettePoints } from "@cigua/core/papel/rosette";
+// @cigua/core imports its own modules without extensions (bundler resolution);
+// plain Node needs the `.ts`, so relative imports get it added on a miss.
+registerHooks({
+  resolve(specifier, context, next) {
+    try {
+      return next(specifier, context);
+    } catch (err) {
+      if (specifier.startsWith(".")) return next(`${specifier}.ts`, context);
+      throw err;
+    }
+  },
+});
+const { BIRD_BODY, BIRD_WING } = await import("@cigua/core/papel/bird");
+const { MEDALLION, medallionSvg } = await import("@cigua/core/papel/medallion");
+const { ROSETTE_LAYERS, rosettePoints } = await import("@cigua/core/papel/rosette");
 
-const ASSETS = join(dirname(fileURLToPath(import.meta.url)), "..", "assets");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ASSETS = join(HERE, "..", "assets");
+const LOGO = join(HERE, "..", "..", "..", "packages", "core", "design", "logo");
 const SIZE = 1024;
 
-// `note` and `note-ink` in packages/core/design/tokens.json.
+// `note`, `note-ink` and light `foreground` in packages/core/design/tokens.json
+// and apps/mobile/src/theme/tokens.ts.
 const DISC = "#4a1f8c";
 const INK = "#f8f5ff";
+const PAPER_INK = "#1b1530";
 
 /** The guilloche plate, one path per layer, in the canvas's own units
  *  (a 176 radius, so 352 across). */
@@ -36,7 +56,14 @@ const PLATE_LAYERS = ROSETTE_LAYERS.map((layer) => {
   return d;
 });
 
-/** The plate as the in-app splash drew it: layer alphas 0.9/0.55 under 40%.
+/** The mark centred on the tile, sized so the seal takes `seal` of it. */
+function mark(seal: number, ring = INK): string {
+  const side = (SIZE * seal) / MEDALLION.seal;
+  const at = (SIZE - side) / 2;
+  return medallionSvg({ plate: ring, disc: DISC, ink: INK, size: "print", attrs: `x="${at}" y="${at}" width="${side}" height="${side}"` });
+}
+
+/** The splash's plate, as the in-app splash drew it: layer alphas 0.9/0.55 under 40%.
  *  Lines are heavier than the canvas's 0.7px, because an icon is seen small. */
 function plate(size: number): string {
   const s = size / 352;
@@ -64,26 +91,36 @@ function svg(body: string, background: boolean): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${bg}${body}</svg>`;
 }
 
-/** Share of the tile each part takes. */
+/** Share of the tile the seal takes; the ring follows at MEDALLION's ratio. */
 export const LAYOUT = {
   // iOS and the store listing: the OS rounds the corners itself.
-  icon: { plate: 0.9, seal: 0.54 },
+  icon: { seal: 0.54 },
   // Android crops the adaptive foreground to its own shape and keeps about
   // the middle two thirds, so the whole mark stays inside that circle.
-  foreground: { plate: 0.68, seal: 0.4 },
+  foreground: { seal: 0.4 },
   // The launch image, shown `imageWidth` points wide (app.json) on the note
-  // violet: the plate fills it and the seal takes half of it.
+  // violet: the full three-layer plate fills it and the seal takes half of it.
   splash: { plate: 0.98, seal: 0.5 },
 } as const;
 
-async function write(name: string, markup: string, alpha: boolean) {
+async function write(path: string, markup: string, alpha: boolean) {
   let img = sharp(Buffer.from(markup));
   if (!alpha) img = img.flatten({ background: DISC }).removeAlpha();
-  writeFileSync(join(ASSETS, name), await img.png({ compressionLevel: 9 }).toBuffer());
-  console.log(`wrote assets/${name}`);
+  writeFileSync(path, await img.png({ compressionLevel: 9 }).toBuffer());
+  console.log(`wrote ${path}`);
 }
 
 const { icon, foreground, splash } = LAYOUT;
-await write("icon.png", svg(plate(SIZE * icon.plate) + seal(SIZE * icon.seal), true), false);
-await write("android-icon-foreground.png", svg(plate(SIZE * foreground.plate) + seal(SIZE * foreground.seal), true), true);
-await write("splash-icon.png", svg(plate(SIZE * splash.plate) + seal(SIZE * splash.seal), false), true);
+await write(join(ASSETS, "icon.png"), svg(mark(icon.seal), true), false);
+await write(join(ASSETS, "android-icon-foreground.png"), svg(mark(foreground.seal), true), true);
+await write(join(ASSETS, "splash-icon.png"), svg(plate(SIZE * splash.plate) + seal(SIZE * splash.seal), false), true);
+
+// Logo files: the mark alone on a transparent ground, the ring in ink for light
+// backgrounds and in note ink for dark or violet ones, as SVG and 1024px PNG.
+mkdirSync(LOGO, { recursive: true });
+for (const [name, ring] of [["cigua-logo", PAPER_INK], ["cigua-logo-on-dark", INK]] as const) {
+  const file = medallionSvg({ plate: ring, disc: DISC, ink: INK, size: "print", attrs: `xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}"` });
+  writeFileSync(join(LOGO, `${name}.svg`), file + "\n");
+  console.log(`wrote ${join(LOGO, `${name}.svg`)}`);
+  await write(join(LOGO, `${name}.png`), file, true);
+}

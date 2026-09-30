@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import sharp from "sharp";
-import { medallionSvg } from "../lib/medallion";
+import { medallionSvg } from "@cigua/core/papel/medallion";
 
 /* PNG fallback for browsers without SVG favicons. It cannot follow the tab
    bar's theme, so the ring takes note-line, which reads on light and dark. */
