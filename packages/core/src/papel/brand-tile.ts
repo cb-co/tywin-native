@@ -1,9 +1,10 @@
 /**
- * The small brand mark (app header, site nav and footer): the app icon at chrome
- * size. A deep-violet tile (`note-deep`) with rounded corners, the guilloche
- * plate engraved in its centre, and the note-violet seal on top. Both are fixed
- * colours, the way a note never goes dark: the deep tile stands off the violet
- * hero as well as off paper and the dark ground, and the seal stands off it.
+ * The app header's mark: the app icon at chrome size. A deep-violet tile
+ * (`note-deep`) with rounded corners, the guilloche plate engraved in its
+ * centre, and the note-violet seal on top. Both are fixed colours, the way a
+ * note never goes dark, so it reads on paper and on the dark ground alike.
+ * The site draws the same plate and seal without the tile
+ * (apps/site/src/lib/medallion.ts).
  *
  * Shares of the tile's side, drawn in a 64 box.
  */

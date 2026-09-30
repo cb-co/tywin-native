@@ -67,10 +67,10 @@ function svg(body: string, background: boolean): string {
 /** Share of the tile each part takes. */
 export const LAYOUT = {
   // iOS and the store listing: the OS rounds the corners itself.
-  icon: { plate: 0.9, seal: 0.46 },
+  icon: { plate: 0.9, seal: 0.54 },
   // Android crops the adaptive foreground to its own shape and keeps about
   // the middle two thirds, so the whole mark stays inside that circle.
-  foreground: { plate: 0.68, seal: 0.34 },
+  foreground: { plate: 0.68, seal: 0.4 },
   // The launch image, shown `imageWidth` points wide (app.json) on the note
   // violet: the plate fills it and the seal takes half of it.
   splash: { plate: 0.98, seal: 0.5 },

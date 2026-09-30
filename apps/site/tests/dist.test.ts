@@ -95,3 +95,24 @@ describe("legal pages switch language in place", () => {
     expect(html).toMatch(new RegExp(`<a [^>]*href="${twin}"[^>]*hreflang="${lang}"`));
   });
 });
+
+describe("favicons", () => {
+  it("ships the SVG mark, its ring following the tab bar's theme", () => {
+    const svg = readFileSync(join(DIST, "favicon.svg"), "utf8");
+    expect(svg).toMatch(/^<svg[^>]*xmlns="http:\/\/www.w3.org\/2000\/svg"/);
+    expect(svg).toContain('class="plate"');
+    expect(svg).toContain("prefers-color-scheme: dark");
+  });
+
+  it("ships a 64px PNG fallback", () => {
+    const png = readFileSync(join(DIST, "favicon.png"));
+    expect(png.subarray(1, 4).toString()).toBe("PNG");
+    expect(png.readUInt32BE(16)).toBe(64);
+  });
+
+  it("links both from every page", () => {
+    const html = readFileSync(fileFor("/"), "utf8");
+    expect(html).toContain('href="/favicon.svg"');
+    expect(html).toContain('href="/favicon.png"');
+  });
+});
