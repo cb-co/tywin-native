@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   joinBudgetGroupRows,
   newestPendingImport,
+  wholeBudgetMonth,
   type BudgetGroupUsageRow,
   type PendingTriageImportRow,
 } from "./queries";
@@ -124,5 +125,23 @@ describe("joinBudgetGroupRows", () => {
       [usage({ budget_group_id: "g2" }), usage()],
     );
     expect(rows.map((r) => r.name)).toEqual(["Essentials", "Lifestyle"]);
+  });
+});
+
+describe("wholeBudgetMonth", () => {
+  const payPeriod = { start: "2026-09-14", end: "2026-10-13" };
+
+  it("takes the month whole for a monthly profile's own pay period", () => {
+    expect(wholeBudgetMonth(payPeriod, { pay_cycle: "monthly", pay_anchor_day: 14 })).toBe(true);
+  });
+
+  it("prorates a quincena", () => {
+    expect(
+      wholeBudgetMonth({ start: "2026-09-01", end: "2026-09-15" }, { pay_cycle: "semimonthly", pay_anchor_day: 1 }),
+    ).toBe(false);
+  });
+
+  it("prorates a cross-month range when the profile has not loaded, rather than guess its anchor", () => {
+    expect(wholeBudgetMonth(payPeriod, null)).toBe(false);
   });
 });

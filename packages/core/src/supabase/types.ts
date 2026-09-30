@@ -1748,7 +1748,7 @@ export type Database = {
     Functions: {
       ask_query: { Args: { p_sql: string }; Returns: Json }
       budget_group_usage_range: {
-        Args: { p_end: string; p_start: string }
+        Args: { p_end: string; p_start: string; p_whole?: boolean }
         Returns: {
           budget: number
           budget_group_id: string
@@ -1783,7 +1783,7 @@ export type Database = {
         }[]
       }
       category_usage_range: {
-        Args: { p_end: string; p_start: string }
+        Args: { p_end: string; p_start: string; p_whole?: boolean }
         Returns: {
           budget: number
           budget_monthly: number

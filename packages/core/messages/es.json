@@ -1117,7 +1117,7 @@
     "ledgerMockPaymentAccounts": "Cuenta corriente diaria → Tarjeta Signature",
     "ledgerMockDay": "vie, 4 sep",
     "budgetsTitle": "Presupuestos",
-    "budgetsIntro": "Los presupuestos funcionan mes a mes, una fila por categoría. Navega entre meses y define un importe para cada categoría directamente en la fila.",
+    "budgetsIntro": "Los presupuestos siguen tu ciclo de pago, una fila por categoría. Si cobras una vez al mes, cada monto cubre tu período completo, de cobro a cobro, aunque empiece a mitad de mes. Si cobras quincenal o semanal, ves el monto mensual junto a la parte que le toca a este período. Avanza entre períodos, cambia a Mes para ver el mes calendario y fija el monto de cada categoría ahí mismo.",
     "budgetsCategory": "Crea categorías con un nombre, un emoji y un color",
     "budgetsInline": "Escribe un importe mensual directamente en la fila de una categoría",
     "budgetsProgress": "Cerca y Excedido se marcan, no solo se colorean: una etiqueta Cerca y una línea más gruesa al acercarte al límite, una marca Excedido y un doble filete al final cuando lo superas",

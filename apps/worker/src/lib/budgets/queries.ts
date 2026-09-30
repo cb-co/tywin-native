@@ -1,6 +1,7 @@
 import { createClient } from "#/lib/supabase/server";
 import { baseCurrencyOf } from "@cigua/core/profile";
-import type { Period } from "@cigua/core/period/cycle";
+import { isBudgetMonth, type Period } from "@cigua/core/period/cycle";
+import { payAnchorOf, payCycleOf, type PayCycleProfile } from "@cigua/core/period/profile";
 
 export type BudgetStatus = "within" | "approaching" | "over";
 
@@ -49,13 +50,27 @@ export type BudgetOverview = {
   period: Period;
 };
 
+/** Whether the range RPCs should take the budget of the month holding
+ *  `period.start` whole instead of prorating it by day — a calendar month, or
+ *  a monthly cycle's own pay period. See isBudgetMonth. */
+export function wholeBudgetMonth(period: Period, profile: PayCycleProfile | null | undefined): boolean {
+  return isBudgetMonth(period, payCycleOf(profile), payAnchorOf(profile));
+}
+
 export async function getBudgetOverview(period: Period): Promise<BudgetOverview> {
   const supabase = await createClient();
-  const [{ data: usage }, { data: categories }, { data: profile }, { data: uncategorized }, pendingTriageImportId] =
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("base_currency,pay_cycle,pay_anchor_day")
+    .maybeSingle();
+  const [{ data: usage }, { data: categories }, { data: uncategorized }, pendingTriageImportId] =
     await Promise.all([
-      supabase.rpc("category_usage_range", { p_start: period.start, p_end: period.end }),
+      supabase.rpc("category_usage_range", {
+        p_start: period.start,
+        p_end: period.end,
+        p_whole: wholeBudgetMonth(period, profile),
+      }),
       supabase.from("categories").select("id,name,emoji,color,budget_group_id").order("sort_order"),
-      supabase.from("profiles").select("base_currency").maybeSingle(),
       supabase.rpc("uncategorized_spend_range", { p_start: period.start, p_end: period.end }),
       getPendingTriageImportId(supabase),
     ]);
@@ -164,10 +179,17 @@ export function joinBudgetGroupRows(
  */
 export async function getBudgetGroupOverview(period: Period): Promise<BudgetGroupOverview> {
   const supabase = await createClient();
-  const [{ data: groups }, { data: usage }, { data: profile }] = await Promise.all([
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("base_currency,pay_cycle,pay_anchor_day")
+    .maybeSingle();
+  const [{ data: groups }, { data: usage }] = await Promise.all([
     supabase.from("budget_groups").select("id,name,emoji,color").order("sort_order"),
-    supabase.rpc("budget_group_usage_range", { p_start: period.start, p_end: period.end }),
-    supabase.from("profiles").select("base_currency").maybeSingle(),
+    supabase.rpc("budget_group_usage_range", {
+      p_start: period.start,
+      p_end: period.end,
+      p_whole: wholeBudgetMonth(period, profile),
+    }),
   ]);
 
   const rows = joinBudgetGroupRows(groups ?? [], usage ?? []);

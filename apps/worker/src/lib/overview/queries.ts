@@ -8,6 +8,7 @@ import { cardAmountDue, dayAfter } from "@cigua/core/overview/card-due";
 import { importPromptState, type ImportPrompt } from "./import-prompt";
 import { isOutgoing } from "./outgoing";
 import { currentPeriod } from "@cigua/core/period/profile";
+import { wholeBudgetMonth } from "#/lib/budgets/queries";
 import { localDate, type Period } from "@cigua/core/period/cycle";
 import { computeAvailable, type Available } from "./available";
 import { computeFunding, type ContributionRow } from "#/lib/goals/funding";
@@ -134,7 +135,11 @@ export async function getOverview(): Promise<Overview> {
     { data: contributions },
   ] = await Promise.all([
     supabase.rpc("cashflow_range", { p_start: period.start, p_end: period.end }),
-    supabase.rpc("category_usage_range", { p_start: period.start, p_end: period.end }),
+    supabase.rpc("category_usage_range", {
+      p_start: period.start,
+      p_end: period.end,
+      p_whole: wholeBudgetMonth(period, profile),
+    }),
     supabase.from("accounts").select("id,name,currency,type").eq("is_archived", false),
     supabase.from("account_balances").select("account_id,currency,balance"),
     supabase

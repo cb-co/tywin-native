@@ -14,6 +14,12 @@ describe("budgetLabelParts", () => {
     ).toEqual({ monthly: 5000, prorated: 2500 });
   });
 
+  it("shows one figure for a monthly cycle's pay period, which takes the month whole", () => {
+    expect(
+      budgetLabelParts({ start: "2026-09-14", end: "2026-10-13" }, 200, 200),
+    ).toEqual({ monthly: 200, prorated: null });
+  });
+
   it("shows one figure when nothing is budgeted, rather than 0 of 0", () => {
     expect(
       budgetLabelParts({ start: "2026-09-01", end: "2026-09-15" }, 0, 0),

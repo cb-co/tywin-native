@@ -142,3 +142,15 @@ export function isWholeMonth(p: Period): boolean {
   const [ey, em, ed] = parse(p.end);
   return sd === 1 && sy === ey && sm === em && ed === daysInMonth(ey, em);
 }
+
+/** True when a period is worth one month of budget: a calendar month, or one
+ *  whole pay period of a monthly cycle (the 14th to the 13th). Budgets are
+ *  stored as a monthly amount, and such a period takes the amount of the month
+ *  it starts in, whole. Prorating it by day would split one paycheck's budget
+ *  across two calendar months. */
+export function isBudgetMonth(p: Period, cycle: PayCycle, anchor: number | null): boolean {
+  if (isWholeMonth(p)) return true;
+  if (cycle !== "monthly") return false;
+  const own = periodFor(p.start, "monthly", anchor);
+  return own.start === p.start && own.end === p.end;
+}

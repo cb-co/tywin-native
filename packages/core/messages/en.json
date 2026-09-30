@@ -1117,7 +1117,7 @@
     "ledgerMockPaymentAccounts": "Everyday Checking → Signature Card",
     "ledgerMockDay": "Fri, Sep 4",
     "budgetsTitle": "Budgets",
-    "budgetsIntro": "Budgets run month by month, one row per category. Navigate between months, and set an amount for each category inline.",
+    "budgetsIntro": "Budgets follow your pay cycle, one row per category. Paid monthly, each amount covers your whole pay period, payday to payday, even when it starts mid-month. Paid quincenal or weekly, you see the monthly amount beside this period's share of it. Step between periods, switch to Month for the calendar month, and set each category's amount inline.",
     "budgetsCategory": "Create categories with a name, emoji, and color",
     "budgetsInline": "Type a monthly amount directly into a category's row",
     "budgetsProgress": "Near and over are marked, not just colored: a Near tag and a heavier rule as you approach the limit, an Over budget flag and a double-rule end once you pass it",

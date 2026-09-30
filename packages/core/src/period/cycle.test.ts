@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { periodFor, nextPayday, shiftPeriod, isWholeMonth, localDate, addDays } from "./cycle";
+import { periodFor, nextPayday, shiftPeriod, isWholeMonth, isBudgetMonth, localDate, addDays } from "./cycle";
 
 describe("periodFor · semimonthly", () => {
   it("puts the 1st through the 15th in the first half", () => {
@@ -188,6 +188,30 @@ describe("isWholeMonth", () => {
 
   it("is false for a period that spans two months", () => {
     expect(isWholeMonth({ start: "2026-08-25", end: "2026-09-24" })).toBe(false);
+  });
+});
+
+describe("isBudgetMonth", () => {
+  it("is true for a calendar month, whatever the cycle", () => {
+    expect(isBudgetMonth({ start: "2026-09-01", end: "2026-09-30" }, "semimonthly", 1)).toBe(true);
+  });
+
+  it("is true for one whole pay period of a monthly cycle, across two months", () => {
+    expect(isBudgetMonth({ start: "2026-09-14", end: "2026-10-13" }, "monthly", 14)).toBe(true);
+  });
+
+  it("follows the anchor's end-of-month clamp", () => {
+    // Anchor 31: February's period starts on the 28th and runs to March 30.
+    expect(isBudgetMonth({ start: "2026-02-28", end: "2026-03-30" }, "monthly", 31)).toBe(true);
+  });
+
+  it("is false for a range that is not the monthly cycle's own period", () => {
+    expect(isBudgetMonth({ start: "2026-09-14", end: "2026-10-13" }, "monthly", 25)).toBe(false);
+  });
+
+  it("is false for a quincena or a week", () => {
+    expect(isBudgetMonth({ start: "2026-09-01", end: "2026-09-15" }, "semimonthly", 1)).toBe(false);
+    expect(isBudgetMonth({ start: "2026-09-28", end: "2026-10-04" }, "weekly", 1)).toBe(false);
   });
 });
 
