@@ -1250,3 +1250,15 @@ a.store:hover {
   text-transform: uppercase;
   color: var(--peso-line);
 }
+
+/* ── Locale toggle on paper (legal pages) ─────────────────────── */
+.localeTogglePaper {
+  border-color: var(--paper-line);
+}
+.localeTogglePaper a {
+  color: var(--ink-soft);
+}
+.localeTogglePaper a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper);
+}

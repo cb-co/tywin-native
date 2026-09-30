@@ -7,12 +7,14 @@ import s from "../styles/papel.module.css";
 interface Props {
   locale: Locale;
   page: Page;
+  /** "note" on the violet hero; "paper" on the light legal sheet. */
+  tone?: "note" | "paper";
 }
-const { locale, page } = Astro.props;
+const { locale, page, tone = "note" } = Astro.props;
 const t = translator(locale, "Marketing");
 ---
 
-<nav aria-label={t("languageLabel")} class={s.localeToggle}>
+<nav aria-label={t("languageLabel")} class:list={[s.localeToggle, tone === "paper" && s.localeTogglePaper]}>
   {
     LOCALES.map((code) => (
       <a

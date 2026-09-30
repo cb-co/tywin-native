@@ -1,6 +1,6 @@
 ---
 import { BIRD_BODY, BIRD_FEATHER, BIRD_WING } from "@cigua/core/papel/bird";
-import { rosettePath } from "@cigua/core/papel/rosette";
+import { sealRingPath } from "../lib/rosette-svg";
 
 interface Props {
   class?: string;
@@ -9,7 +9,7 @@ interface Props {
   [attr: string]: unknown;
 }
 const { class: className, rosette = false, ...rest } = Astro.props;
-const RING = rosettePath(64);
+const RING = sealRingPath();
 ---
 
 <span class:list={["seal", className]} aria-hidden="true" {...rest}>

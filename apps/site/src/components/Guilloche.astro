@@ -1,6 +1,4 @@
 ---
-import { ROSETTE_EXTENT, rosetteLayerPaths } from "../lib/rosette-svg";
-
 interface Props {
   variant?: "rosette" | "field";
   class?: string;
@@ -9,62 +7,19 @@ interface Props {
   [attr: string]: unknown;
 }
 const { variant = "rosette", class: className, lineWidth = 0.7, duration = 1800, ...rest } = Astro.props;
-const paths = variant === "rosette" ? rosetteLayerPaths() : [];
-const box = `${-ROSETTE_EXTENT} ${-ROSETTE_EXTENT} ${ROSETTE_EXTENT * 2} ${ROSETTE_EXTENT * 2}`;
 ---
 
-{
-  variant === "rosette" ? (
-    <svg class:list={["guilloche", className]} viewBox={box} aria-hidden="true" style={`--dur: ${duration}ms`} {...rest}>
-      <g class="lathe">
-        {paths.map((d, i) => (
-          <path d={d} pathLength="1" style={`--li: ${i}; opacity: ${i === 0 ? 0.9 : 0.55}; stroke-width: ${lineWidth}px`} />
-        ))}
-      </g>
-    </svg>
-  ) : (
-    <canvas class={className} aria-hidden="true" data-guilloche-field data-line-width={lineWidth} data-duration={duration} {...rest} />
-  )
-}
+<!-- Engraved line work, drawn live on a canvas (src/scripts/guilloche.ts), as on the web.
+     Decoration only: aria-hidden, never holds content. -->
+<canvas
+  class={className}
+  aria-hidden="true"
+  data-guilloche={variant}
+  data-line-width={lineWidth}
+  data-duration={duration}
+  {...rest}
+></canvas>
 
 <script>
-  import "../scripts/guilloche-field";
+  import "../scripts/guilloche";
 </script>
-
-<style>
-  /* Engraved line work: a stack of hypotrochoids, the curve a geometric lathe cuts
-     into a banknote plate. Stroke is currentColor, so callers tint it with color. */
-  .guilloche path {
-    fill: none;
-    stroke: currentColor;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-  }
-  /* The plate "cuts" itself once on load: a slow quarter-turn of the lathe while each
-     layer draws in, later layers a little faster. Finished by default (no JS, reduced motion). */
-  @media (prefers-reduced-motion: no-preference) {
-    .guilloche .lathe {
-      animation: lathe var(--dur) cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-    .guilloche path {
-      stroke-dasharray: 1;
-      animation: cut calc(var(--dur) / (1 + var(--li) * 0.15)) cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-  }
-  @keyframes lathe {
-    from {
-      transform: rotate(-20deg);
-    }
-    to {
-      transform: none;
-    }
-  }
-  @keyframes cut {
-    from {
-      stroke-dashoffset: 1;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-</style>

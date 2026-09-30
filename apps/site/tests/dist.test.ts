@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -68,5 +68,30 @@ describe("404", () => {
   it("exists and is not indexed", () => {
     const html = readFileSync(join(DIST, "404.html"), "utf8");
     expect(html).toContain('name="robots" content="noindex"');
+  });
+});
+
+describe("page weight", () => {
+  /* Decoration is drawn at runtime (canvas) or kept coarse (the small seal ring),
+     so a page is mostly its words. The first build shipped 2.9 MB of rosette paths. */
+  it.each([
+    ["/", 150],
+    ["/es", 150],
+    ["/privacy", 60],
+    ["/es/terms", 60],
+  ] as const)("%s stays under %i KB", (path, kb) => {
+    expect(statSync(fileFor(path)).size / 1024).toBeLessThan(kb);
+  });
+});
+
+describe("legal pages switch language in place", () => {
+  it.each([
+    ["/privacy", "es", "/es/privacy"],
+    ["/terms", "es", "/es/terms"],
+    ["/es/privacy", "en", "/privacy"],
+    ["/es/terms", "en", "/terms"],
+  ] as const)("%s links to its %s twin", (path, lang, twin) => {
+    const html = readFileSync(fileFor(path), "utf8");
+    expect(html).toMatch(new RegExp(`<a [^>]*href="${twin}"[^>]*hreflang="${lang}"`));
   });
 });

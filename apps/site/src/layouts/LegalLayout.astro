@@ -2,6 +2,7 @@
 import { ArrowLeft } from "lucide-static";
 import type { Locale } from "@cigua/core/i18n/locale";
 import Base from "./Base.astro";
+import LocaleToggle from "../components/LocaleToggle.astro";
 import Logo from "../components/Logo.astro";
 import Wordmark from "../components/Wordmark.astro";
 import { pathFor, type Page } from "../i18n/paths";
@@ -23,6 +24,7 @@ const home = pathFor(locale, "home");
   <main class="legal">
     <header class="bar">
       <a href={home} class="brand"><Logo /><Wordmark class="word" /></a>
+      <LocaleToggle locale={locale} page={page} tone="paper" />
     </header>
     <div class="sheet">
       <a href={home} class="back"><Fragment set:html={icon(ArrowLeft)} />{t("back")}</a>
@@ -42,6 +44,7 @@ const home = pathFor(locale, "home");
   }
   .bar {
     display: flex;
+    justify-content: space-between;
     height: 4rem;
     flex-shrink: 0;
     align-items: center;
