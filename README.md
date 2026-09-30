@@ -109,11 +109,11 @@ Apple is native on iOS: enable the Apple provider in Supabase with the app's
 bundle ID (`app.tywin.cigua`) as an authorised client ID. Email confirmation links
 open the same route in the app.
 
-The base schema and its migrations live with the web app (`cb-co/tywin`,
-`supabase/migrations`); this repository reads and writes that same schema.
-Changes only the native app needs are in `supabase/migrations` here. Apply each
-one to the same project (paste it into the SQL editor) before deploying a Worker
-that relies on it.
+The whole schema history lives in `supabase/migrations` (it moved here from the
+retired web repo, `cb-co/tywin`). The repo is linked to the Supabase project:
+`npm run db:new <name>` starts a migration, `npm run db:push` applies pending ones,
+and `npm run db:types` regenerates `packages/core/src/supabase/types.ts`. Apply a
+migration before deploying a Worker that relies on it.
 
 ### Site
 
