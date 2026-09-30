@@ -6,7 +6,7 @@ import { useTranslations } from "use-intl";
 import { LOCALES, LOCALE_LABEL } from "@cigua/core/i18n/locale";
 import { Button } from "~/components/ui/button";
 import { Menu } from "~/components/ui/menu";
-import { Seal } from "~/components/papel/seal";
+import { BrandTile } from "~/components/papel/brand-tile";
 import { Wordmark } from "~/components/papel/wordmark";
 import { useFigureMask } from "~/components/money/figure-mask";
 import { useAppLocale } from "~/lib/i18n";
@@ -35,7 +35,7 @@ export function MobileHeader() {
           accessibilityLabel={t("overview")}
           style={s.brand}
         >
-          <Seal size={28} rosette />
+          <BrandTile size={32} />
           <Wordmark height={18} color={colors.foreground} />
         </Pressable>
         <View style={s.actions}>

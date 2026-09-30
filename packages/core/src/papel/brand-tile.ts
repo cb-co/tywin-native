@@ -1,0 +1,22 @@
+/**
+ * The small brand mark (app header, site nav and footer): the app icon at chrome
+ * size. A note-violet tile with rounded corners, the guilloche plate engraved in
+ * its centre, and the seal on top. The tile is note violet in both themes, the
+ * way a note never goes dark, so it reads on paper and on the dark ground alike.
+ *
+ * Shares of the tile's side, drawn in a 64 box.
+ */
+export const BRAND_TILE = {
+  /** Corner radius. */
+  radius: 0.24,
+  /** Plate diameter. */
+  plate: 0.94,
+  /** Seal diameter. Large enough for the bird to read at 32px. */
+  seal: 0.6,
+  /** Only the plate's outer layer (ROSETTE_LAYERS[0]): all three merge into a
+   *  flat lavender band at this size, one still reads as engraved line work. */
+  plateLayers: 1,
+  plateOpacity: 0.55,
+  /** Plate line width in the 64 box. At 32px that is about a third of a pixel. */
+  plateLine: 0.7,
+} as const;
