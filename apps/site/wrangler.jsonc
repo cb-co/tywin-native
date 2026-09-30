@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The public site: static files only, no Worker code.
+  "name": "cigua-site",
+  "compatibility_date": "2026-09-29",
+  // Explicit: omitting it turns workers.dev off on every deploy (found on palmonte-site).
+  "workers_dev": true,
+  // Cloudflare creates the DNS record and certificate on deploy; the
+  // quantcoresolutions.com zone is on this account.
+  "routes": [{ "pattern": "cigua.quantcoresolutions.com", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

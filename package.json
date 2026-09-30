@@ -11,7 +11,10 @@
     "lint": "npm run lint --workspaces --if-present",
     "dev:worker": "npm run dev -w @cigua/worker",
     "dev:mobile": "npm run start -w @cigua/mobile",
-    "deploy:worker": "npm run deploy -w @cigua/worker"
+    "deploy:worker": "npm run deploy -w @cigua/worker",
+    "dev:site": "npm run dev -w @cigua/site",
+    "build:site": "npm run build -w @cigua/site",
+    "deploy:site": "npm run deploy -w @cigua/site"
   },
   "overrides": {
     "react": "19.2.3",
