@@ -1,0 +1,78 @@
+---
+import { cardForeground, gradientFrom } from "@cigua/core/color";
+import { DEFAULT_CARD_ACCENT, HEX6 } from "@cigua/core/accounts/card-art";
+import Guilloche from "./Guilloche.astro";
+
+const NETWORK_WORDMARK = { visa: "VISA", mastercard: "MASTERCARD", amex: "AMEX" } as const;
+
+interface Props {
+  name: string;
+  last4: string;
+  network: keyof typeof NETWORK_WORDMARK;
+  accent: string;
+  class?: string;
+  [attr: string]: unknown;
+}
+const { name, last4, network, accent, class: className, ...rest } = Astro.props;
+const base = HEX6.test(accent) ? accent : DEFAULT_CARD_ACCENT;
+const fg = cardForeground(base);
+---
+
+<div class:list={["card", className]} style={`background-image: ${gradientFrom(base)}; color: ${fg}`} {...rest}>
+  <Guilloche lineWidth={0.5} class="plate" />
+  <span class="name">{name}</span>
+  <span class="number">•••• {last4}</span>
+  <span class="network">{NETWORK_WORDMARK[network]}</span>
+</div>
+
+<style>
+  .card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    aspect-ratio: 1.7;
+    width: 100%;
+    max-width: 25rem;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 1.3rem 1.4rem;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.25),
+      0 26px 50px -24px rgb(20 10 40 / 0.7);
+  }
+  .plate {
+    pointer-events: none;
+    position: absolute;
+    right: -95%;
+    top: -75%;
+    z-index: -10;
+    aspect-ratio: 1;
+    width: 150%;
+    opacity: 0.35;
+  }
+  .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-stretch: 112%;
+  }
+  .number {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+  }
+  .network {
+    position: absolute;
+    bottom: 1.2rem;
+    right: 1.4rem;
+    font-size: 0.95rem;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.04em;
+    font-stretch: 125%;
+  }
+</style>
