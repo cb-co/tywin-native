@@ -62,12 +62,12 @@ function mark(seal: number, ring = INK): string {
   return medallionSvg({ plate: ring, disc: DISC, ink: INK, size: "print", attrs: `x="${at}" y="${at}" width="${side}" height="${side}"` });
 }
 
-/** The splash's plate, as the in-app splash drew it: layer alphas 0.9/0.55 under 40%.
+/** The splash's plate, as the in-app splash drew it: layer alphas 0.9/0.55 under 60%.
  *  Lines are heavier than the canvas's 0.7px, because an icon is seen small. */
 function plate(size: number): string {
   const s = size / 352;
   const paths = PLATE_LAYERS.map((d, i) => `<path d="${d}" opacity="${i === 0 ? 0.9 : 0.55}"/>`).join("");
-  return `<g transform="translate(${SIZE / 2} ${SIZE / 2}) scale(${s})" fill="none" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round" opacity="0.4">${paths}</g>`;
+  return `<g transform="translate(${SIZE / 2} ${SIZE / 2}) scale(${s})" fill="none" stroke="${INK}" stroke-width="1" stroke-linejoin="round" opacity="0.6">${paths}</g>`;
 }
 
 /** The mark's seal (the same drawing as the logo), its disc filled so the
@@ -90,8 +90,8 @@ export const LAYOUT = {
   // the middle two thirds, so the whole mark stays inside that circle.
   foreground: { seal: 0.4 },
   // The launch image, shown `imageWidth` points wide (app.json) on the note
-  // violet: the full three-layer plate fills it and the seal takes half of it.
-  splash: { plate: 0.98, seal: 0.5 },
+  // violet: the full three-layer plate fills it and the seal takes 0.3 of it (90 of 300 points).
+  splash: { plate: 0.98, seal: 0.3 },
 } as const;
 
 async function write(path: string, markup: string, alpha: boolean) {
