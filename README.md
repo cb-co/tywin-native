@@ -92,6 +92,13 @@ cd apps/mobile
 npx expo run:ios        # or run:android
 ```
 
+To put a standalone build on your own iPhone with a free Apple ID (Xcode's
+"Personal Team"), run `npm run ios:device` from `apps/mobile`. It first checks that the three
+`EXPO_PUBLIC_*` values are set and not the examples. Personal teams
+can't use Sign in with Apple, so that build ("Cigua Test", bundle ID
+`app.tywin.cigua.personal`) leaves it out; see `app.config.ts`. It stops opening
+after 7 days; run the command again to reinstall.
+
 Release builds go through EAS (`eas build --profile production`), with the three
 `EXPO_PUBLIC_*` values set as EAS environment variables.
 

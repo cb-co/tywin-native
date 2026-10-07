@@ -7,4 +7,6 @@ export const ENV = {
   apiUrl: (process.env.EXPO_PUBLIC_API_URL ?? "").replace(/\/+$/, ""),
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? "",
   supabaseKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+  /** Off in builds signed by a free Apple Personal Team (see app.config.ts). */
+  appleSignIn: process.env.EXPO_PUBLIC_PERSONAL_TEAM !== "1",
 };

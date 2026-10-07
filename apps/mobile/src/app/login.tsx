@@ -5,6 +5,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslations } from "use-intl";
 import { AUTH_REDIRECT, signInWithApple, signInWithGoogle } from "~/lib/auth";
+import { ENV } from "~/lib/env";
 import { auth } from "~/lib/supabase";
 import { Button } from "~/components/ui/button";
 import { Field, Input } from "~/components/ui/field";
@@ -116,7 +117,7 @@ export default function LoginScreen() {
             </View>
           </Button>
 
-          {Platform.OS === "ios" ? (
+          {Platform.OS === "ios" && ENV.appleSignIn ? (
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={signingUp ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP : AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
               buttonStyle={scheme === "dark" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
