@@ -23,6 +23,7 @@ export { default as CircleHelp } from "lucide-react-native/icons/circle-question
 export { default as CloudOff } from "lucide-react-native/icons/cloud-off";
 export { default as CopyPlus } from "lucide-react-native/icons/copy-plus";
 export { default as CreditCard } from "lucide-react-native/icons/credit-card";
+export { default as Download } from "lucide-react-native/icons/download";
 export { default as Ellipsis } from "lucide-react-native/icons/ellipsis";
 export { default as Eye } from "lucide-react-native/icons/eye";
 export { default as EyeOff } from "lucide-react-native/icons/eye-off";

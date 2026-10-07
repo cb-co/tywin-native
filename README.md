@@ -67,9 +67,29 @@ recommendation. In production, set the two Supabase values as vars in
 ```sh
 cd apps/worker
 npx wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+npx wrangler secret put ASK_QUERY_SECRET   # see "Ask's signing secret" below
+npx wrangler secret put APPLE_TEAM_ID      # the four APPLE_* revoke Sign in with Apple
+npx wrangler secret put APPLE_KEY_ID       # on account deletion (App Store 5.1.1(v)):
+npx wrangler secret put APPLE_PRIVATE_KEY  # a .p8 key with Sign in with Apple enabled,
+npx wrangler secret put APPLE_CLIENT_ID    # and the bundle ID, app.tywin.cigua
 npx wrangler secret put OWNER_EMAIL        # optional
 npm run deploy
 ```
+
+The Gemini key must belong to a Google Cloud project **with billing enabled**
+(the paid tier). The Privacy Policy tells people Google does not train on their
+data, which is only true of paid API use. Set a budget alert on that project too.
+
+**Ask's signing secret.** `ask_query` only runs statements the Worker signed, so
+the same random value lives in two places. Generate it once
+(`openssl rand -hex 32`), put it in the Worker (`wrangler secret put
+ASK_QUERY_SECRET`), and in the database, from the SQL editor:
+
+```sql
+select vault.create_secret('<the same value>', 'ask_query_secret');
+```
+
+Until both exist, every Ask query is refused.
 
 The Worker does no PDF work (the app reads statements), so its requests are
 light: mostly waiting on Supabase and Gemini, which does not count as CPU time.
@@ -134,6 +154,39 @@ the same text the app's legal screens show. Store links are in
 npm run dev:site      # http://localhost:4321
 npm run deploy:site   # check + tests + build + wrangler deploy
 ```
+
+## Plans: Free and Cigua Pro
+
+Free accounts get limits and a small ad; Cigua Pro removes both. The database
+holds the whole model (`supabase/migrations/20261006120200_plans_and_quotas.sql`):
+
+- `plan_limits`: every number. Rows without a `period` cap how many accounts,
+  credit cards (a card's currency lines count once), loans, goals and recurring
+  payments someone may have (archived ones don't count); rows with `day` or
+  `month` are quotas on the AI features (`ask`, `statement_parse`,
+  `recommendation`, `card_art`). `max_count` null = unlimited. Change one with an
+  `update`; no deploy.
+- `entitlements`: who is on Pro, until when. No row = Free. People cannot write
+  it; grant Pro by hand from the SQL editor until store purchases write it:
+  `insert into entitlements (user_id, plan, source) values ('<uuid>', 'pro', 'manual');`
+- Limits are enforced by triggers, so they hold even against direct Data API
+  calls. A refusal is SQLSTATE `CGLIM`, which the Worker turns into an "upgrade"
+  message. Rows people already had are never removed.
+
+In the app, `usePlan()` (`apps/mobile/src/lib/plan.ts`) reads the plan and
+`<AdSlot placement="…" />` (`components/plan/ad-slot.tsx`) shows a banner to Free
+accounts only. It is mounted nowhere yet: put it where ads should go. It renders
+a house ad for Cigua Pro today; swapping in an ad network means adding its
+consent flow and updating the Privacy Policy's ads paragraph first.
+`useUpgrade()` is the single place the purchase flow will plug into.
+
+## Legal
+
+The Terms and Privacy Policy are one catalogue (`Terms`, `Privacy` in
+`packages/core/messages`) rendered by both the app and the site from the outline
+in `packages/core/src/legal.ts`, which also holds the operator, contact address
+and "last updated" date. Bump `LEGAL_UPDATED` with every change to the copy, and
+for material changes notify people 15 days ahead, as the Terms promise.
 
 ## Checks
 

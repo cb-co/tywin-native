@@ -11,6 +11,7 @@ import { collectAskContext } from "#/lib/ask/context";
 import { askTools, CHAT_MAX_STEPS } from "#/lib/ask/tools";
 import { takeAskToken } from "#/lib/ask/rate-limit";
 import { MAX_MESSAGES, stillTooLarge, trimHistory } from "#/lib/ask/history";
+import { takeQuota } from "#/lib/plan";
 
 /**
  * The model that answers.
@@ -53,6 +54,8 @@ const BodySchema = z.object({
  *
  * Status codes are the contract (the body is plain text): 401 signed out, 429 too
  * many questions, 400 malformed, 413 transcript too large even after trimming.
+ * A 429 whose body is `ASK_QUOTA` means the plan's daily questions are used up
+ * (the app says so and offers Cigua Pro); any other 429 is the burst limiter.
  */
 export async function ask(req: Request): Promise<Response> {
   const supabase = await createClient();
@@ -71,6 +74,12 @@ export async function ask(req: Request): Promise<Response> {
   const history = trimHistory(parsed.data.messages);
   if (stillTooLarge(history)) {
     return new Response("Question too large", { status: 413 });
+  }
+
+  /* Last, after every free refusal: a question that was going to be turned
+     away for its shape should not cost one of the day's questions. */
+  if (!(await takeQuota("ask"))) {
+    return new Response("ASK_QUOTA", { status: 429 });
   }
 
   /* Both reads together: the person waits on the later of the two, not the sum.

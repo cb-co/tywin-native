@@ -1,4 +1,5 @@
 import { getTranslations } from "#/i18n";
+import { isLimitFeature, PLAN_LIMIT_SQLSTATE } from "@cigua/core/plans";
 
 /** The shape Supabase/PostgREST returns for a database failure. */
 type DbError = {
@@ -25,9 +26,9 @@ const FRIENDLY_BY_CODE: Record<string, string> = {
  *
  * Raw PostgREST messages read like `duplicate key value violates unique
  * constraint "banks_user_id_name_key"`, which hands an attacker the schema and
- * tells an ordinary user nothing. The full error is logged server-side under
- * `where` so debugging does not get harder; only the generic or mapped text
- * crosses the wire.
+ * tells an ordinary user nothing. The error is logged server-side under `where`
+ * (without its row values) so debugging does not get harder; only the generic
+ * or mapped text crosses the wire.
  *
  * Supabase Auth errors are deliberately NOT routed through here. They are
  * written for end users, reveal nothing about the schema, and replacing
@@ -35,10 +36,22 @@ const FRIENDLY_BY_CODE: Record<string, string> = {
  * impossible to reason about.
  */
 export async function dbError(error: DbError, where: string): Promise<string> {
+  /* A plan limit is not a failure: it is the answer, and it says how to get
+     more. The feature rides in HINT and the limit in DETAIL (see
+     supabase/migrations/20261006120200_plans_and_quotas.sql). */
+  if (error.code === PLAN_LIMIT_SQLSTATE && isLimitFeature(error.hint)) {
+    const t = await getTranslations("Plan");
+    const limit = Number(error.details) || 0;
+    return t(`limit_${error.hint}`, { limit });
+  }
+
+  /* `details` is left out on purpose: Postgres puts row VALUES there
+     ("Key (user_id, name)=(…, Banreservas Visa) already exists"), and a log is
+     no place for someone's finances. Code, message and hint are enough to find
+     the bug. */
   console.error(`[db:${where}]`, {
     code: error.code,
     message: error.message,
-    details: error.details,
     hint: error.hint,
   });
 

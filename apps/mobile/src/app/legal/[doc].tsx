@@ -1,12 +1,17 @@
 import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
+import {
+  LEGAL_CONTACT_EMAIL,
+  LEGAL_NAMESPACE,
+  LEGAL_VALUES,
+  legalOutline,
+  legalUpdatedLabel,
+  type LegalDoc,
+} from "@cigua/core/legal";
 import { Text } from "~/components/ui/text";
 import { makeStyles } from "~/theme/theme";
-
-const LAST_UPDATED = "July 20, 2026";
-const CONTACT_EMAIL = "info.quantcoresolutions@gmail.com";
 
 type Section = { title: string; body: React.ReactNode[] };
 
@@ -19,38 +24,30 @@ function useLink() {
   );
 }
 
-function useTerms(): { title: string; sections: Section[] } {
-  const t = useTranslations("Terms");
-  const link = useLink();
-  const n = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
-  return {
-    title: t("title"),
-    sections: n.map((i) => ({
-      title: t(`s${i}Title`),
-      body: [
-        i === 6
-          ? t.rich("s6Body", { privacyLink: (chunks) => link(chunks, () => router.replace({ pathname: "/legal/[doc]", params: { doc: "privacy" } })) })
-          : i === 9
-            ? t.rich("s9Body", { email: CONTACT_EMAIL, link: (chunks) => link(chunks, () => void Linking.openURL(`mailto:${CONTACT_EMAIL}`)) })
-            : t(`s${i}Body`),
-      ],
-    })),
+/**
+ * One document, from the outline the website renders too
+ * (packages/core/src/legal.ts), so the two never drift. Every paragraph gets
+ * every value and tag; each uses the ones it needs.
+ */
+function useLegalDoc(doc: LegalDoc): { title: string; sections: Section[] } {
+  const t = useTranslations(LEGAL_NAMESPACE[doc]) as unknown as {
+    (key: string): string;
+    rich: (key: string, values: Record<string, unknown>) => React.ReactNode;
   };
-}
-
-function usePrivacy(): { title: string; sections: Section[] } {
-  const t = useTranslations("Privacy");
   const link = useLink();
+  const open = (target: LegalDoc) => () => router.replace({ pathname: "/legal/[doc]", params: { doc: target } });
+  const values = {
+    ...LEGAL_VALUES,
+    privacyLink: (chunks: React.ReactNode) => link(chunks, open("privacy")),
+    termsLink: (chunks: React.ReactNode) => link(chunks, open("terms")),
+    link: (chunks: React.ReactNode) => link(chunks, () => void Linking.openURL(`mailto:${LEGAL_CONTACT_EMAIL}`)),
+  };
   return {
     title: t("title"),
-    sections: [
-      { title: t("s1Title"), body: [t("s1Body1"), t("s1Body2")] },
-      ...([2, 3, 4, 5, 6, 7] as const).map((i) => ({ title: t(`s${i}Title`), body: [t(`s${i}Body`)] })),
-      {
-        title: t("s8Title"),
-        body: [t.rich("s8Body", { email: CONTACT_EMAIL, link: (chunks) => link(chunks, () => void Linking.openURL(`mailto:${CONTACT_EMAIL}`)) })],
-      },
-    ],
+    sections: legalOutline(doc).map((section) => ({
+      title: t(`${section.key}.title`),
+      body: section.paragraphs.map((p) => t.rich(p, values)),
+    })),
   };
 }
 
@@ -58,11 +55,10 @@ function usePrivacy(): { title: string; sections: Section[] } {
 export default function LegalScreen() {
   const { doc } = useLocalSearchParams<{ doc: string }>();
   const t = useTranslations("Legal");
+  const locale = useLocale();
   const s = useStyles();
   const insets = useSafeAreaInsets();
-  const terms = useTerms();
-  const privacy = usePrivacy();
-  const page = doc === "privacy" ? privacy : terms;
+  const page = useLegalDoc(doc === "privacy" ? "privacy" : "terms");
 
   return (
     <>
@@ -72,7 +68,7 @@ export default function LegalScreen() {
           {page.title}
         </Text>
         <Text size="sm" tone="muted" style={{ marginTop: 4 }}>
-          {t("updated", { date: LAST_UPDATED })}
+          {t("updated", { date: legalUpdatedLabel(locale) })}
         </Text>
         <View style={{ marginTop: 32, gap: 32 }}>
           {page.sections.map((sec) => (

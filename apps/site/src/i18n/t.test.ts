@@ -29,7 +29,7 @@ describe("translator", () => {
   });
 
   it("renders rich tags through markup", () => {
-    const html = translator("en", "Terms").markup("s6Body", { privacyLink: (c) => `<a href="/privacy">${c}</a>` });
+    const html = translator("en", "Terms").markup("data.p1", { privacyLink: (c) => `<a href="/privacy">${c}</a>` });
     expect(html).toContain('<a href="/privacy">');
   });
 

@@ -3,3 +3,12 @@ SUPABASE_PUBLISHABLE_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 # Runs Ask and today's take on OWNER_MODEL for this one account. Leave unset otherwise.
 OWNER_EMAIL=
+# Signs each Ask statement; must equal the Vault secret `ask_query_secret` in the
+# database (see supabase/migrations/20261006120000_ask_query_signed.sql). Locally:
+#   select vault.create_secret('<same value>', 'ask_query_secret');
+ASK_QUERY_SECRET=
+# Sign in with Apple token revocation on account deletion. Optional locally.
+APPLE_TEAM_ID=
+APPLE_KEY_ID=
+APPLE_PRIVATE_KEY=
+APPLE_CLIENT_ID=app.tywin.cigua

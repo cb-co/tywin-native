@@ -37,6 +37,7 @@ import { getNetWorthHistory } from "#/lib/insights/net-worth-history";
 import { getSubscriptions } from "#/lib/subscriptions/queries";
 import { getImportTriage } from "#/lib/statements/triage";
 import { getMerchantRules } from "#/lib/rules/queries";
+import { getPlanStatus } from "#/lib/plan";
 import { hasCardAccent } from "@cigua/core/accounts/card-art";
 import { spendTotal } from "@cigua/core/accounts/card-spend";
 import { yearCashback, hasReportedCashback } from "@cigua/core/accounts/cashback";
@@ -62,12 +63,14 @@ async function session() {
       data: { user },
     },
     { data: profile },
+    plan,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase
       .from("profiles")
       .select("display_name,base_currency,onboarded_at,pay_cycle,pay_anchor_day")
       .maybeSingle(),
+    getPlanStatus(),
   ]);
   return {
     email: user?.email ?? "",
@@ -77,6 +80,10 @@ async function session() {
     onboarded: !!profile?.onboarded_at,
     payCycle: payCycleOf(profile),
     payAnchorDay: payAnchorOf(profile),
+    /** Free or Cigua Pro, and each limit with its use: ads, upgrade prompts, Settings. */
+    plan,
+    /** How they sign in, so account deletion knows to revoke Sign in with Apple. */
+    providers: (user?.app_metadata?.providers as string[] | undefined) ?? [],
   };
 }
 

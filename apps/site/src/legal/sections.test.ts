@@ -1,36 +1,46 @@
 import { describe, expect, it } from "vitest";
-import { CONTACT_EMAIL, legalDoc } from "./sections";
+import { legalOutline } from "@cigua/core/legal";
+import { CONTACT_EMAIL, lastUpdated, legalDoc } from "./sections";
 
 describe("legalDoc", () => {
-  it("has the web and app's section counts", () => {
-    expect(legalDoc("en", "terms").sections).toHaveLength(9);
-    expect(legalDoc("en", "privacy").sections).toHaveLength(8);
-    expect(legalDoc("en", "privacy").sections[0].paragraphs).toHaveLength(2);
+  it("renders every section of the shared outline", () => {
+    for (const doc of ["terms", "privacy"] as const) {
+      const outline = legalOutline(doc);
+      for (const locale of ["en", "es"] as const) {
+        const { sections } = legalDoc(locale, doc);
+        expect(sections).toHaveLength(outline.length);
+        sections.forEach((s, i) => expect(s.paragraphs).toHaveLength(outline[i].paragraphs.length));
+      }
+    }
   });
 
   it("links Terms → Privacy inside the reader's language", () => {
-    expect(legalDoc("es", "terms").sections[5].paragraphs[0]).toContain('href="/privacy"');
-    expect(legalDoc("en", "terms").sections[5].paragraphs[0]).toContain('href="/en/privacy"');
+    expect(legalDoc("es", "terms").sections[0].paragraphs[1]).toContain('href="/privacy"');
+    expect(legalDoc("en", "terms").sections[0].paragraphs[1]).toContain('href="/en/privacy"');
   });
 
-  it("links the contact email", () => {
-    expect(legalDoc("en", "terms").sections[8].paragraphs[0]).toContain(`href="mailto:${CONTACT_EMAIL}"`);
-    expect(legalDoc("es", "privacy").sections[7].paragraphs[0]).toContain(`href="mailto:${CONTACT_EMAIL}"`);
+  it("links the contact email and names the operator", () => {
+    const terms = legalDoc("en", "terms").sections;
+    expect(terms.at(-1)!.paragraphs[0]).toContain(`href="mailto:${CONTACT_EMAIL}"`);
+    expect(terms[0].paragraphs[0]).toContain("Quantcore Solutions SRL");
+    expect(legalDoc("es", "privacy").sections.at(-1)!.paragraphs[0]).toContain(`href="mailto:${CONTACT_EMAIL}"`);
   });
 
-  it("leaves no ICU placeholder unfilled", () => {
+  it("leaves no ICU placeholder unfilled and no markup but links", () => {
     for (const locale of ["en", "es"] as const) {
       for (const doc of ["terms", "privacy"] as const) {
         for (const s of legalDoc(locale, doc).sections) {
-          for (const p of s.paragraphs) expect(p).not.toMatch(/\{\w+/);
+          expect(s.title).not.toMatch(/[<{]/);
+          for (const p of s.paragraphs) {
+            expect(p).not.toMatch(/\{\w+/);
+            expect(p).not.toMatch(/<(?!\/?a[\s>])/);
+          }
         }
       }
     }
   });
 
-  it("escapes plain paragraphs", () => {
-    for (const s of legalDoc("en", "privacy").sections.slice(1, 7)) {
-      expect(s.paragraphs[0]).not.toMatch(/<(?!\/?a[\s>])/);
-    }
+  it("dates the documents in the reader's language", () => {
+    expect(lastUpdated("es")).toMatch(/de \w+ de 2026/);
   });
 });

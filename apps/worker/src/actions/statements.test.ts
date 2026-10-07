@@ -19,9 +19,12 @@ vi.mock("#/lib/fx", async (importOriginal) => ({
 vi.mock("#/i18n", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }));
+// The plan's monthly allowance: granted unless a test spends it.
+vi.mock("#/lib/plan", () => ({ takeQuota: vi.fn(async () => true) }));
 
 import { extractWithLLM } from "#/lib/statements/llm/extract";
 import { createClient } from "#/lib/supabase/server";
+import { takeQuota } from "#/lib/plan";
 import { confirmStatementImport, listImportTargets, parseStatement } from "./statements";
 import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import {
@@ -267,6 +270,14 @@ describe("parseStatement", () => {
     expect(result.error).toBe("unsupportedBank");
     // The model's own error is kept on the failed import, not a fixed string.
     expect(supabase.importInsert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed_detection", error: "boom" }));
+  });
+
+  it("refuses the model call once the plan's monthly imports are used up", async () => {
+    (takeQuota as unknown as Mock).mockResolvedValueOnce(false);
+    const result = await parseStatement(input("statement text"));
+    expect(takeQuota).toHaveBeenCalledWith("statement_parse");
+    expect(result.error).toBe("quota_statement_parse");
+    expect(extractWithLLM).not.toHaveBeenCalled();
   });
 
   it("refuses the model call once the person's parse budget is spent", async () => {

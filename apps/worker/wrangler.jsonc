@@ -19,5 +19,6 @@
     "GOOGLE_ASK_MODEL": "gemini-3.5-flash-lite",
     "OWNER_MODEL": "gemini-3.7-flash"
   }
-  // Secrets (`wrangler secret put`): GOOGLE_GENERATIVE_AI_API_KEY, OWNER_EMAIL
+  // Secrets (`wrangler secret put`): GOOGLE_GENERATIVE_AI_API_KEY, ASK_QUERY_SECRET,
+  // APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY, APPLE_CLIENT_ID, OWNER_EMAIL
 }

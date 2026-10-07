@@ -3,6 +3,7 @@ import { env } from "#/env";
 import { tool } from "ai";
 import { createClient } from "#/lib/supabase/server";
 import { guardSql } from "./guard";
+import { signAskSql } from "./sign";
 
 /**
  * Seven steps: six queries and the answer.
@@ -147,8 +148,20 @@ export function askTools() {
           return { error: guarded.reason, ...budget };
         }
 
+        /* Signed after the guard and never before: the signature is what lets
+           ask_query run a statement, so it must only ever cover one the guard
+           returned. Without the secret nothing runs, which is the safe failure. */
+        const secret = env("ASK_QUERY_SECRET");
+        if (!secret) return { error: "Querying is not configured.", ...budget };
+
         const supabase = await createClient();
-        const { data, error } = await supabase.rpc("ask_query", { p_sql: guarded.sql });
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return { error: "Not signed in.", ...budget };
+
+        const p_sig = await signAskSql(secret, user.id, guarded.sql);
+        const { data, error } = await supabase.rpc("ask_query", { p_sql: guarded.sql, p_sig });
 
         if (error) {
           trace(purpose, `FAILED ${error.message}`, guarded.sql);

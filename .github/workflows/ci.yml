@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck (core, mobile, worker)
+        run: npm run typecheck
+      - name: Unit tests (core, site, worker)
+        run: npm test
+      - name: Bundle the Worker
+        run: npm run build -w @cigua/worker
+      - name: Site (astro check, build, built-output tests)
+        run: npm run verify -w @cigua/site
+      - name: Bundle the app for iOS and Android
+        run: npm run export:check -w @cigua/mobile
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
+  migrations:
+    # Applies every migration to a fresh Postgres, so a broken one fails here
+    # rather than on `supabase db push`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase db start

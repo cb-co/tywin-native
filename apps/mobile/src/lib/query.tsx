@@ -82,6 +82,7 @@ type Screen = ScreenName | "transactions";
  * profile, which every screen reads).
  */
 const AFFECTS: Partial<Record<string, Screen[] | null>> = {
+  // Plan usage (in "session" and "settings") moves with anything a plan limits.
   "recommendation.refreshRecommendation": ["overview"],
   "transactions.createTransaction": ["overview", "accounts", "account", "transactions"],
   "transactions.updateTransaction": ["overview", "accounts", "account", "transactions", "insights", "budgets"],
@@ -91,9 +92,9 @@ const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   "settings.setPayCycle": null,
   "rules.updateRule": ["rules"],
   "rules.deleteRule": ["rules"],
-  "recurring.createSubscription": ["overview", "recurring"],
+  "recurring.createSubscription": ["overview", "recurring", "session", "settings"],
   "recurring.updateSubscription": ["overview", "recurring"],
-  "recurring.deleteSubscription": ["overview", "recurring"],
+  "recurring.deleteSubscription": ["overview", "recurring", "session", "settings"],
   "recurring.setSubscriptionActive": ["overview", "recurring"],
   "recurring.addCharge": ["overview", "accounts", "account", "recurring", "transactions"],
   "imports.categorizeTriageGroup": ["overview", "budgets", "insights", "transactions", "importTriage", "account", "rules"],
@@ -107,20 +108,20 @@ const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   "budgetGroups.deleteBudgetGroup": ["overview", "budgets", "quickAdd"],
   "budgetGroups.setGroupBudget": ["overview", "budgets"],
   "budgetGroups.setCategoryGroup": ["overview", "budgets", "quickAdd"],
-  "goals.createGoal": ["accounts", "account", "budgets", "goal", "insights"],
-  "goals.updateGoal": ["accounts", "account", "budgets", "goal", "insights"],
-  "goals.deleteGoal": ["accounts", "account", "budgets", "goal", "insights"],
+  "goals.createGoal": ["accounts", "account", "budgets", "goal", "insights", "session", "settings"],
+  "goals.updateGoal": ["accounts", "account", "budgets", "goal", "insights", "session", "settings"],
+  "goals.deleteGoal": ["accounts", "account", "budgets", "goal", "insights", "session", "settings"],
   "goals.deleteContribution": ["accounts", "account", "budgets", "goal", "insights"],
   "goals.addContribution": ["accounts", "account", "budgets", "goal", "insights"],
-  "accounts.createAccount": ["overview", "accounts", "quickAdd"],
-  "accounts.updateAccount": ["overview", "accounts", "account", "quickAdd"],
+  "accounts.createAccount": ["overview", "accounts", "quickAdd", "session", "settings"],
+  "accounts.updateAccount": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
   "accounts.backfillCardArt": ["overview", "accounts", "account"],
-  "accounts.archiveAccount": ["overview", "accounts", "account", "quickAdd"],
-  "accounts.deleteAccount": ["overview", "accounts", "account", "quickAdd", "transactions"],
+  "accounts.archiveAccount": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
+  "accounts.deleteAccount": ["overview", "accounts", "account", "quickAdd", "transactions", "session", "settings"],
   "accounts.createBank": ["accounts"],
-  "accounts.createCardWithLines": ["overview", "accounts", "quickAdd"],
-  "accounts.createCardStub": ["overview", "accounts", "quickAdd"],
-  "accounts.addCardLine": ["overview", "accounts", "account", "quickAdd"],
+  "accounts.createCardWithLines": ["overview", "accounts", "quickAdd", "session", "settings"],
+  "accounts.createCardStub": ["overview", "accounts", "quickAdd", "session", "settings"],
+  "accounts.addCardLine": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
   "statements.deleteCardStatement": ["overview", "accounts", "account", "budgets", "insights", "transactions"],
   "statements.saveMerchantRule": ["rules"],
   "onboarding.finishOnboarding": null,
@@ -144,7 +145,7 @@ export async function invalidateAfter(action: string): Promise<void> {
 /** A statement import touches nearly everything; the confirm step calls this. */
 export async function invalidateAfterImport(): Promise<void> {
   await Promise.all(
-    (["overview", "accounts", "account", "budgets", "insights", "quickAdd"] as const).map((s) =>
+    (["overview", "accounts", "account", "budgets", "insights", "quickAdd", "session", "settings"] as const).map((s) =>
       queryClient.invalidateQueries({ queryKey: ["screen", s] }),
     ),
   );

@@ -732,6 +732,33 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlements: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          plan: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          plan?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          plan?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goal_contributions: {
         Row: {
           account_id: string
@@ -826,6 +853,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_limits: {
+        Row: {
+          feature: string
+          max_count: number | null
+          period: string | null
+          plan: string
+        }
+        Insert: {
+          feature: string
+          max_count?: number | null
+          period?: string | null
+          plan: string
+        }
+        Update: {
+          feature?: string
+          max_count?: number | null
+          period?: string | null
+          plan?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1393,6 +1441,27 @@ export type Database = {
           },
         ]
       }
+      usage_counters: {
+        Row: {
+          feature: string
+          period_start: string
+          used: number
+          user_id: string
+        }
+        Insert: {
+          feature: string
+          period_start: string
+          used?: number
+          user_id: string
+        }
+        Update: {
+          feature?: string
+          period_start?: string
+          used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       account_balances: {
@@ -1746,7 +1815,7 @@ export type Database = {
       }
     }
     Functions: {
-      ask_query: { Args: { p_sql: string }; Returns: Json }
+      ask_query: { Args: { p_sig: string; p_sql: string }; Returns: Json }
       budget_group_usage_range: {
         Args: { p_end: string; p_start: string; p_whole?: boolean }
         Returns: {
@@ -1793,12 +1862,15 @@ export type Database = {
           used: number
         }[]
       }
+      consume_quota: { Args: { p_feature: string }; Returns: boolean }
+      current_plan: { Args: never; Returns: string }
       delete_own_account: { Args: never; Returns: undefined }
       effective_budget_group: {
         Args: { p_category_group: string; p_transaction_group: string }
         Returns: string
       }
       import_card_statement: { Args: { p: Json }; Returns: string }
+      plan_status: { Args: never; Returns: Json }
       recompute_card_balance: {
         Args: { p_account: string }
         Returns: undefined

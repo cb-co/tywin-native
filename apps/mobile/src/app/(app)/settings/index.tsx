@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { Check, CircleHelp, LogOut, Tag, Trash2 } from "~/components/ui/icons";
-import { useTranslations } from "use-intl";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import { Check, CircleHelp, Download, LogOut, Sparkles, Tag, Trash2 } from "~/components/ui/icons";
+import { useFormatter, useTranslations } from "use-intl";
 import type { ScreenData } from "@cigua/worker/api";
 import { LOCALES, LOCALE_LABEL } from "@cigua/core/i18n/locale";
 import { PAY_CYCLE_VALUES, SEMIMONTHLY_MAX_ANCHOR, semimonthlyStarts, type PayCycle } from "@cigua/core/period/cycle";
@@ -10,6 +13,9 @@ import { act, useScreen } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { useAppLocale } from "~/lib/i18n";
 import { auth } from "~/lib/supabase";
+import { ENV } from "~/lib/env";
+import { useUpgrade } from "~/lib/plan";
+import { FREE_STATUS, LIMIT_FEATURES, type PlanStatus } from "@cigua/core/plans";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/field";
 import { Dialog } from "~/components/ui/overlay";
@@ -35,6 +41,8 @@ const WEEKDAY_KEYS = {
 } as const;
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+/** What the plan row lists: the limits, then the AI allowances worth knowing about. */
+const PLAN_ROWS = [...LIMIT_FEATURES, "ask", "statement_parse"] as const;
 
 /**
  * One settings line. `inline` keeps a compact control (a switch, a two-way
@@ -140,6 +148,7 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
   const [cyclePending, setCyclePending] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
+  const [exportPending, setExportPending] = useState(false);
 
   const nameDirty = name.trim() !== savedName.trim();
   const [semiFirst, semiSecond] = semimonthlyStarts(semimonthlyAnchor);
@@ -216,10 +225,51 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
     }
   }
 
+  /** Writes the export to a file and hands it to the share sheet (Files, Drive, email…). */
+  async function onExport() {
+    setExportPending(true);
+    try {
+      const result = await act("settings", "exportData");
+      if (result.error || !result.data) {
+        toast.error(result.error ?? t("exportFailed"));
+        playError();
+        return;
+      }
+      const file = new File(Paths.cache, `cigua-export-${result.data.exportedAt.slice(0, 10)}.json`);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(JSON.stringify(result.data, null, 2));
+      if (!(await Sharing.isAvailableAsync())) {
+        toast.error(t("exportFailed"));
+        return;
+      }
+      await Sharing.shareAsync(file.uri, { mimeType: "application/json", UTI: "public.json", dialogTitle: t("exportTitle") });
+    } catch {
+      toast.error(t("exportFailed"));
+      playError();
+    } finally {
+      setExportPending(false);
+    }
+  }
+
   async function onDeleteAccount() {
     setDeletePending(true);
     try {
-      const result = await act("settings", "deleteAccount");
+      /* Someone who signs in with Apple confirms with Apple once more: the fresh
+         authorization code is what lets the API revoke Cigua's access to their
+         Apple ID (App Store guideline 5.1.1(v)). Only possible on iOS. */
+      let appleAuthorizationCode: string | undefined;
+      // `?.`: a settings screen saved before `providers` existed has none.
+      if (Platform.OS === "ios" && ENV.appleSignIn && data.providers?.includes("apple")) {
+        try {
+          const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+          appleAuthorizationCode = credential.authorizationCode ?? undefined;
+        } catch {
+          toast.error(t("deleteAppleCancelled"));
+          return;
+        }
+      }
+      const result = await act("settings", "deleteAccount", { appleAuthorizationCode });
       if (result.error) {
         toast.error(result.error);
         playError();
@@ -238,6 +288,8 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
         {t("pageDescription")}
       </Text>
       <View style={s.table}>
+        <PlanRow plan={data.plan ?? FREE_STATUS} />
+
         <Row title={t("displayNameTitle")} description={t("displayNameDescription")}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Input
@@ -374,6 +426,12 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
           </Button>
         </Row>
 
+        <Row inline title={t("exportTitle")} description={t("exportDescription")}>
+          <Button variant="outline" size="sm" icon={Download} onPress={() => void onExport()} disabled={exportPending} isLoading={exportPending}>
+            {t("exportButton")}
+          </Button>
+        </Row>
+
         <Row inline title={t("sessionTitle")} description={t("sessionDescription")} last>
           <Button variant="outline" size="sm" icon={LogOut} onPress={() => void auth.signOut()}>
             {t("signOutButton")}
@@ -412,6 +470,50 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
         }
       />
     </Screen>
+  );
+}
+
+/** Free or Cigua Pro, what each limit allows and how much of it is used. */
+function PlanRow({ plan }: { plan: PlanStatus }) {
+  const t = useTranslations("Settings");
+  const tp = useTranslations("Plan");
+  const format = useFormatter();
+  const upgrade = useUpgrade();
+  const pro = plan.plan === "pro";
+  const description = pro
+    ? plan.expiresAt
+      ? t("planProUntil", { date: format.dateTime(new Date(plan.expiresAt), { dateStyle: "medium" }) })
+      : t("planDescriptionPro")
+    : t("planDescriptionFree");
+
+  return (
+    <Row title={`${t("planTitle")} · ${tp(pro ? "name_pro" : "name_free")}`} description={description}>
+      <View style={{ gap: 8 }}>
+        {PLAN_ROWS.map((feature) => {
+          const f = plan.features[feature];
+          if (!f) return null;
+          const usage =
+            f.limit === null
+              ? tp("unlimited")
+              : tp(f.period === "day" ? "usageDay" : f.period === "month" ? "usageMonth" : "usage", { used: f.used, limit: f.limit });
+          return (
+            <View key={feature} style={{ flexDirection: "row", justifyContent: "space-between", gap: 12 }}>
+              <Text size="sm" tone="muted" style={{ flex: 1 }}>
+                {tp(`feature_${feature}`)}
+              </Text>
+              <Text size="sm" figure tone={f.limit !== null && f.used >= f.limit ? "warning" : undefined}>
+                {usage}
+              </Text>
+            </View>
+          );
+        })}
+        {pro ? null : (
+          <Button size="sm" variant="brand" icon={Sparkles} onPress={upgrade} style={{ alignSelf: "flex-start", marginTop: 4 }}>
+            {t("upgradeButton")}
+          </Button>
+        )}
+      </View>
+    </Row>
   );
 }
 

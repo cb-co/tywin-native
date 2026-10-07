@@ -146,7 +146,8 @@ export function AskChat({ initialQuestion }: { initialQuestion: string | null })
 
         {error ? (
           <Text size="sm" tone="destructive" accessibilityRole="alert">
-            {error.message.includes("ASK_TIMEOUT") ? t("timeout") : t("error")}
+            {/* A non-2xx answer arrives as its body text: ASK_QUOTA is the plan's daily questions running out. */}
+            {error.message.includes("ASK_QUOTA") ? t("quota") : error.message.includes("ASK_TIMEOUT") ? t("timeout") : t("error")}
           </Text>
         ) : null}
       </ScrollView>
@@ -173,6 +174,9 @@ export function AskChat({ initialQuestion }: { initialQuestion: string | null })
         </View>
         <Text legend tone="muted" style={{ fontSize: 10 }}>
           {t("readOnly")}
+        </Text>
+        <Text size="xs" tone="muted">
+          {t("disclaimer")}
         </Text>
       </View>
     </KeyboardAvoidingView>

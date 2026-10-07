@@ -15,6 +15,23 @@ export type Bindings = {
   OWNER_MODEL?: string;
   /** "1" logs each Ask query's purpose and SQL. Local development only. */
   ASK_TRACE?: string;
+  /**
+   * Secret. Signs each Ask statement so `ask_query` runs nothing the guard has
+   * not seen. Must equal the Vault secret `ask_query_secret` (see
+   * supabase/migrations/20261006120000_ask_query_signed.sql).
+   */
+  ASK_QUERY_SECRET?: string;
+  /**
+   * Sign in with Apple token revocation on account deletion (App Store
+   * guideline 5.1.1(v)). The key is the .p8 from Apple Developer → Keys with
+   * "Sign in with Apple" enabled, PEM text included. Secrets. Without all four,
+   * deletion still works and revocation is skipped.
+   */
+  APPLE_TEAM_ID?: string;
+  APPLE_KEY_ID?: string;
+  APPLE_PRIVATE_KEY?: string;
+  /** The app's bundle ID, which is the client ID for native Sign in with Apple. */
+  APPLE_CLIENT_ID?: string;
 };
 
 let testBindings: Partial<Bindings> | null = null;

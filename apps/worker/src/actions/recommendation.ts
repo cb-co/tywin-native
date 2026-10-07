@@ -4,6 +4,7 @@ import { collectSnapshot } from "#/lib/overview/recommendation/collect";
 import { inferRecommendation } from "#/lib/overview/recommendation/llm";
 import { isStale } from "#/lib/overview/recommendation/freshness";
 import { pushRecent } from "#/lib/overview/recommendation/history";
+import { takeQuota } from "#/lib/plan";
 
 /**
  * Regenerates the overview's recommendation, if it still needs regenerating.
@@ -44,6 +45,12 @@ export async function refreshRecommendation(): Promise<{ refreshed: boolean }> {
 
   const snapshot = await collectSnapshot();
   if (!snapshot) return { refreshed: false };
+
+  /* Staleness is decided by a row the person can edit (and by the language
+     header, which they choose on every request), so it cannot be what bounds
+     the spend. The daily quota is: switching language back and forth, or
+     deleting the row, regenerates at most that many times a day. */
+  if (!(await takeQuota("recommendation"))) return { refreshed: false };
 
   const rec = await inferRecommendation(snapshot, locale, user.email, recent);
   if (!rec) return { refreshed: false };

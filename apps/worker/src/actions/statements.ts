@@ -6,6 +6,7 @@ import { validateChecksums } from "#/lib/statements/validate";
 import { centsToDecimal } from "#/lib/statements/money";
 import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import { takeStatementParseToken } from "#/lib/statements/rate-limit";
+import { takeQuota } from "#/lib/plan";
 import { suggestAccountMappings, type CardAccountOption } from "#/lib/statements/mapping";
 import { cardBackfillFromSection } from "#/lib/statements/backfill";
 import { resolveCategoryId, type CategoryRuleRow } from "#/lib/statements/categorize";
@@ -194,6 +195,11 @@ async function extractAndParse({ text, fileName }: StatementTextInput) {
   if (!takeStatementParseToken(user.id, Date.now())) {
     return { error: t("llmRateLimited") } as const;
   }
+  // The plan's monthly allowance, after the burst limiter so a refused burst
+  // spends none of it.
+  if (!(await takeQuota("statement_parse"))) {
+    return { error: (await getTranslations("Plan"))("quota_statement_parse") } as const;
+  }
 
 
   // Already scrubbed of personal details on the phone (lib/statements/pdf-text in
@@ -224,11 +230,10 @@ async function extractAndParse({ text, fileName }: StatementTextInput) {
     parsed = toParsedStatement(llmResult.statement);
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
-    // The model's own output is the only thing that explains this failure, and
-    // it is different on every run — without it a report of "the statement
-    // couldn't be parsed" is unactionable. Server-side log; the JSON dump above
-    // has the same payload for local runs.
-    console.error("[statements] conversion failed:", detail, JSON.stringify(llmResult.statement));
+    // Only the reason is logged. The model's output is a person's statement
+    // (every merchant, amount and date on it), and production logs are no place
+    // for it; reproduce a failure locally with the statement in hand instead.
+    console.error("[statements] conversion failed:", detail);
     await supabase.from("statement_imports").insert({
       user_id: user.id,
       parser_id: "unknown",

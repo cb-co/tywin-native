@@ -1,7 +1,7 @@
 ---
 import type { Locale } from "@cigua/core/i18n/locale";
 import LegalLayout from "../layouts/LegalLayout.astro";
-import { LAST_UPDATED, legalDoc, type LegalDoc } from "../legal/sections";
+import { lastUpdated, legalDoc, type LegalDoc } from "../legal/sections";
 
 interface Props {
   locale: Locale;
@@ -11,7 +11,7 @@ const { locale, doc } = Astro.props;
 const { title, sections } = legalDoc(locale, doc);
 ---
 
-<LegalLayout locale={locale} page={doc} title={title} updated={LAST_UPDATED}>
+<LegalLayout locale={locale} page={doc} title={title} updated={lastUpdated(locale)}>
   {
     sections.map((s) => (
       <section>

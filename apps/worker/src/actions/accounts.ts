@@ -3,6 +3,7 @@ import { accountInput, type AccountInput, cardStubInput, type CardStubInput } fr
 import { hasCardAccent } from "@cigua/core/accounts/card-art";
 import { inferCardArt } from "#/lib/accounts/llm/card-art";
 import { dbError } from "#/lib/errors";
+import { takeQuota } from "#/lib/plan";
 
 type Result = { error?: string; id?: string };
 
@@ -71,11 +72,25 @@ async function resolveArtFor(
   if (v.type !== "credit_card") return undefined;
   if (hasCardAccent(v.color)) return undefined;
 
-  const art = await inferCardArt(v.name);
+  const art = await cardArt(v.name);
   if (!art) return undefined;
 
   return { color: art.accent, ...(art.network ? { brand: art.network } : {}) };
 }
+
+/**
+ * Card art behind the plan's daily allowance. Every caller treats no art as the
+ * default accent, so a spent allowance degrades exactly like a card the model
+ * could not place.
+ */
+async function cardArt(name: string) {
+  if (!name.trim()) return null;
+  if (!(await takeQuota("card_art"))) return null;
+  return inferCardArt(name);
+}
+
+/** Cards resolved per backfill call: the rest wait for the next page visit. */
+const BACKFILL_MAX = 5;
 
 async function requireUser() {
   const supabase = await createClient();
@@ -191,8 +206,10 @@ export async function backfillCardArt(): Promise<{ filled: number }> {
 
   let filled = 0;
 
-  for (const account of accounts ?? []) {
-    const art = await inferCardArt(account.name);
+  /* Bounded per call: a person can create any number of colourless cards
+     straight through the Data API, and each one here is a model call. */
+  for (const account of (accounts ?? []).slice(0, BACKFILL_MAX)) {
+    const art = await cardArt(account.name);
     if (!art) continue;
     const { error } = await supabase
       .from("accounts")
@@ -201,8 +218,8 @@ export async function backfillCardArt(): Promise<{ filled: number }> {
     if (!error) filled++;
   }
 
-  for (const group of groups ?? []) {
-    const art = await inferCardArt(group.name);
+  for (const group of (groups ?? []).slice(0, BACKFILL_MAX)) {
+    const art = await cardArt(group.name);
     if (!art) continue;
     const { error } = await supabase
       .from("card_groups")
@@ -214,8 +231,6 @@ export async function backfillCardArt(): Promise<{ filled: number }> {
     if (!error) filled++;
   }
 
-  if (filled > 0) {
-  }
   return { filled };
 }
 
@@ -293,7 +308,7 @@ export async function createCardWithLines(name: string, lines: AccountInput[]): 
   if (!user) return { error: "You're not signed in." };
 
   // A group IS the physical card, so its face is the one that needs art.
-  const art = await inferCardArt(trimmed);
+  const art = await cardArt(trimmed);
   const face = {
     ...(art ? { color: art.accent } : {}),
     ...(art?.network ? { brand: art.network } : {}),
@@ -342,7 +357,7 @@ export async function createCardStub(input: CardStubInput): Promise<Result> {
   const { supabase, user } = await requireUser();
   if (!user) return { error: "You're not signed in." };
 
-  const art = await inferCardArt(parsed.data.name);
+  const art = await cardArt(parsed.data.name);
   const res = await supabase
     .from("accounts")
     .insert({

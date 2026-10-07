@@ -30,7 +30,7 @@
   "Login": {
     "heroTitle": "Tu estado de cuenta, leído. Tus cuotas, al día. Tu quincena, clara.",
     "heroBody": "Sube el PDF de tu banco y Cigua organiza cada consumo en RD$ y US$, sin digitar.",
-    "heroFootnote": "Privado por diseño. Tus datos, solo tus ojos.",
+    "heroFootnote": "Privado por diseño. Nunca vendemos tus datos.",
     "welcomeBack": "Bienvenido de nuevo",
     "welcomeBody": "Inicia sesión para continuar donde lo dejaste.",
     "linkError": "Ese enlace de acceso no funcionó. Inténtalo de nuevo.",
@@ -47,7 +47,7 @@
     "passwordRules": "Mínimo {min} caracteres, con mayúsculas, minúsculas, un número y un símbolo.",
     "termsAgreement": "Al continuar, aceptas nuestros <terms>Términos de servicio</terms> y nuestra <privacy>Política de privacidad</privacy>.",
     "createTitle": "Crea tu cuenta",
-    "createBody": "Gratis. Luego subes tu primer estado de cuenta."
+    "createBody": "Gratis para empezar. Luego subes tu primer estado de cuenta."
   },
   "Errors": {
     "title": "Algo salió mal",
@@ -728,7 +728,9 @@
     "error": "Algo salió mal. Intenta preguntar de nuevo.",
     "readOnly": "Solo lectura — puede ver tus datos, nunca cambiarlos.",
     "inputLabel": "Tu pregunta",
-    "noAnswer": "Se me acabaron los intentos con esa — vuelve a preguntarla, o acótala a una tarjeta o un mes."
+    "noAnswer": "Se me acabaron los intentos con esa — vuelve a preguntarla, o acótala a una tarjeta o un mes.",
+    "quota": "Ya usaste las preguntas de hoy en tu plan. Pasa a Cigua Pro para tener más, o vuelve a preguntar mañana.",
+    "disclaimer": "Las respuestas las escribe una IA a partir de tus propios datos y pueden tener errores. Verifica las cifras importantes con tu banco."
   },
   "Settings": {
     "pageTitle": "Configuración",
@@ -787,7 +789,19 @@
     "rulesDescription": "Edita o elimina las reglas que Cigua aprendió de tus estados de cuenta.",
     "rulesLink": "Reglas de categorías",
     "payCycleSemimonthlyAnchorLabel": "Primer día de pago del mes",
-    "payCycleSemimonthlyRange": "Elige un día del 1 al 15."
+    "payCycleSemimonthlyRange": "Elige un día del 1 al 15.",
+    "planTitle": "Plan",
+    "planDescriptionFree": "Gratis, con anuncios y los límites de abajo.",
+    "planDescriptionPro": "Cigua Pro: sin anuncios y con límites más altos.",
+    "planProUntil": "Cigua Pro hasta el {date}.",
+    "upgradeButton": "Obtener Cigua Pro",
+    "upgradeComingSoon": "Cigua Pro llega pronto.",
+    "exportTitle": "Exportar tus datos",
+    "exportDescription": "Una copia de todo lo que guardaste en Cigua, en un archivo JSON.",
+    "exportButton": "Exportar",
+    "exportRateLimited": "Acabas de exportar tus datos. Vuelve a intentarlo en unos minutos.",
+    "exportFailed": "No se pudo guardar la exportación. Inténtalo de nuevo.",
+    "deleteAppleCancelled": "Confirma con Apple para terminar de eliminar tu cuenta."
   },
   "Rules": {
     "pageTitle": "Reglas de categorías",
@@ -943,44 +957,165 @@
   },
   "Terms": {
     "title": "Términos de servicio",
-    "s1Title": "1. Aceptación de los términos",
-    "s1Body": "Al crear una cuenta o usar Cigua, aceptas estos Términos de servicio. Si no estás de acuerdo, por favor no uses la aplicación.",
-    "s2Title": "2. Qué es Cigua",
-    "s2Body": "Cigua es una herramienta de finanzas personales que te permite registrar cuentas, transacciones, presupuestos y suscripciones en distintas monedas. Es una herramienta de contabilidad, no un banco, un corredor ni un asesor financiero, y no mueve dinero en tu nombre.",
-    "s3Title": "3. Tu cuenta",
-    "s3Body": "Eres responsable de la exactitud de la información que ingresas y de mantener seguras tus credenciales de acceso. Debes poder formar un contrato vinculante para usar Cigua, y cada cuenta es para una sola persona: no compartas tus credenciales.",
-    "s4Title": "4. Uso aceptable",
-    "s4Body": "No uses Cigua para almacenar datos sobre los que no tienes derecho, para intentar interrumpir el servicio, ni para intentar acceder a los datos de otro usuario. Podemos suspender o cancelar cuentas que infrinjan esto.",
-    "s5Title": "5. No es asesoría financiera",
-    "s5Body": "Los saldos, presupuestos y análisis que muestra Cigua se calculan a partir de los datos que ingresas. Se ofrecen solo con fines informativos y no constituyen asesoría financiera, fiscal ni legal.",
-    "s6Title": "6. Tus datos",
-    "s6Body": "Cómo recopilamos, usamos y almacenamos tus datos se describe en la <privacyLink>Política de privacidad</privacyLink>. Puedes exportar o eliminar permanentemente tu cuenta y sus datos en cualquier momento desde Configuración.",
-    "s7Title": "7. Servicio “tal cual”",
-    "s7Body": "Cigua se ofrece “tal cual”, sin garantías de ningún tipo. No garantizamos que el servicio sea ininterrumpido o esté libre de errores, y en la máxima medida permitida por la ley no somos responsables de daños indirectos o consecuentes derivados de tu uso del servicio.",
-    "s8Title": "8. Cambios",
-    "s8Body": "Podemos actualizar estos términos de vez en cuando. Si sigues usando Cigua después de un cambio, aceptas los términos actualizados.",
-    "s9Title": "9. Contacto",
-    "s9Body": "¿Preguntas sobre estos términos? Escríbenos a <link>{email}</link>."
+    "about": {
+      "title": "1. Quiénes somos y estos términos",
+      "p1": "Cigua es operada por {entity}, sociedad constituida conforme a las leyes de la República Dominicana (“Quantcore”, “nosotros”). Estos Términos de servicio son un acuerdo vinculante entre tú y nosotros para el uso de la aplicación móvil Cigua, su sitio web y los servicios relacionados (en conjunto, “Cigua”).",
+      "p2": "Al crear una cuenta o usar Cigua aceptas estos términos y nuestra <privacyLink>Política de privacidad</privacyLink>. Tu aceptación electrónica tiene el mismo efecto que una firma conforme a la Ley 126-02 sobre Comercio Electrónico. Si no estás de acuerdo, no uses Cigua."
+    },
+    "eligibility": {
+      "title": "2. Quién puede usar Cigua",
+      "p1": "Debes tener al menos 18 años y capacidad para obligarte contractualmente. Cigua es para tus finanzas personales: una cuenta es para una sola persona, y no puedes compartir tu acceso ni usar Cigua en nombre de una empresa o de otra persona sin nuestra autorización escrita."
+    },
+    "service": {
+      "title": "3. Qué es Cigua y qué no es",
+      "p1": "Cigua es una herramienta de contabilidad personal: registras tus cuentas, tarjetas, préstamos, transacciones, presupuestos, metas y pagos recurrentes, y Cigua calcula a partir de ellos tus saldos, presupuestos y análisis.",
+      "p2": "Cigua no es un banco, servicio de pago, intermediario de valores, prestamista, buró de crédito ni asesor financiero, y no está supervisada por la Superintendencia de Bancos. No se conecta a tu banco, nunca te pide tus credenciales bancarias y no puede mover dinero. La importación de estados de cuenta solo lee los archivos que tú eliges importar."
+    },
+    "account": {
+      "title": "4. Tu cuenta",
+      "p1": "Eres responsable de la exactitud de lo que registras, de mantener seguros tu dispositivo y tu método de inicio de sesión, y de todo lo que se haga con tu cuenta. Escríbenos de inmediato a <link>{email}</link> si crees que otra persona ha accedido a ella."
+    },
+    "plans": {
+      "title": "5. Plan gratis, Cigua Pro y anuncios",
+      "p1": "Cigua tiene un plan gratis y puede ofrecer un plan de pago, Cigua Pro. El plan gratis tiene límites —por ejemplo, cuántas cuentas, tarjetas, préstamos, metas y pagos recurrentes puedes tener y con qué frecuencia puedes usar las funciones de IA— y puede mostrar publicidad. Los límites vigentes se muestran en la app, en Configuración. Cigua Pro elimina los anuncios y amplía o elimina esos límites.",
+      "p2": "Cigua Pro se vende a través de la App Store de Apple o de Google Play. El precio, el período de facturación y cualquier prueba gratis se muestran antes de comprar. Las suscripciones se renuevan automáticamente al final de cada período, salvo que las canceles al menos 24 horas antes de que termine, desde los ajustes de tu cuenta en la tienda. El cobro, la cancelación y los reembolsos los gestionan Apple o Google según sus propios términos.",
+      "p3": "Podemos cambiar lo que incluye cada plan o el precio de Cigua Pro. Un cambio de precio nunca se aplica a un período que ya pagaste, y te avisaremos antes de que entre en vigor. Si pasas de Cigua Pro al plan gratis, no se borra nada de lo que guardaste: lo que exceda los límites gratuitos seguirá visible, pero no podrás agregar más hasta volver a estar dentro de ellos."
+    },
+    "ai": {
+      "title": "6. Funciones de IA",
+      "p1": "Algunas funciones usan modelos de inteligencia artificial proporcionados por Google: la lectura de los estados de cuenta que importas, las respuestas de Pregunta a Cigua, la tarjeta «Para hoy» del Resumen y la sugerencia de colores de tarjetas. Lo que produce la IA puede ser incorrecto, incompleto o estar desactualizado. Verifica las cifras importantes con los estados de cuenta de tu banco antes de basarte en ellas. Las funciones de IA tienen límites de uso y pueden cambiar o retirarse."
+    },
+    "advice": {
+      "title": "7. No es asesoría financiera",
+      "p1": "Todo lo que muestra Cigua —saldos, presupuestos, análisis, costos de deuda, y respuestas y sugerencias de la IA— es solo informativo. No constituye asesoría financiera, de inversión, crediticia, fiscal ni legal, y no toma en cuenta todas tus circunstancias. Las decisiones sobre tu dinero son tuyas; para recibir asesoría, consulta a un profesional calificado."
+    },
+    "use": {
+      "title": "8. Uso aceptable",
+      "p1": "No uses Cigua para nada ilícito; no registres datos que no tengas derecho a usar; no intentes acceder a los datos de otra persona ni a partes de Cigua a las que no debes llegar; no sondees, escanees ni pongas a prueba su seguridad sin nuestra autorización escrita; no interfieras con el servicio ni lo sobrecargues; no accedas mediante bots, scrapers u otros medios automatizados; no eludas los límites de los planes, los límites de uso ni los anuncios; y no copies, revendas ni apliques ingeniería inversa a Cigua, salvo donde la ley lo permita.",
+      "p2": "Si lo haces, podemos suspender o cerrar tu cuenta. Cuando sea razonable, te avisaremos antes y te daremos la oportunidad de corregirlo."
+    },
+    "data": {
+      "title": "9. Tus datos",
+      "p1": "Lo que registras sigue siendo tuyo. Nos autorizas a almacenarlo, procesarlo y mostrarlo solo en la medida necesaria para prestarte Cigua, como se describe en la <privacyLink>Política de privacidad</privacyLink>. Puedes exportar una copia de tus datos o eliminar tu cuenta de forma permanente en cualquier momento desde Configuración."
+    },
+    "ip": {
+      "title": "10. Nuestra propiedad intelectual",
+      "p1": "Cigua —su software, diseño, nombre, logotipo y contenido, salvo tus datos— pertenece a Quantcore o a sus licenciantes. Te otorgamos una licencia personal, no exclusiva, intransferible y revocable para usar la app Cigua en dispositivos que te pertenezcan o que controles, para tu uso propio y conforme a estos términos. Nos reservamos todos los derechos no otorgados expresamente."
+    },
+    "stores": {
+      "title": "11. Tiendas de aplicaciones",
+      "p1": "Si descargaste Cigua de la App Store de Apple, estos términos son entre tú y nosotros, no con Apple. Apple no tiene obligación de prestar mantenimiento ni soporte, y no es responsable de ningún reclamo relacionado con Cigua, incluidos los de responsabilidad por producto, cumplimiento normativo o propiedad intelectual. Si Cigua no cumple alguna garantía aplicable, puedes notificarlo a Apple, que te reembolsará el precio de compra, si lo hubo; Apple no tiene ninguna otra obligación de garantía. Apple y sus subsidiarias son terceros beneficiarios de estos términos y pueden hacerlos valer frente a ti. En lo que estos términos te otorguen menos que el Contrato de licencia de usuario final de aplicaciones con licencia de Apple, se aplica ese contrato.",
+      "p2": "Declaras que no te encuentras en un país sujeto a embargo del Gobierno de los Estados Unidos y que no figuras en ninguna lista de partes prohibidas o restringidas de ese Gobierno. Tu uso de Google Play se rige igualmente por los términos de Google."
+    },
+    "thirdParty": {
+      "title": "12. Otros servicios",
+      "p1": "Cigua depende de servicios de otras empresas —entre ellas Supabase, Cloudflare, Google y Apple— y te permite iniciar sesión con Google o Apple. No somos responsables de esos servicios, de su disponibilidad ni de sus términos, que se aplican a tu uso de ellos."
+    },
+    "availability": {
+      "title": "13. Disponibilidad y cambios",
+      "p1": "Trabajamos para que Cigua esté disponible y sea precisa, pero podemos modificar, suspender o descontinuar funciones, o Cigua en su totalidad. Si descontinuamos Cigua, te avisaremos con antelación razonable para que puedas exportar tus datos, y las suscripciones de pago se gestionarán a través de la tienda donde las compraste."
+    },
+    "disclaimer": {
+      "title": "14. Exclusión de garantías",
+      "p1": "En la medida permitida por la ley, Cigua se ofrece “tal cual” y “según disponibilidad”, sin garantías de ningún tipo, expresas o implícitas, incluidas las de que funcione sin interrupciones, sin errores o de forma segura, o de que los cálculos, las tasas de cambio, los estados de cuenta importados o las respuestas de la IA sean exactos o completos."
+    },
+    "liability": {
+      "title": "15. Limitación de responsabilidad",
+      "p1": "En la medida permitida por la ley, Quantcore y sus socios, empleados y proveedores no son responsables de daños indirectos, incidentales, especiales o consecuentes, ni de pérdidas de ganancias, ahorros, datos u oportunidades de negocio, derivados de Cigua o de estos términos. Nuestra responsabilidad total por cualquier reclamo se limita al mayor entre lo que nos hayas pagado por Cigua en los 12 meses anteriores al reclamo y RD$3,000.",
+      "p2": "Nada en estos términos excluye ni limita la responsabilidad que la ley no permite excluir o limitar, incluida la derivada de fraude o culpa grave, ni ningún derecho irrenunciable que tengas como consumidor conforme a la Ley 358-05 General de Protección de los Derechos del Consumidor o Usuario."
+    },
+    "indemnity": {
+      "title": "16. Indemnización",
+      "p1": "Si incumples estos términos o haces un uso indebido de Cigua, te comprometes a compensar a Quantcore por las pérdidas y los costos razonables que resulten, incluidos los honorarios legales, en la medida permitida por la ley."
+    },
+    "termination": {
+      "title": "17. Terminación",
+      "p1": "Puedes dejar de usar Cigua en cualquier momento y eliminar tu cuenta desde Configuración; borrar la app no elimina tu cuenta ni cancela una suscripción en la tienda. Podemos suspender o cerrar tu cuenta según lo descrito arriba, o cuando la ley nos lo exija. Las secciones que por su naturaleza deban subsistir —entre ellas las de propiedad intelectual, exclusión de garantías, responsabilidad, indemnización y ley aplicable— subsisten al término de este acuerdo."
+    },
+    "changes": {
+      "title": "18. Cambios a estos términos",
+      "p1": "Podemos actualizar estos términos. Si los cambios son importantes, te avisaremos en la app o por correo al menos 15 días antes de que entren en vigor. Si sigues usando Cigua después de esa fecha, se aplicarán los términos actualizados; si no estás de acuerdo, elimina tu cuenta antes. La fecha al inicio indica cuándo cambiaron por última vez."
+    },
+    "law": {
+      "title": "19. Ley aplicable y controversias",
+      "p1": "Estos términos se rigen por las leyes de la República Dominicana. Antes de iniciar cualquier reclamo, escríbenos a <link>{email}</link> para intentar resolverlo, y danos 30 días para hacerlo. Las controversias que no se resuelvan serán conocidas por los tribunales competentes del Distrito Nacional, Santo Domingo, salvo que la ley de protección al consumidor te permita presentarlas en otro lugar. Nada de esto te impide presentar una reclamación ante Pro Consumidor."
+    },
+    "general": {
+      "title": "20. Disposiciones generales",
+      "p1": "Estos términos y la Política de privacidad constituyen el acuerdo completo entre tú y nosotros sobre Cigua. Si alguna parte resulta inaplicable, el resto sigue vigente. No ejercer un derecho no implica renunciar a él. No puedes ceder este acuerdo; nosotros podemos cederlo a un sucesor de nuestro negocio y te lo informaremos. Estos términos están disponibles en español e inglés; en caso de discrepancia, prevalece la versión en español."
+    },
+    "contact": {
+      "title": "21. Contacto",
+      "p1": "{entity}, República Dominicana. Preguntas sobre estos términos: <link>{email}</link>."
+    }
   },
   "Privacy": {
     "title": "Política de privacidad",
-    "s1Title": "1. Información que recopilamos",
-    "s1Body1": "Información de la cuenta: tu dirección de correo electrónico y, si inicias sesión con Google, tu nombre y foto de perfil de tu cuenta de Google.",
-    "s1Body2": "Datos financieros que ingresas: cuentas, saldos, transacciones, presupuestos y suscripciones. Estos datos los ingresas tú y no se obtienen de ningún banco ni institución financiera.",
-    "s2Title": "2. Cómo lo usamos",
-    "s2Body": "Para que la aplicación funcione: autenticarte, mostrarte tus propios datos y calcular los saldos, presupuestos y análisis que se muestran. No vendemos tus datos ni los usamos con fines publicitarios.",
-    "s3Title": "3. Terceros",
-    "s3Body": "Cigua está construido sobre Supabase, que aloja nuestra base de datos y gestiona la autenticación. Si inicias sesión con Google, Google procesa tu inicio de sesión según su propia política de privacidad. No compartimos tus datos financieros con ningún otro tercero.",
-    "s4Title": "4. Seguridad de los datos",
-    "s4Body": "Tus datos se almacenan en una base de datos limitada a tu cuenta, protegida mediante seguridad a nivel de fila para que solo tú puedas leerlos o escribirlos. Las conexiones a Cigua están cifradas en tránsito.",
-    "s5Title": "5. Retención y eliminación de datos",
-    "s5Body": "Conservamos tus datos mientras tu cuenta esté activa. Puedes eliminar permanentemente tu cuenta y todos sus datos en cualquier momento desde Configuración → Zona de peligro. La eliminación es inmediata y no se puede deshacer.",
-    "s6Title": "6. Tus derechos",
-    "s6Body": "Puedes acceder, corregir o eliminar tus datos directamente en la aplicación en cualquier momento. Si necesitas ayuda para exportar o eliminar tus datos, contáctanos con los datos que aparecen abajo.",
-    "s7Title": "7. Cambios en esta política",
-    "s7Body": "Podemos actualizar esta política de vez en cuando. Si sigues usando Cigua después de un cambio, aceptas la política actualizada.",
-    "s8Title": "8. Contacto",
-    "s8Body": "¿Preguntas sobre esta política? Escríbenos a <link>{email}</link>."
+    "controller": {
+      "title": "1. Responsable del tratamiento",
+      "p1": "{entity} (“Quantcore”, “nosotros”) es responsable de los datos personales que se tratan a través de Cigua, conforme a la Ley 172-13 sobre Protección Integral de los Datos Personales de la República Dominicana. Esta política explica qué recopilamos, para qué, con quién lo compartimos y cuáles son tus derechos. Puedes contactarnos en <link>{email}</link>."
+    },
+    "collect": {
+      "title": "2. Qué recopilamos",
+      "p1": "Datos de tu cuenta: tu correo electrónico; si inicias sesión con Google, tu nombre y foto de perfil; si inicias sesión con Apple, tu nombre la primera vez y el correo que Apple nos comparte, que puede ser una dirección privada de reenvío.",
+      "p2": "Datos financieros que registras o importas: tus cuentas, tarjetas y préstamos (nombres, banco, tipo, últimos cuatro dígitos, límites, saldos, tasas y días de pago), transacciones, presupuestos, metas, pagos recurrentes y reglas de categorización. Cigua no se conecta a tu banco y nunca te pide tus credenciales bancarias.",
+      "p3": "Estados de cuenta que importas: el PDF se lee en tu teléfono, y ni el archivo ni su contraseña salen de tu dispositivo. Antes de enviarnos el texto extraído, Cigua elimina automáticamente nombres, correos, teléfonos y líneas de identificación. El resto —transacciones, montos, fechas, saldos y los últimos cuatro dígitos de la tarjeta— se envía para poder leer el estado de cuenta. Esta eliminación es automática y puede no detectarlo todo.",
+      "p4": "Las preguntas que haces en Pregunta a Cigua y cuántas veces usas las funciones que tienen límites de uso.",
+      "p5": "Datos técnicos: dirección IP, tipo de dispositivo y sistema operativo, y los registros de solicitudes y errores que guardan nuestros proveedores de hospedaje por seguridad y para resolver problemas. Actualmente la app Cigua no usa herramientas de analítica, publicidad ni rastreo."
+    },
+    "use": {
+      "title": "3. Para qué lo usamos",
+      "p1": "Para prestarte Cigua: iniciar tu sesión, guardar tus datos y mostrártelos, calcular saldos, presupuestos y análisis, leer los estados de cuenta que importas, responder tus preguntas y preparar la tarjeta «Para hoy». También para aplicar los límites de los planes y prevenir abusos, mantener Cigua segura, responderte y cumplir nuestras obligaciones legales.",
+      "p2": "No vendemos tus datos, ni usamos tus datos financieros para publicidad o para crear un perfil publicitario sobre ti.",
+      "p3": "El plan gratis puede mostrar anuncios. Si incorporamos un proveedor de publicidad que recopile información de tu dispositivo, actualizaremos esta política antes de que empiece y te pediremos tu consentimiento cuando la ley o las tiendas de aplicaciones lo exijan."
+    },
+    "consent": {
+      "title": "4. Tu consentimiento",
+      "p1": "Tratamos tus datos con tu consentimiento, que otorgas al crear tu cuenta tras leer esta política, y porque es necesario para prestarte el servicio que solicitaste. Puedes retirar tu consentimiento en cualquier momento eliminando tu cuenta; esto no afecta el tratamiento ya realizado."
+    },
+    "ai": {
+      "title": "5. Procesamiento con IA",
+      "p1": "Algunas funciones envían datos a la API Gemini de Google para que los procese un modelo de inteligencia artificial: el texto depurado de los estados de cuenta que importas; tus preguntas en Pregunta a Cigua, junto con las cifras de tus propios datos necesarias para responderlas; un resumen de tus saldos, gastos, presupuestos y próximos pagos para la tarjeta «Para hoy»; y los nombres de tarjetas y pagos recurrentes, para sugerir colores.",
+      "p2": "Google trata estos datos por cuenta nuestra como proveedor de servicios, bajo las condiciones de uso de pago de la API, que no le permiten usarlos para entrenar sus modelos. Google puede conservarlos por un tiempo limitado para detectar abusos, según lo permiten esas condiciones."
+    },
+    "share": {
+      "title": "6. Con quién los compartimos",
+      "p1": "Solo con los proveedores que necesitamos para operar Cigua, cada uno siguiendo nuestras instrucciones: Supabase (base de datos e inicio de sesión), Cloudflare (nuestros servidores, red y sitio web), Google (la API Gemini, y el inicio de sesión con Google si lo usas) y Apple (Iniciar sesión con Apple, si lo usas). Las compras de Cigua Pro las procesan Apple o Google según sus propias políticas de privacidad; nosotros solo recibimos el estado de tu suscripción, nunca tus datos de pago.",
+      "p2": "También podemos revelar datos cuando lo exija la ley o una autoridad competente, para proteger los derechos y la seguridad de nuestros usuarios o de Quantcore, o a un sucesor en caso de fusión o adquisición, que seguiría obligado por esta política. No compartimos tus datos con nadie más."
+    },
+    "transfers": {
+      "title": "7. Transferencias internacionales",
+      "p1": "Nuestros proveedores almacenan y procesan datos fuera de la República Dominicana, incluso en los Estados Unidos. Al usar Cigua consientes esta transferencia. Elegimos proveedores que protegen los datos con medidas de seguridad al menos tan sólidas como las que describe esta política y que se comprometen por contrato a usarlos solo para prestarnos sus servicios."
+    },
+    "device": {
+      "title": "8. Datos en tu dispositivo",
+      "p1": "Tu sesión se guarda en el almacenamiento seguro de tu dispositivo (Llavero o Keystore). Para abrir rápido y funcionar sin conexión, Cigua guarda en tu dispositivo una copia de las pantallas que viste recientemente; se borra al cerrar sesión. Tus preferencias (idioma, tema, sonido) también se guardan en el dispositivo."
+    },
+    "security": {
+      "title": "9. Seguridad",
+      "p1": "Los datos viajan cifrados, y cada fila de nuestra base de datos está limitada a su dueño, de modo que solo tú puedes leerla o modificarla. El acceso a los sistemas de producción es restringido. Ningún sistema es totalmente seguro; si una brecha afecta tus datos, te lo notificaremos a ti y a las autoridades según lo exija la ley."
+    },
+    "retention": {
+      "title": "10. Conservación y eliminación",
+      "p1": "Conservamos tus datos mientras tu cuenta esté activa. Cuando eliminas tu cuenta desde Configuración, tus datos se borran de nuestra base de datos de inmediato y no se pueden recuperar. Pueden quedar copias en los respaldos y registros de nuestros proveedores por hasta 30 días, hasta que se sobrescriban. Si iniciaste sesión con Apple, al eliminar tu cuenta también se revoca el acceso de Cigua a tu Apple ID.",
+      "p2": "Podemos conservar registros limitados por más tiempo cuando la ley lo exija."
+    },
+    "rights": {
+      "title": "11. Tus derechos",
+      "p1": "Conforme a la Ley 172-13 tienes derecho a acceder, rectificar, cancelar (eliminar) y oponerte al tratamiento de tus datos personales. En la app puedes ver y corregir tus datos en cualquier momento, y exportar una copia o eliminar tu cuenta desde Configuración. Para cualquier otra solicitud, escríbenos a <link>{email}</link>; responderemos en los plazos que fija la ley y es posible que primero debamos verificar tu identidad. También puedes presentar una reclamación ante las autoridades competentes de la República Dominicana."
+    },
+    "children": {
+      "title": "12. Menores de edad",
+      "p1": "Cigua no está dirigida a menores de 18 años y no recopilamos sus datos a sabiendas. Si crees que un menor creó una cuenta, contáctanos y la eliminaremos."
+    },
+    "changes": {
+      "title": "13. Cambios a esta política",
+      "p1": "Podemos actualizar esta política. Si los cambios son importantes, te avisaremos en la app o por correo antes de que entren en vigor. La fecha al inicio indica cuándo cambió por última vez."
+    },
+    "contact": {
+      "title": "14. Contacto",
+      "p1": "{entity}, República Dominicana. Preguntas o solicitudes sobre tus datos: <link>{email}</link>."
+    }
   },
   "Help": {
     "pageTitle": "Cómo funciona Cigua",
@@ -1154,7 +1289,7 @@
     "legendSubscriptions": "Suscripciones",
     "legendOther": "Otros",
     "askTitle": "Pregunta a Cigua",
-    "askIntro": "Un cuadro de texto que responde preguntas sobre tus propios números en lenguaje natural — en inglés o español, el que estés usando. Cigua lee tus datos para responder y te devuelve las cifras reales — una frase cuando es un solo número, una tabla cuando preguntaste por varios movimientos.",
+    "askIntro": "Un cuadro de texto que responde preguntas sobre tus propios números en lenguaje natural — en inglés o español, el que estés usando. Cigua lee tus datos para responder y te devuelve las cifras que encuentra — una frase cuando es un solo número, una tabla cuando preguntaste por varios movimientos. Las respuestas las escribe una IA y pueden tener errores, así que verifica lo importante con tu banco.",
     "askAnswers": "Buenas preguntas: gastos por categoría en cualquier rango de fechas, qué se cargó a una tarjeta específica entre dos fechas, cuál es un saldo ahora, qué vence y cuándo, cómo fue un mes frente a su presupuesto.",
     "askReadOnly": "Solo puede leer. No hay pregunta que cambie una transacción, un presupuesto o una cuenta — y solo ve tus datos, nunca los de nadie más.",
     "askLimits": "Responde con lo que está registrado. Si no has importado un estado de cuenta o registrado una transacción, no puede saberlo — y lo dirá en vez de adivinar.",
@@ -1208,5 +1343,32 @@
     "showAllRows": "Mostrar las {count}",
     "notFoundTitle": "No encontrado",
     "notFoundBody": "Puede que se haya eliminado."
+  },
+  "Plan": {
+    "name_free": "Gratis",
+    "name_pro": "Cigua Pro",
+    "limit_accounts": "El plan gratis incluye hasta {limit} cuentas de banco, efectivo e inversión. Pasa a Cigua Pro para tener cuentas ilimitadas, o archiva una que ya no uses.",
+    "limit_credit_cards": "El plan gratis incluye hasta {limit} tarjetas de crédito. Pasa a Cigua Pro para tener tarjetas ilimitadas, o archiva una que ya no uses.",
+    "limit_loans": "El plan gratis incluye hasta {limit} préstamos. Pasa a Cigua Pro para tener préstamos ilimitados, o archiva uno que ya saldaste.",
+    "limit_goals": "El plan gratis incluye hasta {limit} metas de ahorro. Pasa a Cigua Pro para tener metas ilimitadas, o archiva una que ya alcanzaste.",
+    "limit_subscriptions": "El plan gratis incluye hasta {limit} pagos recurrentes. Pasa a Cigua Pro para tener pagos ilimitados, o elimina uno que ya no uses.",
+    "quota_statement_parse": "Ya usaste las importaciones de estados de cuenta de este mes en tu plan. Pasa a Cigua Pro para tener más, o vuelve a importar el mes que viene.",
+    "quota_ask": "Ya usaste las preguntas de hoy en tu plan. Pasa a Cigua Pro para tener más, o vuelve a preguntar mañana.",
+    "feature_accounts": "Cuentas",
+    "feature_credit_cards": "Tarjetas de crédito",
+    "feature_loans": "Préstamos",
+    "feature_goals": "Metas de ahorro",
+    "feature_subscriptions": "Pagos recurrentes",
+    "feature_ask": "Preguntas a Cigua",
+    "feature_statement_parse": "Importaciones de estados de cuenta",
+    "feature_recommendation": "Actualizaciones de «Para hoy»",
+    "usage": "{used} de {limit}",
+    "usageDay": "{used} de {limit} hoy",
+    "usageMonth": "{used} de {limit} este mes",
+    "unlimited": "Ilimitado",
+    "adLabel": "Anuncio",
+    "houseAdTitle": "Quita los anuncios con Cigua Pro",
+    "houseAdBody": "Más tarjetas, cuentas y preguntas, y sin anuncios.",
+    "houseAdCta": "Ver Cigua Pro"
   }
 }

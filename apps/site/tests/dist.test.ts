@@ -125,3 +125,20 @@ describe("old Spanish URLs", () => {
     }
   });
 });
+
+describe("security headers", () => {
+  it("ships a _headers file with a CSP that forbids framing and outside scripts", () => {
+    const headers = readFileSync(join(DIST, "_headers"), "utf8");
+    expect(headers).toMatch(/Strict-Transport-Security: max-age=\d+/);
+    expect(headers).toMatch(/Content-Security-Policy: default-src 'self';/);
+    expect(headers).toContain("frame-ancestors 'none'");
+    expect(headers).toContain("X-Content-Type-Options: nosniff");
+  });
+
+  it("loads nothing from another origin, so the CSP holds", () => {
+    for (const path of ["/", "/en", "/privacy", "/en/terms"]) {
+      const html = readFileSync(fileFor(path), "utf8");
+      expect(html).not.toMatch(/<(script|link|img)[^>]+(src|href)="https?:\/\/(?!cigua\.quantcoresolutions\.com)/);
+    }
+  });
+});
