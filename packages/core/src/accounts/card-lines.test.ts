@@ -1,34 +1,23 @@
 import { describe, expect, test } from "vitest";
-import { cardLineName, cardLineSpecs } from "./card-lines";
+import { cardLineCurrency, cardLineName, cardLineSpecs, compareCardLines } from "./card-lines";
 
-const specs = (multiCurrency: boolean, installments: boolean, currency = "EUR") =>
-  cardLineSpecs({ multiCurrency, installments, currency });
+const specs = (multiCurrency: boolean, installments: boolean) => cardLineSpecs({ multiCurrency, installments });
 
 describe("cardLineSpecs", () => {
   test("no toggles means no group at all", () => {
     expect(specs(false, false)).toEqual([]);
   });
 
-  test("installments alone keeps the chosen currency and adds a DOP line", () => {
-    expect(specs(false, true).map((s) => [s.key, s.currency])).toEqual([
-      ["primary", "EUR"],
-      ["installments", "DOP"],
-    ]);
+  test("cuotas alone is DOP + Cuotas: no USD line nobody asked for", () => {
+    expect(specs(false, true).map((s) => s.line)).toEqual(["DOP", "CUOTAS"]);
   });
 
-  test("multi-currency is the fixed DOP + USD pair, ignoring the currency select", () => {
-    expect(specs(true, false).map((s) => [s.key, s.currency])).toEqual([
-      ["primary", "DOP"],
-      ["usd", "USD"],
-    ]);
+  test("multi-currency alone is DOP + USD: no cuotas line nobody asked for", () => {
+    expect(specs(true, false).map((s) => s.line)).toEqual(["DOP", "USD"]);
   });
 
-  test("both toggles give three lines, two of them DOP", () => {
-    expect(specs(true, true).map((s) => [s.key, s.currency])).toEqual([
-      ["primary", "DOP"],
-      ["usd", "USD"],
-      ["installments", "DOP"],
-    ]);
+  test("both toggles give all three lines", () => {
+    expect(specs(true, true).map((s) => s.line)).toEqual(["DOP", "USD", "CUOTAS"]);
   });
 
   test("every line points at its own limit and balance field", () => {
@@ -43,18 +32,24 @@ describe("cardLineSpecs", () => {
   });
 });
 
-describe("cardLineName", () => {
-  test("names currency lines by their currency", () => {
-    const [dop, usd] = specs(true, false);
-    expect(cardLineName("Visa Signature", dop, "Cuotas")).toBe("Visa Signature · DOP");
-    expect(cardLineName("Visa Signature", usd, "Cuotas")).toBe("Visa Signature · USD");
+describe("cardLineCurrency", () => {
+  test("cuotas are billed in pesos", () => {
+    expect(cardLineCurrency("DOP")).toBe("DOP");
+    expect(cardLineCurrency("USD")).toBe("USD");
+    expect(cardLineCurrency("CUOTAS")).toBe("DOP");
   });
+});
 
-  /* The reason currency alone can't name a line: a card with installments has two
-     DOP lines, and the group tile headlines the name. */
-  test("names the installments line by its label, not DOP", () => {
-    const [revolving, cuotas] = specs(false, true, "DOP");
-    expect(cardLineName("Visa Signature", revolving, "Cuotas")).toBe("Visa Signature · DOP");
-    expect(cardLineName("Visa Signature", cuotas, "Cuotas")).toBe("Visa Signature · Cuotas");
+describe("cardLineName", () => {
+  test("names the currency lines by their currency and cuotas by its label", () => {
+    expect(cardLineName("Visa Signature", "DOP", "Cuotas")).toBe("Visa Signature · DOP");
+    expect(cardLineName("Visa Signature", "USD", "Cuotas")).toBe("Visa Signature · USD");
+    expect(cardLineName("Visa Signature", "CUOTAS", "Cuotas")).toBe("Visa Signature · Cuotas");
+  });
+});
+
+describe("compareCardLines", () => {
+  test("orders DOP, USD, Cuotas, with untagged rows last", () => {
+    expect(["CUOTAS", null, "USD", "DOP"].sort(compareCardLines)).toEqual(["DOP", "USD", "CUOTAS", null]);
   });
 });

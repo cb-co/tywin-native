@@ -19,19 +19,17 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toMatch(/do not compute, round/i);
   });
 
-  /* Left unspecified, the model transcribes the symbol the statement prints
-     ("RD$") into a field every consumer reads as an ISO code. */
-  it("demands an ISO currency code rather than the printed symbol", () => {
-    expect(SYSTEM_PROMPT).toMatch(/ISO 4217/);
-    expect(SYSTEM_PROMPT).toContain("RD$");
+  /* The section's line is the whole routing decision on import, and cuotas are
+     printed in pesos — the one place a symbol-based reading goes wrong. */
+  it("names the three lines and pins cuotas to its own line despite the RD$", () => {
+    for (const line of ['"DOP"', '"USD"', '"CUOTAS"']) expect(SYSTEM_PROMPT).toContain(line);
+    expect(SYSTEM_PROMPT).toMatch(/always "CUOTAS", never "DOP"/);
+    expect(SYSTEM_PROMPT).toMatch(/never two for the same line/);
   });
 
-  /* The section key is derived from sectionKind + currency now, so the prompt
-     no longer names keys — it only has to describe which kind a section is. */
-  it("describes the two section kinds instead of a key to construct", () => {
-    expect(SYSTEM_PROMPT).toContain("installments");
-    expect(SYSTEM_PROMPT).toContain("revolving");
-    expect(SYSTEM_PROMPT).not.toContain("_CUOTAS");
+  it("never asks for a currency code the line already implies", () => {
+    expect(SYSTEM_PROMPT).not.toMatch(/ISO 4217/);
+    expect(SYSTEM_PROMPT).not.toContain("sectionKind");
   });
 
   /* Amounts are typed as numbers in the schema; a prompt that still showed

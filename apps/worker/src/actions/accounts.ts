@@ -1,6 +1,7 @@
 import { createClient } from "#/lib/supabase/server";
 import { accountInput, type AccountInput, cardStubInput, type CardStubInput } from "@cigua/core/accounts/schema";
 import { hasCardAccent } from "@cigua/core/accounts/card-art";
+import type { CardLine } from "@cigua/core/accounts/card-lines";
 import { inferCardArt } from "#/lib/accounts/llm/card-art";
 import { dbError } from "#/lib/errors";
 import { takeQuota } from "#/lib/plan";
@@ -111,6 +112,8 @@ export async function createAccount(input: AccountInput): Promise<Result> {
     ...toColumns(parsed.data),
     ...(await resolveArtFor(parsed.data)),
     currency: parsed.data.currency,
+    // A single-line card is the line of its own currency.
+    card_line: parsed.data.type === "credit_card" ? (parsed.data.card_line ?? parsed.data.currency) : null,
     user_id: user.id,
   };
   const res = await supabase.from("accounts").insert(row).select("id").single();
@@ -297,11 +300,14 @@ export async function createCardWithLines(name: string, lines: AccountInput[]): 
   if (!trimmed) return { error: "Name is required." };
   if (lines.length === 0) return { error: "A card needs at least one line." };
 
-  const parsed: AccountInput[] = [];
+  const parsed: (AccountInput & { card_line: CardLine })[] = [];
   for (const line of lines) {
     const result = accountInput.safeParse(line);
     if (!result.success) return { error: result.error.issues[0]?.message ?? "Invalid input" };
-    parsed.push(result.data);
+    const { card_line } = result.data;
+    if (result.data.type !== "credit_card" || !card_line) return { error: "Every line of a card says which line it is." };
+    if (parsed.some((p) => p.card_line === card_line)) return { error: `A card has one ${card_line} line.` };
+    parsed.push({ ...result.data, card_line });
   }
 
   const { supabase, user } = await requireUser();
@@ -330,6 +336,7 @@ export async function createCardWithLines(name: string, lines: AccountInput[]): 
     ...toColumns(line),
     ...face,
     currency: line.currency,
+    card_line: line.card_line,
     card_group_id: group.id,
     user_id: user.id,
   }));
@@ -347,8 +354,8 @@ export async function createCardWithLines(name: string, lines: AccountInput[]): 
  * uses when someone has no card at all.
  *
  * Deliberately ungrouped: most cards in this market are a single DOP line, and a
- * one-line group would be a container around nothing. `addCardLine` promotes the
- * card if a statement turns out to have sections this one account cannot receive.
+ * one-line group would be a container around nothing. Importing a statement with
+ * a USD or cuotas section adds those lines (see `addCardLines`).
  */
 export async function createCardStub(input: CardStubInput): Promise<Result> {
   const parsed = cardStubInput.safeParse(input);
@@ -364,6 +371,7 @@ export async function createCardStub(input: CardStubInput): Promise<Result> {
       name: parsed.data.name,
       type: "credit_card",
       currency: parsed.data.currency,
+      card_line: parsed.data.currency,
       user_id: user.id,
       ...(parsed.data.last4 ? { last4: parsed.data.last4 } : {}),
       ...(art ? { color: art.accent } : {}),
@@ -375,90 +383,3 @@ export async function createCardStub(input: CardStubInput): Promise<Result> {
   if (res.error) return { error: await dbError(res.error, "createCardStub") };
   return { id: res.data.id };
 }
-
-/**
- * A further line on a card that already exists — the USD or cuotas section of a
- * statement that the card's single account cannot receive, because
- * `suggestAccountId` matches sections to accounts by currency.
- *
- * Promotion is a plain card_group_id update: statement_section_mappings rows are
- * only ever written for cards that already have a group (see the guard in
- * confirmStatementImport), so an ungrouped card has none to re-key.
- */
-export async function addCardLine(siblingId: string, input: CardStubInput): Promise<Result> {
-  const parsed = cardStubInput.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-
-  const { supabase, user } = await requireUser();
-  if (!user) return { error: "You're not signed in." };
-
-  const { data: sibling } = await supabase
-    .from("accounts")
-    .select("id,name,type,card_group_id,color,brand")
-    .eq("id", siblingId)
-    .single();
-  if (!sibling || sibling.type !== "credit_card") return { error: "Not a credit card." };
-
-  // A group IS the physical card, so it inherits the face the sibling already wears.
-  const face = {
-    ...(sibling.color ? { color: sibling.color } : {}),
-    ...(sibling.brand ? { brand: sibling.brand } : {}),
-  };
-
-  // Tracks whether THIS call minted the group, so a failure below can undo it.
-  // A reused group predates this call and must never be deleted for a failure
-  // that has nothing to do with its own creation.
-  let groupId = sibling.card_group_id;
-  let createdGroup = false;
-  if (!groupId) {
-    const { data: group, error: groupError } = await supabase
-      .from("card_groups")
-      .insert({
-        name: sibling.name,
-        user_id: user.id,
-        ...(sibling.color ? { art_color: sibling.color } : {}),
-        ...(sibling.brand ? { brand: sibling.brand } : {}),
-      })
-      .select("id")
-      .single();
-    if (groupError) return { error: await dbError(groupError, "addCardLine") };
-    groupId = group.id;
-    createdGroup = true;
-
-    const { error: linkError } = await supabase
-      .from("accounts")
-      .update({ card_group_id: groupId })
-      .eq("id", sibling.id);
-    if (linkError) {
-      // Same reasoning as createCardWithLines: a group this call just created,
-      // with nothing successfully linked to it, must not survive to render as
-      // an empty card in the gallery.
-      await supabase.from("card_groups").delete().eq("id", groupId);
-      return { error: await dbError(linkError, "addCardLine") };
-    }
-  }
-
-  const res = await supabase
-    .from("accounts")
-    .insert({
-      name: parsed.data.name,
-      type: "credit_card",
-      currency: parsed.data.currency,
-      card_group_id: groupId,
-      user_id: user.id,
-      ...(parsed.data.last4 ? { last4: parsed.data.last4 } : {}),
-      ...face,
-    })
-    .select("id")
-    .single();
-
-  if (res.error) {
-    // The sibling is already linked to `groupId` at this point, so deleting the
-    // group would orphan it too — only clean up when the group is new AND
-    // nothing else references it yet, i.e. exactly the case this call created.
-    if (createdGroup) await supabase.from("card_groups").delete().eq("id", groupId);
-    return { error: await dbError(res.error, "addCardLine") };
-  }
-  return { id: res.data.id };
-}
-

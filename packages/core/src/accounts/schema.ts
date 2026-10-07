@@ -1,15 +1,23 @@
 import { z } from "zod";
 import { ACCOUNT_TYPE_VALUES } from "./meta";
+import { CARD_CURRENCIES, CARD_LINES, cardLineCurrency, isCardCurrency } from "./card-lines";
 
 /** How long a card or account name may be. Shared so anything that *composes*
  *  a name — the statement import suggesting a line name, say — can trim to fit
  *  instead of discovering the cap as a zod error in the wrong language. */
 export const NAME_MAX_LENGTH = 80;
 
+/** What a Dominican bank holds money in. Cards are narrower still: see CARD_CURRENCIES. */
+export const ACCOUNT_CURRENCIES = ["DOP", "USD", "EUR"] as const;
+
 const accountBase = z.object({
   name: z.string().trim().min(1, "Name is required").max(NAME_MAX_LENGTH),
   type: z.enum(ACCOUNT_TYPE_VALUES),
-  currency: z.string().trim().length(3, "Use a 3-letter code").toUpperCase(),
+  currency: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((c) => (ACCOUNT_CURRENCIES as readonly string[]).includes(c), "Use DOP, USD or EUR"),
   starting_balance: z.coerce.number().finite().default(0),
   color: z.string().trim().max(9).optional().or(z.literal("")),
   bank_id: z.string().uuid().optional().or(z.literal("")),
@@ -25,6 +33,9 @@ const accountBase = z.object({
   payment_due_day: z.coerce.number().int().min(1).max(31).optional(),
   current_balance: z.coerce.number().min(0).default(0),
   card_group_id: z.string().uuid().optional().or(z.literal("")),
+  /** Which of the card's fixed lines this account is. Set on create only; a
+   *  single-line card leaves it to its currency. */
+  card_line: z.enum(CARD_LINES).optional(),
   // Four digits or nothing. The pattern is checked here on purpose: the
   // `color` field above is `max(9)` with no pattern, which is exactly how a
   // malformed hex reached the card face, and the database's own check
@@ -56,6 +67,10 @@ type AccountBase = z.infer<typeof accountBase>;
 
 function refineAccount(v: AccountBase, ctx: z.RefinementCtx) {
   if (v.type === "credit_card") {
+    if (!isCardCurrency(v.currency))
+      ctx.addIssue({ code: "custom", path: ["currency"], message: "Credit cards are DOP or USD" });
+    else if (v.card_line && cardLineCurrency(v.card_line) !== v.currency)
+      ctx.addIssue({ code: "custom", path: ["currency"], message: `The ${v.card_line} line is held in ${cardLineCurrency(v.card_line)}` });
     for (const f of ["credit_limit", "statement_closing_day", "payment_due_day"] as const) {
       if (v[f] === undefined)
         ctx.addIssue({ code: "custom", path: [f], message: "Required for credit cards" });
@@ -112,7 +127,7 @@ export type AccountInput = z.infer<typeof accountInput>;
  */
 export const cardStubInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(NAME_MAX_LENGTH),
-  currency: z.string().trim().length(3, "Use a 3-letter code").toUpperCase(),
+  currency: z.string().trim().toUpperCase().pipe(z.enum(CARD_CURRENCIES)),
   last4: z
     .string()
     .trim()

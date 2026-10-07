@@ -136,6 +136,10 @@ describe("cardStubInput", () => {
     expect(r.data?.currency).toBe("DOP");
   });
 
+  test("rejects a card outside DOP and USD", () => {
+    expect(cardStubInput.safeParse({ name: "Popular Visa", currency: "EUR" }).success).toBe(false);
+  });
+
   test("accepts a card with no last4 at all", () => {
     expect(cardStubInput.safeParse({ name: "Popular Visa", currency: "DOP" }).success).toBe(true);
   });
@@ -148,5 +152,25 @@ describe("cardStubInput", () => {
   test("accountInput still requires the three card fields", () => {
     const r = accountInput.safeParse({ name: "Popular Visa", type: "credit_card", currency: "DOP" });
     expect(r.success).toBe(false);
+  });
+});
+
+describe("card lines", () => {
+  test("a credit card is DOP or USD", () => {
+    const parsed = validate({ ...base, currency: "EUR" });
+    expect(parsed.error?.issues.map((i) => i.path.join("."))).toEqual(["currency"]);
+  });
+
+  test("other accounts are DOP, USD or EUR", () => {
+    expect(validate({ ...base, type: "checking", currency: "EUR" }).success).toBe(true);
+    expect(validate({ ...base, type: "checking", currency: "GBP" }).success).toBe(false);
+  });
+
+  test("a tagged line must be held in that line's currency", () => {
+    const line = (card_line: "DOP" | "USD" | "CUOTAS", currency: string) =>
+      accountInput.safeParse({ ...blankToUndefined(normalizeFormValues({ ...base, currency })), card_line }).success;
+    expect(line("CUOTAS", "DOP")).toBe(true);
+    expect(line("CUOTAS", "USD")).toBe(false);
+    expect(line("USD", "DOP")).toBe(false);
   });
 });

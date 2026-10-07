@@ -145,7 +145,6 @@ const EXPORT_TABLES = [
   "statement_imports",
   "card_statements",
   "card_statement_lines",
-  "statement_section_mappings",
   "category_rules",
   "daily_recommendations",
   "entitlements",

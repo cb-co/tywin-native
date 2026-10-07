@@ -6,8 +6,7 @@ const VALID = {
   cardLast4: "1234",
   sections: [
     {
-      sectionKind: "revolving",
-      currency: "DOP",
+      line: "DOP",
       periodStart: "2026-05-26",
       periodEnd: "2026-06-25",
       dueDate: "2026-07-20",
@@ -86,16 +85,15 @@ describe("StatementSchema", () => {
   });
 
   /* A currency symbol here was a real production bug — Intl.NumberFormat throws
-     RangeError on "RD$" and the preview died on render. */
-  it("rejects a currency that is not an ISO code it knows", () => {
-    for (const currency of ["RD$", "$", "dop", "DOLLARS", ""]) {
-      expect(StatementSchema.safeParse(withSection({ currency })).success, currency).toBe(false);
+     RangeError on "RD$" and the preview died on render. The line enum is what
+     stands in for the currency now. */
+  it("rejects anything but one of the card's three lines", () => {
+    for (const line of ["RD$", "$", "dop", "EUR", "DOP_CUOTAS", "installments", ""]) {
+      expect(StatementSchema.safeParse(withSection({ line })).success, line).toBe(false);
     }
-    expect(StatementSchema.safeParse(withSection({ currency: "USD" })).success).toBe(true);
-  });
-
-  it("rejects a section kind outside the two it derives keys from", () => {
-    expect(StatementSchema.safeParse(withSection({ sectionKind: "cuotas" })).success).toBe(false);
+    for (const line of ["DOP", "USD", "CUOTAS"]) {
+      expect(StatementSchema.safeParse(withSection({ line })).success, line).toBe(true);
+    }
   });
 
   it("allows a nullable figure the statement does not print", () => {

@@ -10,9 +10,8 @@ const WITH_LINES: LlmStatement = {
   cardLast4: "1234",
   sections: [
     {
-      sectionKind: "revolving",
+      line: "DOP",
       periodStart: null,
-      currency: "DOP",
       periodEnd: "2026-06-25",
       dueDate: "2026-07-20",
       previousBalance: 1000.00,
@@ -57,9 +56,8 @@ const LINE_LESS: LlmStatement = {
   cardLast4: "6760",
   sections: [
     {
-      sectionKind: "installments",
+      line: "CUOTAS",
       periodStart: null,
-      currency: "DOP",
       periodEnd: "2026-07-15",
       dueDate: "2026-08-10",
       previousBalance: 0.00,
@@ -91,9 +89,8 @@ const WITH_ADJUSTMENT: LlmStatement = {
   cardLast4: "3627",
   sections: [
     {
-      sectionKind: "revolving",
+      line: "DOP",
       periodStart: null,
-      currency: "DOP",
       periodEnd: "2026-08-03",
       dueDate: "2026-08-28",
       previousBalance: 1000.00,
@@ -186,38 +183,33 @@ describe("toParsedStatement", () => {
     expect(validateChecksums(toParsedStatement(WITH_ADJUSTMENT))).toEqual([]);
   });
 
-  /* `ParsedSection.currency` is declared ISO 4217 and consumed as one — the preview
-     hands it to Intl.NumberFormat, confirm compares it against the account's currency,
-     and fx looks up a rate by it. A statement that prints only "RD$" and never "DOP"
-     used to get the symbol transcribed into it verbatim, and Intl threw RangeError on
-     render; the schema types the field as an enum of ISO codes now, so the decoder
-     cannot emit a symbol and there is no normalization step left to get wrong. */
-  describe("currency and sectionKey", () => {
+  /* The section key IS the card line the section lands on at import, and the
+     currency follows from it — the model never gives one, so a symbol can't be
+     transcribed into a field Intl.NumberFormat and fx both read as an ISO code. */
+  describe("line, sectionKey and currency", () => {
     const withSection = (patch: Partial<LlmStatement["sections"][number]>): LlmStatement => ({
       ...WITH_LINES,
       sections: [{ ...WITH_LINES.sections[0], ...patch }],
     });
 
-    it("carries the enum value straight through", () => {
-      expect(toParsedStatement(withSection({ currency: "USD" })).sections[0].currency).toBe("USD");
+    it("keys each section by its line", () => {
+      for (const line of ["DOP", "USD", "CUOTAS"] as const) {
+        expect(toParsedStatement(withSection({ line })).sections[0].sectionKey).toBe(line);
+      }
+    });
+
+    it("derives the currency from the line, with cuotas in pesos", () => {
+      expect(toParsedStatement(withSection({ line: "USD" })).sections[0].currency).toBe("USD");
+      expect(toParsedStatement(withSection({ line: "CUOTAS" })).sections[0].currency).toBe("DOP");
     });
 
     it("builds the parserId from the section currencies", () => {
-      expect(toParsedStatement(withSection({ currency: "USD" })).parserId).toBe("visa_1234_usd");
+      expect(toParsedStatement(withSection({ line: "USD" })).parserId).toBe("visa_1234_usd");
     });
 
-    /* These are the exact keys already persisted in statement_section_mappings for
-       existing cards. Deriving them from two enum fields keeps every saved mapping
-       matching, and makes a key the model could vary structurally impossible. */
-    it("derives the section key from currency and kind", () => {
-      expect(toParsedStatement(withSection({ sectionKind: "revolving" })).sections[0].sectionKey)
-        .toBe("DOP");
-      expect(toParsedStatement(withSection({ sectionKind: "installments" })).sections[0].sectionKey)
-        .toBe("DOP_CUOTAS");
-      expect(
-        toParsedStatement(withSection({ currency: "USD", sectionKind: "revolving" })).sections[0]
-          .sectionKey,
-      ).toBe("USD");
+    it("refuses a statement with two sections on the same line", () => {
+      const twice: LlmStatement = { ...WITH_LINES, sections: [WITH_LINES.sections[0], WITH_LINES.sections[0]] };
+      expect(() => toParsedStatement(twice)).toThrow(/two DOP sections/);
     });
   });
 

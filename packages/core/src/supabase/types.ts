@@ -44,6 +44,7 @@ export type Database = {
           bank_id: string | null
           brand: string | null
           card_group_id: string | null
+          card_line: string | null
           color: string | null
           created_at: string
           credit_limit: number | null
@@ -79,6 +80,7 @@ export type Database = {
           bank_id?: string | null
           brand?: string | null
           card_group_id?: string | null
+          card_line?: string | null
           color?: string | null
           created_at?: string
           credit_limit?: number | null
@@ -114,6 +116,7 @@ export type Database = {
           bank_id?: string | null
           brand?: string | null
           card_group_id?: string | null
+          card_line?: string | null
           color?: string | null
           created_at?: string
           credit_limit?: number | null
@@ -148,17 +151,17 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "accounts_bank_id_fkey"
-            columns: ["bank_id"]
+            columns: ["bank_id", "user_id"]
             isOneToOne: false
             referencedRelation: "banks"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "accounts_card_group_id_fkey"
-            columns: ["card_group_id"]
+            columns: ["card_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -217,10 +220,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "budget_group_budgets_budget_group_id_fkey"
-            columns: ["budget_group_id"]
+            columns: ["budget_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "budget_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -345,73 +348,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_statement_id_fkey"
-            columns: ["statement_id"]
+            columns: ["statement_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_statements"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_statement_id_fkey"
-            columns: ["statement_id"]
+            columns: ["statement_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_card_statements"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_transaction_id_fkey"
-            columns: ["transaction_id"]
+            columns: ["transaction_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_transactions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statement_lines_transaction_id_fkey"
-            columns: ["transaction_id"]
+            columns: ["transaction_id", "user_id"]
             isOneToOne: false
             referencedRelation: "transactions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -509,52 +512,52 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_import_id_fkey"
-            columns: ["import_id"]
+            columns: ["import_id", "user_id"]
             isOneToOne: false
             referencedRelation: "statement_imports"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -598,10 +601,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categories_budget_group_id_fkey"
-            columns: ["budget_group_id"]
+            columns: ["budget_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "budget_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -636,10 +639,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "category_budgets_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -677,10 +680,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "category_rules_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -805,52 +808,52 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "goal_contributions_goal_id_fkey"
-            columns: ["goal_id"]
+            columns: ["goal_id", "user_id"]
             isOneToOne: false
             referencedRelation: "savings_goals"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -987,93 +990,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "statement_imports_card_group_id_fkey"
-            columns: ["card_group_id"]
+            columns: ["card_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      statement_section_mappings: {
-        Row: {
-          account_id: string
-          card_group_id: string
-          created_at: string
-          id: string
-          parser_id: string
-          section_key: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          account_id: string
-          card_group_id: string
-          created_at?: string
-          id?: string
-          parser_id: string
-          section_key: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          account_id?: string
-          card_group_id?: string
-          created_at?: string
-          id?: string
-          parser_id?: string
-          section_key?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "statement_section_mappings_card_group_id_fkey"
-            columns: ["card_group_id"]
-            isOneToOne: false
-            referencedRelation: "card_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1147,94 +1067,94 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "subscriptions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1329,115 +1249,115 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_budget_group_id_fkey"
-            columns: ["budget_group_id"]
+            columns: ["budget_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "budget_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_statement_line_id_fkey"
-            columns: ["statement_line_id"]
+            columns: ["statement_line_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_statement_lines"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_subscription_id_fkey"
-            columns: ["subscription_id"]
+            columns: ["subscription_id", "user_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1581,10 +1501,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "budget_group_budgets_budget_group_id_fkey"
-            columns: ["budget_group_id"]
+            columns: ["budget_group_id", "user_id"]
             isOneToOne: false
             referencedRelation: "budget_groups"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1601,10 +1521,10 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "category_budgets_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1634,45 +1554,45 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "card_statements_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }
@@ -1715,101 +1635,101 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            columns: ["account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_category_id_fkey"
-            columns: ["category_id"]
+            columns: ["category_id", "user_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_subscription_id_fkey"
-            columns: ["subscription_id"]
+            columns: ["subscription_id", "user_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "account_balances"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_cost_of_carry"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "card_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "loan_status"
-            referencedColumns: ["account_id"]
+            referencedColumns: ["account_id", "user_id"]
           },
           {
             foreignKeyName: "transactions_to_account_id_fkey"
-            columns: ["to_account_id"]
+            columns: ["to_account_id", "user_id"]
             isOneToOne: false
             referencedRelation: "q_accounts"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "user_id"]
           },
         ]
       }

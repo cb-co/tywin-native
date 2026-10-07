@@ -68,7 +68,7 @@ describe("validateChecksums", () => {
   });
   it("uses stated totals for line-less sections (Cuotas)", () => {
     const ok = section({
-      sectionKey: "CUOTAS_DOP",
+      sectionKey: "CUOTAS",
       previousBalanceCents: 0,
       totalDebitsCents: 0,
       totalCreditsCents: 0,
@@ -76,7 +76,7 @@ describe("validateChecksums", () => {
       lines: [],
     });
     const bad = section({
-      sectionKey: "CUOTAS_DOP",
+      sectionKey: "CUOTAS",
       previousBalanceCents: 0,
       totalDebitsCents: 5000,
       totalCreditsCents: 0,
@@ -85,7 +85,7 @@ describe("validateChecksums", () => {
     });
     expect(validateChecksums(stmt(ok))).toEqual([]);
     expect(validateChecksums(stmt(bad))).toEqual([
-      { sectionKey: "CUOTAS_DOP", computedCents: 5000, statedCents: 0 },
+      { sectionKey: "CUOTAS", computedCents: 5000, statedCents: 0 },
     ]);
   });
 

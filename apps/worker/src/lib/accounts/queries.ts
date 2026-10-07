@@ -337,21 +337,13 @@ export async function getCardGroupSiblings(accountId: string): Promise<CardGroup
   return siblings ?? [account];
 }
 
-/** The currency lines of `accountId`'s card group, for the detail page's rail.
+/** The lines of `accountId`'s card, for the detail page's rail.
  *
  *  Empty for a card that belongs to no group — there is nothing to navigate
- *  between, and the rail renders nothing. The ordering matches the accounts
- *  grid (`sort_order`, then `created_at`) so a card's lines appear in the same
- *  sequence wherever you meet them. */
+ *  between, and the rail renders nothing. */
 export async function getCardGroupLines(accountId: string): Promise<CardGroupLine[]> {
   const supabase = await createClient();
-  // The group's name comes along because every segment's label is derived by
-  // subtracting it from the line's own name — see `cardLineLabel`.
-  const { data: account } = await supabase
-    .from("accounts")
-    .select("card_group_id, card_groups(name)")
-    .eq("id", accountId)
-    .maybeSingle();
+  const { data: account } = await supabase.from("accounts").select("card_group_id").eq("id", accountId).maybeSingle();
   if (!account?.card_group_id) return [];
 
   // Archived lines are filtered in `buildCardGroupLines`, not here: the rule keeps
@@ -359,14 +351,12 @@ export async function getCardGroupLines(accountId: string): Promise<CardGroupLin
   // pure helper owns and tests.
   const { data: rows } = await supabase
     .from("accounts")
-    .select("id, name, currency, is_archived")
+    .select("id, card_line, is_archived")
     .eq("card_group_id", account.card_group_id)
-    .eq("type", "credit_card")
-    .order("sort_order")
-    .order("created_at");
+    .eq("type", "credit_card");
   if (!rows) return [];
 
-  return buildCardGroupLines(rows, account.card_groups?.name ?? "", accountId);
+  return buildCardGroupLines(rows, accountId);
 }
 
 /** Net worth in `baseCurrency`, computed the same way Overview computes it.

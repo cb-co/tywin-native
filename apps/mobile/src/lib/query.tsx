@@ -121,7 +121,6 @@ const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   "accounts.createBank": ["accounts"],
   "accounts.createCardWithLines": ["overview", "accounts", "quickAdd", "session", "settings"],
   "accounts.createCardStub": ["overview", "accounts", "quickAdd", "session", "settings"],
-  "accounts.addCardLine": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
   "statements.deleteCardStatement": ["overview", "accounts", "account", "budgets", "insights", "transactions"],
   "statements.saveMerchantRule": ["rules"],
   "onboarding.finishOnboarding": null,

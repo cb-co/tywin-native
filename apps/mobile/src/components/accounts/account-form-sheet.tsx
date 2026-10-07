@@ -6,7 +6,7 @@ import type { AccountWithStatus, BankRow, CardGroupSibling, CurrencyRow } from "
 import { formatDate } from "@cigua/core/format";
 import { accountResolver, blankToUndefined, normalizeFormValues, type AccountFormValues } from "@cigua/core/accounts/form-values";
 import { isCard, isLoan, hasTransferFees, type AccountType } from "@cigua/core/accounts/meta";
-import { cardLineName, cardLineSpecs } from "@cigua/core/accounts/card-lines";
+import { CARD_CURRENCIES, cardLineCurrency, cardLineLabel, cardLineName, cardLineSpecs, isCardCurrency } from "@cigua/core/accounts/card-lines";
 import { act } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
@@ -40,7 +40,10 @@ function defaultsFor(
   return {
     name: account?.name ?? "",
     type: (account?.type as AccountType) ?? initialType ?? "checking",
-    currency: account?.currency ?? baseCurrency,
+    // A card is DOP or USD; anything else starts on the base currency.
+    currency:
+      account?.currency ??
+      ((initialType ?? "checking") === "credit_card" && !isCardCurrency(baseCurrency) ? "DOP" : baseCurrency),
     bank_id: account?.bank_id ?? "none",
     starting_balance: str(account?.starting_balance) || "0",
     transfer_tax_rate: str(account?.transfer_tax_rate) || "0.002",
@@ -123,15 +126,15 @@ export function AccountFormSheet({
   const hasBonusGoal = useWatch({ control, name: "has_welcome_bonus_goal" }) ?? false;
   const multiCurrency = useWatch({ control, name: "is_multi_currency" }) ?? false;
   const installments = useWatch({ control, name: "has_installments" }) ?? false;
-  const currencySel = useWatch({ control, name: "currency" }) ?? baseCurrency;
   const nameSel = useWatch({ control, name: "name" }) ?? "";
   const card = isCard(type);
   const loan = isLoan(type);
 
-  const lineSpecs = card && mode === "create" ? cardLineSpecs({ multiCurrency, installments, currency: currencySel }) : [];
+  const lineSpecs = card && mode === "create" ? cardLineSpecs({ multiCurrency, installments }) : [];
   const grouped = lineSpecs.length > 0;
 
   const currencyOptions = currencies.map((c) => ({ value: c.code, label: `${c.code} · ${c.name}` }));
+  const cardCurrencyOptions = currencyOptions.filter((o) => (CARD_CURRENCIES as readonly string[]).includes(o.value));
   const bankOptions = [
     { value: "none", label: t("noBank") },
     ...banks.map((b) => ({ value: b.id, label: b.name })),
@@ -170,7 +173,7 @@ export function AccountFormSheet({
 
       const specs =
         mode === "create" && values.type === "credit_card"
-          ? cardLineSpecs({ multiCurrency: values.is_multi_currency, installments: values.has_installments, currency: values.currency })
+          ? cardLineSpecs({ multiCurrency: values.is_multi_currency, installments: values.has_installments })
           : [];
 
       if (specs.length > 0) {
@@ -178,8 +181,9 @@ export function AccountFormSheet({
         // One physical card: everything but the money is shared across its lines.
         const lines = specs.map((spec) => ({
           ...clean,
-          name: cardLineName(cardName, spec, t("lineInstallments")),
-          currency: spec.currency,
+          name: cardLineName(cardName, spec.line, t("lineInstallments")),
+          currency: cardLineCurrency(spec.line),
+          card_line: spec.line,
           credit_limit: field(spec.limitField),
           current_balance: field(spec.balanceField) ?? 0,
           card_group_id: "",
@@ -223,7 +227,7 @@ export function AccountFormSheet({
       name="currency"
       label={t("currencyLabel")}
       required
-      options={currencyOptions}
+      options={card ? cardCurrencyOptions : currencyOptions}
       disabled={mode === "edit"}
       hint={mode === "edit" ? t("currencyLockedHint") : undefined}
     />
@@ -263,8 +267,8 @@ export function AccountFormSheet({
         />
       ) : null}
 
-      {/* A multi-currency card's lines are the fixed DOP + USD pair: no currency to ask. */}
-      {loan || (grouped && multiCurrency) ? null : currencyField}
+      {/* A grouped card's lines carry their own currencies: no currency to ask. */}
+      {loan || grouped ? null : currencyField}
 
       {!card && !loan ? <FormText control={control} name="starting_balance" label={t("startingBalanceLabel")} numeric keyboardType="numbers-and-punctuation" /> : null}
 
@@ -304,17 +308,17 @@ export function AccountFormSheet({
                     {t("cardLinesHeading")}
                   </Text>
                   {lineSpecs.map((spec) => {
-                    const suffix = spec.key === "installments" ? t("lineInstallments") : spec.currency;
+                    const suffix = cardLineLabel(spec.line, t("lineInstallments"));
                     return (
-                      <View key={spec.key} style={s.line}>
+                      <View key={spec.line} style={s.line}>
                         <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
                           {/* The name this line will be saved under, live. */}
                           <Text size="sm" weight={500} numberOfLines={1} style={{ flex: 1 }}>
-                            {nameSel.trim() ? cardLineName(nameSel.trim(), spec, suffix) : suffix}
+                            {nameSel.trim() ? cardLineName(nameSel.trim(), spec.line, t("lineInstallments")) : suffix}
                           </Text>
-                          {spec.key === "installments" ? (
+                          {spec.line === "CUOTAS" ? (
                             <Text size="xs" weight={500} tone="muted">
-                              {spec.currency}
+                              {cardLineCurrency(spec.line)}
                             </Text>
                           ) : null}
                         </View>

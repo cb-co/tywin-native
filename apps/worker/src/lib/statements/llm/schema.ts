@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CARD_LINES } from "@cigua/core/accounts/card-lines";
 
 /**
  * The schema is the enforcement mechanism, not the prompt.
@@ -11,24 +12,6 @@ import { z } from "zod";
  * hand-written logic downstream is expressed here as a type instead, so the
  * repair code has nothing left to do.
  */
-
-/**
- * ISO 4217 codes the extractor may assign.
- *
- * Deliberately far wider than the three currencies the app currently holds
- * accounts in (DOP/EUR/USD). An enum leaves the model no way to say "none of
- * these" — it must return one of the listed values — so a narrow list would not
- * make an unlisted currency fail loudly, it would make it come back silently
- * wrong. The list therefore covers every currency a statement reaching this app
- * could plausibly be denominated in: the majors, plus Latin America and the
- * Caribbean.
- */
-export const CURRENCIES = [
-  "DOP", "USD", "EUR", "GBP", "CAD", "CHF", "JPY", "CNY", "AUD",
-  "MXN", "GTQ", "HNL", "NIO", "CRC", "PAB", "BZD",
-  "COP", "VES", "BRL", "ARS", "CLP", "PEN", "UYU", "PYG", "BOB",
-  "JMD", "TTD", "BBD", "BSD", "KYD", "XCD", "AWG", "ANG", "HTG", "CUP", "SRD", "GYD",
-] as const;
 
 /** A money amount as a plain number — no symbol, no thousands separator, sign
  *  carried by the number itself. Converted to integer cents at the boundary. */
@@ -47,11 +30,10 @@ export const LineSchema = z.object({
 });
 
 export const SectionSchema = z.object({
-  /** What the section IS, rather than a name for it. `sectionKey` used to be a
-   *  free string the model had to construct to a spec and the caller rewrote
-   *  when it didn't; it is derived from this plus `currency` now. */
-  sectionKind: z.enum(["revolving", "installments"]),
-  currency: z.enum(CURRENCIES),
+  /** Which of the card's three fixed lines the section belongs to. The
+   *  currency follows from it (cuotas are pesos), so the model is never asked
+   *  for one separately and the two cannot disagree. */
+  line: z.enum(CARD_LINES),
   /** Read off the statement when it prints a period range; the caller derives it
    *  from `periodEnd` when the statement only prints a cutoff date. */
   periodStart: z.string().nullable(),

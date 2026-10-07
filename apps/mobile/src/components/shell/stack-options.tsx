@@ -1,3 +1,4 @@
+import { StyleSheet, View } from "react-native";
 import type { NativeStackNavigationOptions } from "expo-router";
 import { MobileHeader } from "./mobile-header";
 import { OfflineBanner } from "./offline-banner";
@@ -14,7 +15,8 @@ export function TabHeader() {
   );
 }
 
-/** A pushed screen's header: plain paper, the title in ink, a bare back arrow. */
+/** A pushed screen's header: plain paper, the title in ink, a bare back arrow, and
+ *  a hairline under it so every screen's top edge is ruled, not just the tabs'. */
 export function useStackOptions(): NativeStackNavigationOptions {
   const c = useColors();
   return {
@@ -25,5 +27,10 @@ export function useStackOptions(): NativeStackNavigationOptions {
     headerTitleStyle: { fontFamily: face(600), color: c.foreground },
     headerBackButtonDisplayMode: "minimal",
     headerShadowVisible: false,
+    headerBackground: () => (
+      <View
+        style={{ flex: 1, backgroundColor: c.background, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }}
+      />
+    ),
   };
 }

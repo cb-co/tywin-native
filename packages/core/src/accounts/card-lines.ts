@@ -1,29 +1,54 @@
 /**
- * The currency lines one physical credit card is saved as.
+ * The lines one physical credit card is saved as.
  *
- * A card group used to be something you assembled by hand: create the group,
- * then create each line and remember to point it at the group. Nobody but the
- * author of that form could guess it. Now two questions decide it — "does it
- * have installments?" and "is it multi-currency?" — and the answers imply the
- * lines exactly, which is what this module computes.
- *
- * The currencies are fixed rather than chosen: installments are billed in DOP,
- * and a multi-currency card here is always the DOP + USD pair. Fixing them is
- * what lets the dialog ask for a limit per line instead of asking the person to
- * describe the card's structure a second time.
+ * A Dominican card carries at most three, and always the same three: a DOP
+ * revolving line, a USD revolving line, and a cuotas (installments) line, which
+ * issuers bill in pesos. Each is its own account row, tagged with its line in
+ * `accounts.card_line`; the database holds a card to one of each and pins each
+ * line's currency. Everything that needs to tell a card's lines apart — the
+ * account dialog, the statement importer, the accounts grid, the detail page's
+ * rail — reads the tag rather than a currency or a name.
  */
 
-/** Currency of the installments ("cuotas") line. */
-export const INSTALLMENTS_CURRENCY = "DOP";
+/** Every line a card can have, in display order. Also the statement section keys. */
+export const CARD_LINES = ["DOP", "USD", "CUOTAS"] as const;
+export type CardLine = (typeof CARD_LINES)[number];
 
-/** The pair a multi-currency card is split into, in display order. */
-export const MULTI_CURRENCY_CODES = ["DOP", "USD"] as const;
+/** The currencies a card is held in. */
+export const CARD_CURRENCIES = ["DOP", "USD"] as const;
+export type CardCurrency = (typeof CARD_CURRENCIES)[number];
 
-export type CardLineKey = "primary" | "usd" | "installments";
+export function isCardLine(value: unknown): value is CardLine {
+  return (CARD_LINES as readonly unknown[]).includes(value);
+}
+
+export function isCardCurrency(value: unknown): value is CardCurrency {
+  return (CARD_CURRENCIES as readonly unknown[]).includes(value);
+}
+
+/** Cuotas are billed in pesos; the other two lines are named for their currency. */
+export function cardLineCurrency(line: CardLine): CardCurrency {
+  return line === "USD" ? "USD" : "DOP";
+}
+
+/** Sorts a card's lines into DOP, USD, Cuotas. Untagged rows go last. */
+export function compareCardLines(a: string | null, b: string | null): number {
+  const rank = (l: string | null) => (isCardLine(l) ? CARD_LINES.indexOf(l) : CARD_LINES.length);
+  return rank(a) - rank(b);
+}
+
+/** What a line reads as on its own: the currency, or the localised word for cuotas. */
+export function cardLineLabel(line: CardLine, installmentsLabel: string): string {
+  return line === "CUOTAS" ? installmentsLabel : line;
+}
+
+/** The name a line is saved under: the card's, then which line it is. */
+export function cardLineName(cardName: string, line: CardLine, installmentsLabel: string): string {
+  return `${cardName} · ${cardLineLabel(line, installmentsLabel)}`;
+}
 
 export type CardLineSpec = {
-  key: CardLineKey;
-  currency: string;
+  line: CardLine;
   /** Form field holding this line's credit limit. */
   limitField: "credit_limit" | "usd_credit_limit" | "installments_credit_limit";
   /** Form field holding this line's balance owed. */
@@ -31,54 +56,31 @@ export type CardLineSpec = {
 };
 
 /**
- * The lines a card is saved as, or `[]` when it is an ordinary single-line card.
+ * The lines the account dialog's answers imply, or `[]` for an ordinary
+ * single-line card.
  *
- * An empty result is the signal that no group is needed at all, so callers can
- * branch on it instead of re-deriving "did either toggle get turned on".
+ * A card only gets the lines it was asked for — DOP + USD, DOP + Cuotas, or all
+ * three. Every grouped card has its DOP line: USD is the second currency of a
+ * peso card, and cuotas are billed in pesos. An empty result is the signal that
+ * no group is needed at all, so callers can branch on it instead of re-deriving
+ * "did either toggle get turned on".
  *
- * The primary line reuses the dialog's own `credit_limit`/`current_balance`
- * fields, so a card that only gained an installments line keeps asking for its
- * revolving limit in the same field it always did. When the card is
- * multi-currency the primary line IS the DOP one — the currency select is moot
- * at that point, since the pair is fixed.
+ * The DOP line reuses the dialog's own `credit_limit`/`current_balance` fields,
+ * so a card that only gained a cuotas line keeps asking for its revolving limit
+ * in the same field it always did.
  */
 export function cardLineSpecs({
   multiCurrency,
   installments,
-  currency,
 }: {
   multiCurrency: boolean;
   installments: boolean;
-  /** The dialog's currency select. Only used when the card is not multi-currency. */
-  currency: string;
 }): CardLineSpec[] {
   if (!multiCurrency && !installments) return [];
 
-  const specs: CardLineSpec[] = multiCurrency
-    ? [
-        { key: "primary", currency: MULTI_CURRENCY_CODES[0], limitField: "credit_limit", balanceField: "current_balance" },
-        { key: "usd", currency: MULTI_CURRENCY_CODES[1], limitField: "usd_credit_limit", balanceField: "usd_current_balance" },
-      ]
-    : [{ key: "primary", currency, limitField: "credit_limit", balanceField: "current_balance" }];
-
+  const specs: CardLineSpec[] = [{ line: "DOP", limitField: "credit_limit", balanceField: "current_balance" }];
+  if (multiCurrency) specs.push({ line: "USD", limitField: "usd_credit_limit", balanceField: "usd_current_balance" });
   if (installments)
-    specs.push({
-      key: "installments",
-      currency: INSTALLMENTS_CURRENCY,
-      limitField: "installments_credit_limit",
-      balanceField: "installments_current_balance",
-    });
-
+    specs.push({ line: "CUOTAS", limitField: "installments_credit_limit", balanceField: "installments_current_balance" });
   return specs;
-}
-
-/**
- * What a line is called once saved.
- *
- * The group carries the card's name, so a line only needs to say which line it
- * is. Currency alone won't do it: a card with installments carries two DOP
- * lines, and the group tile headlines the name, not the currency.
- */
-export function cardLineName(cardName: string, spec: CardLineSpec, installmentsLabel: string): string {
-  return `${cardName} · ${spec.key === "installments" ? installmentsLabel : spec.currency}`;
 }

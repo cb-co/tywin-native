@@ -5,11 +5,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TabHeader } from "~/components/shell/stack-options";
 import { BottomBand } from "~/components/shell/bottom-band";
 import { QuickAddFab } from "~/components/shell/quick-add-fab";
+import { FAB_GAP } from "~/components/ui/screen";
 import { usePrefetchTabs } from "~/lib/prefetch";
 import { useColors } from "~/theme/theme";
 
 /**
- * The phone shell: the paper header on top, the five-cell band on the bottom
+ * The phone shell: the paper header on top, the six-cell band on the bottom
  * edge, the quick-add seal above it. Every tab keeps its place when you leave it.
  * Accounts and Budgets are stacks of their own, so their detail pages keep the
  * band; the seal stays on the tabs' own pages, where the screens leave room for it.
@@ -38,7 +39,7 @@ export default function TabsLayout() {
         <Tabs.Screen name="budgets" options={{ headerShown: false }} />
         <Tabs.Screen name="insights" />
       </Tabs>
-      {pushed ? null : <QuickAddFab bottom={insets.bottom + 80} />}
+      {pushed ? null : <QuickAddFab bottom={insets.bottom + FAB_GAP} />}
     </View>
   );
 }

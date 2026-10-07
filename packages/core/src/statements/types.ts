@@ -1,3 +1,5 @@
+import type { CardCurrency, CardLine } from "../accounts/card-lines";
+
 /** `adjustment` is the odd one: a line the statement PRINTS but does not apply
  *  to its own closing balance (see validate.ts). Every other kind moves the
  *  balance by its amount. */
@@ -25,8 +27,9 @@ export interface ParsedLine {
 }
 
 export interface ParsedSection {
-  sectionKey: string;      // stable per parser: "DOP" | "USD" | "CUOTAS_DOP" | ...
-  currency: string;        // ISO 4217
+  /** Which of the card's fixed lines this section is billed to. */
+  sectionKey: CardLine;
+  currency: CardCurrency;  // always the line's own (cardLineCurrency)
   periodStart: string;     // ISO date
   periodEnd: string;       // ISO date (fecha de corte) — the anchor date
   dueDate: string | null;

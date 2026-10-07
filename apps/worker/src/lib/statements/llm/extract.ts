@@ -5,6 +5,7 @@ import { SYSTEM_PROMPT } from "./system-prompt";
 import { ddmmyyyyToIso, monthBeforePlusDay } from "../dates";
 import { movesBalance } from "../validate";
 import type { ParsedLine, ParsedSection, ParsedStatement } from "@cigua/core/statements/types";
+import { cardLineCurrency } from "@cigua/core/accounts/card-lines";
 
 export type LlmExtractResult =
   | { ok: true; statement: LlmStatement }
@@ -104,21 +105,6 @@ function isoDateOrNull(raw: string | null): string | null {
   }
 }
 
-/**
- * Derived, never transcribed.
- *
- * `sectionKey` is persisted in `statement_section_mappings` so that a future
- * import of the same card maps itself with no user input — which only works if
- * the key is byte-identical every time. It used to be a free string the model
- * built to a spec in the prompt, with the caller rewriting it when the model
- * put a currency symbol in; deriving it from two enum fields makes it
- * structurally impossible to vary. Reproduces the keys already saved for
- * existing cards ("DOP", "USD", "DOP_CUOTAS").
- */
-function sectionKeyFor(s: LlmSection): string {
-  return s.sectionKind === "installments" ? `${s.currency}_CUOTAS` : s.currency;
-}
-
 function toLine(l: LlmLine, index: number): ParsedLine {
   return {
     lineNo: index + 1,
@@ -159,8 +145,8 @@ function toSection(s: LlmSection): ParsedSection {
       : centsOrNull(s.totalCredits) ?? 0;
 
   return {
-    sectionKey: sectionKeyFor(s),
-    currency: s.currency,
+    sectionKey: s.line,
+    currency: cardLineCurrency(s.line),
     // Read off the statement when it printed a range; derived from the cutoff
     // date when it printed only that.
     periodStart: isoDateOrNull(s.periodStart) ?? monthBeforePlusDay(periodEnd),
@@ -191,9 +177,14 @@ function toSection(s: LlmSection): ParsedSection {
 }
 
 export function toParsedStatement(statement: LlmStatement): ParsedStatement {
-  // Built from the converted sections, not the raw ones: parserId keys the saved
-  // section mappings, so it has to be as stable as the currencies it embeds.
   const sections = statement.sections.map(toSection);
+  // A card has one of each line, and each section lands on its line — two
+  // sections claiming the same one would overwrite each other on import.
+  const seen = new Set<string>();
+  for (const s of sections) {
+    if (seen.has(s.sectionKey)) throw new Error(`two ${s.sectionKey} sections on one statement`);
+    seen.add(s.sectionKey);
+  }
   const currencies = [...new Set(sections.map((s) => s.currency))].sort();
   const parserId =
     `${statement.cardNetwork}_${statement.cardLast4 ?? "na"}_${currencies.join("")}`.toLowerCase();

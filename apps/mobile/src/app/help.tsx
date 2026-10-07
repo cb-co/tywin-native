@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "~/components/ui/icons";
 import { useTranslations } from "use-intl";
+import { TABS } from "@cigua/core/nav/tabs";
 import { Badge } from "~/components/ui/badge";
 import { Text } from "~/components/ui/text";
 import { HelpCallout, HelpChapter } from "~/components/help/chapter";
@@ -87,6 +88,7 @@ function Chips({ items }: { items: string[] }) {
 /** The guide: ten chapters, each with a still of the screen it explains, and a rail to jump between them. */
 export default function HelpScreen() {
   const t = useTranslations("Help");
+  const tTabs = useTranslations("Tabs");
   const tBudgets = useTranslations("Budgets");
   const tGroups = useTranslations("BudgetGroups");
   const tSubs = useTranslations("Subscriptions");
@@ -222,7 +224,7 @@ export default function HelpScreen() {
                   <Text legend tone="muted" style={{ fontSize: 10, marginBottom: 6 }}>
                     {t("mobileNavTitle")}
                   </Text>
-                  <Bullets items={[t("accountsTitle"), t("mobileNavActivity"), t("overviewTitle"), t("budgetsTitle"), t("insightsTitle")]} />
+                  <Bullets items={TABS.map((tab) => tTabs(tab.key))} />
                 </View>
                 <P>{t("navNote")}</P>
               </View>

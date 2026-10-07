@@ -8,18 +8,16 @@ import type { StatementPreviewResult } from "@cigua/worker/api";
 import type { ImportTarget } from "@cigua/core/statements/import-targets";
 import { collapseImportTargets } from "@cigua/core/statements/import-targets";
 import { sheetRows } from "@cigua/core/statements/sheet-rows";
-import { isInstallmentSection, suggestLineName } from "@cigua/core/statements/line-name";
-import { NAME_MAX_LENGTH } from "@cigua/core/accounts/schema";
+import { cardLineLabel } from "@cigua/core/accounts/card-lines";
 import { MAX_STATEMENT_BYTES } from "@cigua/core/statements/limits";
 import { formatDate, formatMoney } from "@cigua/core/format";
 import { callAction, confirmStatement, type PickedFile } from "~/lib/api";
 import { extractStatementText, readPdf } from "~/lib/statements/pdf-text";
-import { act, invalidateAfterImport } from "~/lib/query";
+import { invalidateAfterImport } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
-import { Field, Input, Label } from "~/components/ui/field";
+import { Input, Label } from "~/components/ui/field";
 import { Sheet } from "~/components/ui/overlay";
-import { Select } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Skeleton } from "~/components/ui/screen";
 import { Text } from "~/components/ui/text";
@@ -32,7 +30,8 @@ type Preview = NonNullable<StatementPreviewResult["preview"]>;
 
 /**
  * Statement import: which card, then the PDF, then a preview of every section as
- * the bank printed it, each mapped to one of the card's lines. The one place the
+ * the bank printed it. Each section lands on the card's line of the same name —
+ * DOP, USD or Cuotas — and one the card lacks is added on import. The one place the
  * app's numbers come from, so it is reachable from Overview, Accounts, a card and
  * onboarding alike.
  */
@@ -55,6 +54,7 @@ export function StatementImportSheet({
   openTriage?: boolean;
 }) {
   const t = useTranslations("Statements");
+  const tForm = useTranslations("AccountForm");
   const locale = useLocale();
   const s = useStyles();
   const { playSuccess, playError } = useFeedback();
@@ -64,7 +64,6 @@ export function StatementImportSheet({
   const [needsPassword, setNeedsPassword] = useState(false);
   const [passwordIncorrect, setPasswordIncorrect] = useState(false);
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [mappings, setMappings] = useState<Record<string, string>>({});
   const [excludeFromBudget, setExcludeFromBudget] = useState(true);
   const [parsedStatement, setParsedStatement] = useState<string | null>(null);
 
@@ -72,7 +71,6 @@ export function StatementImportSheet({
   const targetId = accountId ?? pickedId;
   const [targets, setTargets] = useState<ImportTarget[] | null>(null);
   const [targetsFailed, setTargetsFailed] = useState(false);
-  const [addingKey, setAddingKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || accountId || forceStub || targets !== null || targetsFailed) return;
@@ -98,12 +96,10 @@ export function StatementImportSheet({
     setNeedsPassword(false);
     setPasswordIncorrect(false);
     setParsedStatement(null);
-    setMappings({});
     setExcludeFromBudget(true);
     setPickedId(null);
     setTargets(null);
     setTargetsFailed(false);
-    setAddingKey(null);
   }
 
   const onParse = useCallback(
@@ -140,13 +136,6 @@ export function StatementImportSheet({
         setPasswordIncorrect(false);
         setPreview(result.preview);
         setParsedStatement(result.parsedStatement ?? null);
-        setMappings(
-          Object.fromEntries(
-            result.preview.sections
-              .map((sec) => [sec.sectionKey, sec.mappedAccountId ?? sec.suggestedAccountId ?? ""])
-              .filter(([, v]) => v),
-          ),
-        );
       } catch {
         toast.error(t("parseFailed"));
         playError();
@@ -203,7 +192,6 @@ export function StatementImportSheet({
       const fields: Record<string, string> = {
         file_name: preview.fileName,
         parsed_statement: parsedStatement,
-        mappings: JSON.stringify(mappings),
         exclude_from_budget: String(excludeFromBudget),
       };
       if (targetId) fields.account_id = targetId;
@@ -231,58 +219,6 @@ export function StatementImportSheet({
     }
   }
 
-  const allMapped = preview?.sections.every((sec) => mappings[sec.sectionKey]) ?? false;
-
-  /** Same currency, and not already claimed by a different section. Both the select and "stuck" read this. */
-  function availableOptions(sectionKey: string, currency: string) {
-    return (preview?.accountOptions ?? []).filter(
-      (a) =>
-        a.currency === currency &&
-        (mappings[sectionKey] === a.id || !Object.entries(mappings).some(([key, v]) => key !== sectionKey && v === a.id)),
-    );
-  }
-
-  const target = targets?.find((c) => c.id === targetId);
-  const cardName = (target?.groupName ?? target?.name ?? preview?.accountOptions[0]?.name ?? "").replace(/\s·\s[A-Z]{3}$/, "");
-
-  function suggestedLineName(sectionKey: string, currency: string) {
-    return suggestLineName({
-      cardName,
-      currency,
-      sectionKey,
-      takenNames: (preview?.accountOptions ?? []).map((a) => a.name),
-      maxLength: NAME_MAX_LENGTH,
-      format: (form, card, cur) =>
-        form === "plain"
-          ? t("lineNameSuggestion", { card, currency: cur })
-          : form === "installments"
-            ? t("lineNameInstallments", { card })
-            : t("lineNameInstallmentsCurrency", { card, currency: cur }),
-    });
-  }
-
-  /** The way out of a section no line of this card can take: add one, locally, without re-parsing. */
-  async function onAddLine(sectionKey: string, currency: string) {
-    if (!targetId) return;
-    const lineName = suggestedLineName(sectionKey, currency);
-    setAddingKey(sectionKey);
-    try {
-      const result = await act("accounts", "addCardLine", targetId, { name: lineName, currency });
-      const newId = result.id;
-      if (!newId) {
-        if (result.error) toast.error(result.error);
-        playError();
-        return;
-      }
-      setPreview((p) => (p ? { ...p, accountOptions: [...p.accountOptions, { id: newId, name: lineName, currency }] } : p));
-      setMappings((m) => ({ ...m, [sectionKey]: newId }));
-      toast.success(t("lineAdded"));
-      playSuccess();
-    } finally {
-      setAddingKey(null);
-    }
-  }
-
   function close() {
     resetForm();
     onClose();
@@ -304,7 +240,7 @@ export function StatementImportSheet({
             <Button variant="ghost" disabled={pending} onPress={close}>
               {t("cancelButton")}
             </Button>
-            <Button disabled={pending || addingKey !== null || !allMapped} isLoading={pending} onPress={onConfirm}>
+            <Button disabled={pending} isLoading={pending} onPress={onConfirm}>
               {t("confirmButton")}
             </Button>
           </>
@@ -312,7 +248,7 @@ export function StatementImportSheet({
       }
     >
       {!targetId && forceStub ? (
-        <ImportCardStubStep onCreated={setPickedId} submitLabel={t("stubSubmit")} defaultCurrency="" />
+        <ImportCardStubStep onCreated={setPickedId} submitLabel={t("stubSubmit")} />
       ) : null}
 
       {!targetId && !forceStub && targetsFailed ? (
@@ -344,7 +280,7 @@ export function StatementImportSheet({
 
       {!targetId && !forceStub && !targetsFailed && targets !== null ? (
         targets.length === 0 ? (
-          <ImportCardStubStep onCreated={setPickedId} submitLabel={t("stubSubmit")} defaultCurrency="" />
+          <ImportCardStubStep onCreated={setPickedId} submitLabel={t("stubSubmit")} />
         ) : (
           <View style={{ gap: 12 }}>
             <View style={{ gap: 4 }}>
@@ -417,14 +353,13 @@ export function StatementImportSheet({
       {preview ? (
         <View style={{ gap: 16 }}>
           {preview.sections.map((sec) => {
-            const available = availableOptions(sec.sectionKey, sec.currency);
-            const unmatched = available.length === 0;
+            const line = cardLineLabel(sec.sectionKey, tForm("lineInstallments"));
             return (
               <View key={sec.sectionKey} style={s.section}>
                 <View style={s.sectionHead}>
                   <View style={{ flexShrink: 1 }}>
                     <Text legend style={{ fontSize: 11 }}>
-                      {sec.sectionKey} · {sec.currency}
+                      {line}
                     </Text>
                     <Text size="xs" tone="muted">
                       {formatDate(sec.periodStart, locale)} → {formatDate(sec.periodEnd, locale)}
@@ -438,37 +373,11 @@ export function StatementImportSheet({
                 <Text size="xs" tone="muted">
                   {t("sectionSummary", { lines: sec.lineCount, skipped: sec.skippedCount })}
                 </Text>
-                <Field label={t("mapSectionLabel", { section: sec.sectionKey })}>
-                  <Select
-                    value={mappings[sec.sectionKey] || "none"}
-                    title={t("mapSectionLabel", { section: sec.sectionKey })}
-                    onValueChange={(v) => setMappings((m) => ({ ...m, [sec.sectionKey]: v === "none" ? "" : v }))}
-                    options={[
-                      // Clearing frees this section's claim so lines can be swapped without a deadlock.
-                      { value: "none", label: t("mapSectionNone") },
-                      ...available.map((a) => ({ value: a.id, label: `${a.name} · ${a.currency}` })),
-                    ]}
-                  />
-                </Field>
-                {unmatched ? (
-                  <View style={{ gap: 8 }}>
-                    <Text size="xs" tone="muted">
-                      {isInstallmentSection(sec.sectionKey)
-                        ? t("unmatchedInstallments")
-                        : t("unmatchedSection", { currency: sec.currency })}
-                    </Text>
-                    <Button
-                      variant="outline"
-                      disabled={pending || addingKey !== null}
-                      isLoading={addingKey === sec.sectionKey}
-                      onPress={() => void onAddLine(sec.sectionKey, sec.currency)}
-                    >
-                      {isInstallmentSection(sec.sectionKey)
-                        ? t("addLineInstallmentsButton")
-                        : t("addLineButton", { currency: sec.currency })}
-                    </Button>
-                  </View>
-                ) : null}
+                {sec.accountId ? null : (
+                  <Text size="xs" tone="muted">
+                    {t("sectionNewLine", { line })}
+                  </Text>
+                )}
               </View>
             );
           })}

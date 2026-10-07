@@ -19,12 +19,16 @@ vi.mock("#/lib/fx", async (importOriginal) => ({
 vi.mock("#/i18n", () => ({
   getTranslations: vi.fn(async () => (key: string) => key),
 }));
+vi.mock("#/lib/accounts/card-group", () => ({
+  addCardLines: vi.fn(async () => ({ groupId: "grp-new", ids: new Map([["CUOTAS", "acc-cuotas"]]) })),
+}));
 // The plan's monthly allowance: granted unless a test spends it.
 vi.mock("#/lib/plan", () => ({ takeQuota: vi.fn(async () => true) }));
 
-import { extractWithLLM } from "#/lib/statements/llm/extract";
+import { extractWithLLM, toParsedStatement } from "#/lib/statements/llm/extract";
 import { createClient } from "#/lib/supabase/server";
 import { takeQuota } from "#/lib/plan";
+import { addCardLines } from "#/lib/accounts/card-group";
 import { confirmStatementImport, listImportTargets, parseStatement } from "./statements";
 import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import {
@@ -69,6 +73,7 @@ function makeSupabaseStub(
     statement_closing_day: null,
     payment_due_day: null,
     card_group_id: null,
+    card_line: "DOP",
     type: "credit_card",
     ...accountOverrides,
   };
@@ -76,8 +81,6 @@ function makeSupabaseStub(
   const importInsert = vi.fn(async () => ({ error: null }));
   const byTable: Record<string, () => unknown> = {
     accounts: () => chainable({ data: account }, { update: accountUpdate }),
-    statement_section_mappings: () =>
-      chainable({ data: [] }, { upsert: vi.fn(() => Promise.resolve({ error: null })) }),
     categories: () => chainable({ data: [{ id: "cat-other", name: "Other" }] }),
     category_rules: () => chainable({ data: [] }),
     profiles: () => chainable({ data: { base_currency: "DOP" } }),
@@ -140,7 +143,6 @@ function buildConfirmFormData() {
   const fd = new FormData();
   fd.set("account_id", "acc-1");
   fd.set("file_name", "statement.pdf");
-  fd.set("mappings", JSON.stringify({ DOP: "acc-1" }));
   fd.set("parsed_statement", JSON.stringify(PARSED));
   return fd;
 }
@@ -236,6 +238,50 @@ describe("confirmStatementImport", () => {
     expect(result.importId).toBe("imp-1");
     expect(result.uncategorized).toBeGreaterThan(0);
   });
+
+  it("routes each section to the card's line of the same kind", async () => {
+    const stub = makeSupabaseStub();
+    (createClient as Mock).mockResolvedValue(stub);
+
+    await confirmStatementImport(buildConfirmFormData());
+
+    expect(addCardLines).not.toHaveBeenCalled();
+    const [, args] = stub.rpc.mock.calls[0] as unknown as [string, { p: { sections: { account_id: string; section_key: string }[] } }];
+    expect(args.p.sections.map((s) => [s.section_key, s.account_id])).toEqual([["DOP", "acc-1"]]);
+  });
+
+  it("adds the line a section needs and imports onto it", async () => {
+    const stub = makeSupabaseStub();
+    (createClient as Mock).mockResolvedValue(stub);
+    const fd = buildConfirmFormData();
+    const cuotas = { ...PARSED.sections[0], sectionKey: "CUOTAS" as const };
+    fd.set("parsed_statement", JSON.stringify({ ...PARSED, sections: [PARSED.sections[0], cuotas] }));
+
+    const result = await confirmStatementImport(fd);
+
+    expect(result.error).toBeUndefined();
+    expect((addCardLines as Mock).mock.calls[0][3]).toEqual(["CUOTAS"]);
+    const [, args] = stub.rpc.mock.calls[0] as unknown as [
+      string,
+      { p: { card_group_id: string; sections: { account_id: string; section_key: string }[] } },
+    ];
+    expect(args.p.card_group_id).toBe("grp-new");
+    expect(args.p.sections.map((s) => [s.section_key, s.account_id])).toEqual([
+      ["DOP", "acc-1"],
+      ["CUOTAS", "acc-cuotas"],
+    ]);
+  });
+
+  it("refuses a payload with a section on no known line, or two on one", async () => {
+    for (const sections of [
+      [{ ...PARSED.sections[0], sectionKey: "DOP_CUOTAS" }],
+      [PARSED.sections[0], PARSED.sections[0]],
+    ]) {
+      const fd = buildConfirmFormData();
+      fd.set("parsed_statement", JSON.stringify({ ...PARSED, sections }));
+      expect((await confirmStatementImport(fd)).error).toBe("invalidUpload");
+    }
+  });
 });
 
 describe("parseStatement", () => {
@@ -270,6 +316,19 @@ describe("parseStatement", () => {
     expect(result.error).toBe("unsupportedBank");
     // The model's own error is kept on the failed import, not a fixed string.
     expect(supabase.importInsert).toHaveBeenCalledWith(expect.objectContaining({ status: "failed_detection", error: "boom" }));
+  });
+
+  it("previews each section on its line, and a line the card lacks as one to add", async () => {
+    (extractWithLLM as unknown as Mock).mockResolvedValue({ ok: true, statement: {} });
+    const cuotas = { ...PARSED.sections[0], sectionKey: "CUOTAS" as const };
+    (toParsedStatement as unknown as Mock).mockReturnValue({ ...PARSED, sections: [PARSED.sections[0], cuotas] });
+
+    const result = await parseStatement(input("statement text"));
+
+    expect(result.preview?.sections.map((s) => [s.sectionKey, s.accountId])).toEqual([
+      ["DOP", "acc-1"],
+      ["CUOTAS", null],
+    ]);
   });
 
   it("refuses the model call once the plan's monthly imports are used up", async () => {

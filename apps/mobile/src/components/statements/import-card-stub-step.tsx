@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View } from "react-native";
 import { useTranslations } from "use-intl";
-import { DEFAULT_BASE_CURRENCY } from "@cigua/core/profile";
-import { callAction } from "~/lib/api";
+import { CARD_CURRENCIES, isCardCurrency, type CardCurrency } from "@cigua/core/accounts/card-lines";
 import { act } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
 import { Field, Input } from "~/components/ui/field";
-import { Select } from "~/components/ui/select";
+import { Segmented } from "~/components/ui/segmented";
 import { Text } from "~/components/ui/text";
 import { toast } from "~/components/ui/toast";
 
 /**
  * The three questions a card cannot be created without: its name, its currency
- * and, optionally, its last four digits. The limit, closing day and due day are
- * left to the first statement, which backfills exactly those. Standalone: the
+ * (DOP or USD) and, optionally, its last four digits. The limit, closing day and
+ * due day are left to the first statement, which backfills exactly those, and
+ * adds the card's other lines if the statement prints them. Standalone: the
  * import sheet and onboarding both mount it.
  */
 export function ImportCardStubStep({
@@ -24,43 +24,19 @@ export function ImportCardStubStep({
 }: {
   onCreated: (accountId: string) => void;
   submitLabel: string;
-  /** "" means no preference: the profile's base currency once the list loads. */
-  defaultCurrency: string;
+  /** The profile's base currency, when known. A card is DOP unless that says USD. */
+  defaultCurrency?: string;
 }) {
   const t = useTranslations("Statements");
   const { playSuccess, playError } = useFeedback();
   const [pending, setPending] = useState(false);
   const [name, setName] = useState("");
-  const [currency, setCurrency] = useState(defaultCurrency);
+  const [currency, setCurrency] = useState<CardCurrency>(isCardCurrency(defaultCurrency) ? defaultCurrency : "DOP");
   const [last4, setLast4] = useState("");
-  const [currencies, setCurrencies] = useState<{ code: string; name: string }[]>([]);
-  const [currenciesFailed, setCurrenciesFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void callAction("statements", "listStubCurrencies")
-      .then((result) => {
-        if (cancelled) return;
-        setCurrencies(result.currencies);
-        setCurrency((c) => c || result.baseCurrency);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        // Degraded, not stuck: the app-wide default stands in so the form still works.
-        setCurrenciesFailed(true);
-        setCurrency((c) => c || DEFAULT_BASE_CURRENCY);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const options =
-    !currency || currencies.some((c) => c.code === currency) ? currencies : [{ code: currency, name: currency }, ...currencies];
   const trimmed = name.trim();
 
   async function submit() {
-    if (!trimmed || !currency) return;
+    if (!trimmed) return;
     setPending(true);
     try {
       const result = await act("accounts", "createCardStub", { name: trimmed, currency, last4: last4 || undefined });
@@ -96,12 +72,12 @@ export function ImportCardStubStep({
           returnKeyType="next"
         />
       </Field>
-      <Field label={t("stubCurrencyLabel")} error={currenciesFailed ? t("currenciesFailed") : null}>
-        <Select
-          value={currency || null}
-          onValueChange={setCurrency}
-          title={t("stubCurrencyLabel")}
-          options={options.map((c) => ({ value: c.code, label: `${c.code} · ${c.name}` }))}
+      <Field label={t("stubCurrencyLabel")}>
+        <Segmented
+          value={currency}
+          onChange={setCurrency}
+          items={CARD_CURRENCIES.map((c) => ({ value: c, label: c }))}
+          accessibilityLabel={t("stubCurrencyLabel")}
         />
       </Field>
       <Field label={t("stubLast4Label")}>
@@ -114,7 +90,7 @@ export function ImportCardStubStep({
           onChangeText={(v) => setLast4(v.replace(/\D/g, "").slice(0, 4))}
         />
       </Field>
-      <Button onPress={submit} disabled={pending || !trimmed || !currency} isLoading={pending}>
+      <Button onPress={submit} disabled={pending || !trimmed} isLoading={pending}>
         {submitLabel}
       </Button>
     </View>

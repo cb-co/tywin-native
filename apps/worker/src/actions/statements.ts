@@ -7,18 +7,19 @@ import { centsToDecimal } from "#/lib/statements/money";
 import { MAX_STATEMENT_TEXT_CHARS } from "@cigua/core/statements/limits";
 import { takeStatementParseToken } from "#/lib/statements/rate-limit";
 import { takeQuota } from "#/lib/plan";
-import { suggestAccountMappings, type CardAccountOption } from "#/lib/statements/mapping";
+import { addCardLines } from "#/lib/accounts/card-group";
 import { cardBackfillFromSection } from "#/lib/statements/backfill";
 import { resolveCategoryId, type CategoryRuleRow } from "#/lib/statements/categorize";
 import { getCreditKinds } from "#/lib/statements/credit-kind-queries";
 import type { CreditKind } from "#/lib/statements/credit-kind";
 import { baseRate, getExchangeRates } from "#/lib/fx";
-import { baseCurrencyOf, DEFAULT_BASE_CURRENCY } from "@cigua/core/profile";
+import { baseCurrencyOf } from "@cigua/core/profile";
+import { isCardLine, type CardLine } from "@cigua/core/accounts/card-lines";
 import { becomesTransaction, type LineKind, type ParsedStatement } from "@cigua/core/statements/types";
 import type { ImportTarget } from "@cigua/core/statements/import-targets";
 
 export interface SectionPreview {
-  sectionKey: string;
+  sectionKey: CardLine;
   currency: string;
   periodStart: string;
   periodEnd: string;
@@ -31,8 +32,9 @@ export interface SectionPreview {
    *  and adjustments the statement never applied to its own balance. */
   skippedCount: number;
   creditLimit: string | null;
-  mappedAccountId: string | null;
-  suggestedAccountId: string | null;
+  /** The card's line this section imports onto, or null when the card has no
+   *  such line yet — confirming the import adds it. */
+  accountId: string | null;
 }
 export interface StatementPreviewResult {
   error?: string;
@@ -40,10 +42,7 @@ export interface StatementPreviewResult {
     parserId: string;
     cardLast4: string | null;
     fileName: string;
-    cardGroupId: string | null;
-    needsMapping: boolean;
     sections: SectionPreview[];
-    accountOptions: { id: string; name: string; currency: string }[];
   };
   /** JSON-serialized ParsedStatement. The client echoes this back on Import
    *  (confirmStatementImport) so confirm never re-reads the statement or re-calls
@@ -100,71 +99,42 @@ export async function listImportTargets(): Promise<ImportTarget[]> {
   }));
 }
 
-export type StubCurrencyOptions = {
-  /** The profile's base currency — what a card the user hasn't described yet
-   *  is most likely denominated in. */
-  baseCurrency: string;
-  currencies: { code: string; name: string }[];
+const LINE_COLUMNS =
+  "id,name,currency,credit_limit,statement_closing_day,payment_due_day,card_group_id,card_line,color,brand,last4";
+
+type CardLineRow = {
+  id: string;
+  name: string;
+  credit_limit: number | null;
+  statement_closing_day: number | null;
+  payment_due_day: number | null;
 };
 
-/**
- * The currency list the stub form offers, plus the currency to preselect.
- *
- * `getCurrencies` (lib/accounts/queries) is server-only and every other form
- * receives the list as a prop from its page. The stub step has no page of its
- * own — it is mounted inside a dialog that itself resolves its target — so it
- * reads the list through an action instead.
- */
-export async function listStubCurrencies(): Promise<StubCurrencyOptions> {
-  const { supabase, user } = await requireUser();
-  if (!user) return { baseCurrency: DEFAULT_BASE_CURRENCY, currencies: [] };
-  const [{ data: currencies }, { data: profile }] = await Promise.all([
-    supabase.from("currencies").select("code,name").order("code"),
-    supabase.from("profiles").select("base_currency").maybeSingle(),
-  ]);
-  return { baseCurrency: baseCurrencyOf(profile), currencies: currencies ?? [] };
-}
-
-/** Cheap half of the old runPipeline: account, card-group siblings, and saved
- *  section mappings for one card account + parser. No PDF/LLM work — safe to
- *  call on every parse AND every confirm. */
-async function loadAccountContext(supabase: Supabase, accountId: string, parserId: string) {
+/** The card a statement is being imported onto, and its lines by `card_line`.
+ *  No PDF/LLM work — safe to call on every parse AND every confirm. */
+async function loadAccountContext(supabase: Supabase, accountId: string) {
   const t = await getTranslations("Statements");
   const { data: account } = await supabase
     .from("accounts")
-    .select("id,name,currency,credit_limit,statement_closing_day,payment_due_day,card_group_id,type")
+    .select(`${LINE_COLUMNS},type`)
     .eq("id", accountId)
     .single();
   if (!account || account.type !== "credit_card") return { error: t("notACard") } as const;
 
-  let options: CardAccountOption[] = [
-    {
-      id: account.id,
-      name: account.name,
-      currency: account.currency,
-      credit_limit: account.credit_limit,
-      statement_closing_day: account.statement_closing_day,
-      payment_due_day: account.payment_due_day,
-    },
-  ];
+  let rows: Omit<typeof account, "type">[] = [account];
   if (account.card_group_id) {
     const { data: group } = await supabase
       .from("accounts")
-      .select("id,name,currency,credit_limit,statement_closing_day,payment_due_day")
+      .select(LINE_COLUMNS)
       .eq("card_group_id", account.card_group_id)
       .eq("type", "credit_card")
       .eq("is_archived", false);
-    if (group?.length) options = group;
+    if (group?.length) rows = group;
   }
+  const lines = new Map<CardLine, CardLineRow>();
+  for (const row of rows) if (isCardLine(row.card_line)) lines.set(row.card_line, row);
 
-  const { data: savedRows } = await supabase
-    .from("statement_section_mappings")
-    .select("section_key,account_id")
-    .eq("parser_id", parserId)
-    .eq("card_group_id", account.card_group_id ?? "00000000-0000-0000-0000-000000000000");
-  const saved = new Map((savedRows ?? []).map((m) => [m.section_key, m.account_id]));
-
-  return { account, options, saved } as const;
+  return { account, lines } as const;
 }
 
 /** What the app sends to read a statement: the text it pulled out of the PDF on
@@ -272,16 +242,11 @@ export async function parseStatement(raw: unknown): Promise<StatementPreviewResu
   if ("error" in ctx) return { error: ctx.error };
   const { supabase, parsed, fileName } = ctx;
 
-  const accountCtx = await loadAccountContext(supabase, accountId, parsed.parserId);
+  const accountCtx = await loadAccountContext(supabase, accountId);
   if ("error" in accountCtx) return { error: accountCtx.error };
-  const { account, options, saved } = accountCtx;
-
-  const suggestions = suggestAccountMappings(parsed.sections, saved, options);
+  const { lines } = accountCtx;
 
   const sections: SectionPreview[] = parsed.sections.map((s) => {
-    const mapped =
-      saved.get(s.sectionKey) ??
-      (parsed.sections.length === 1 && options.length === 1 ? options[0].id : null);
     return {
       sectionKey: s.sectionKey,
       currency: s.currency,
@@ -293,8 +258,7 @@ export async function parseStatement(raw: unknown): Promise<StatementPreviewResu
       lineCount: s.lines.filter((l) => becomesTransaction(l.kind)).length,
       skippedCount: s.lines.filter((l) => !becomesTransaction(l.kind)).length,
       creditLimit: s.creditLimitCents === null ? null : centsToDecimal(s.creditLimitCents),
-      mappedAccountId: mapped,
-      suggestedAccountId: mapped ?? suggestions.get(s.sectionKey) ?? null,
+      accountId: lines.get(s.sectionKey)?.id ?? null,
     };
   });
 
@@ -303,19 +267,15 @@ export async function parseStatement(raw: unknown): Promise<StatementPreviewResu
       parserId: parsed.parserId,
       cardLast4: parsed.cardLast4,
       fileName,
-      cardGroupId: account.card_group_id,
-      needsMapping: sections.some((s) => !s.mappedAccountId),
       sections,
-      accountOptions: options.map(({ id, name, currency }) => ({ id, name, currency })),
     },
     parsedStatement: JSON.stringify(parsed),
   };
 }
 
-/** Lightweight shape guard for the client-echoed parsed statement — same
- *  spirit as the `mappings` JSON guard below: not a new trust boundary (a
- *  caller could already forge arbitrary FormData today), just protects
- *  against a corrupted/stale payload crashing the RPC downstream. */
+/** Lightweight shape guard for the client-echoed parsed statement — not a new
+ *  trust boundary (a caller could already forge arbitrary FormData today), just
+ *  protects against a corrupted/stale payload crashing the RPC downstream. */
 function parseIncomingStatement(raw: string): ParsedStatement | null {
   let value: unknown;
   try {
@@ -331,6 +291,10 @@ function parseIncomingStatement(raw: string): ParsedStatement | null {
   ) {
     return null;
   }
+  // Each section is one of the card's lines, and no line twice: the section key
+  // is what routes it.
+  const keys = (value as ParsedStatement).sections.map((s) => s?.sectionKey);
+  if (!keys.every(isCardLine) || new Set(keys).size !== keys.length) return null;
   return value as ParsedStatement;
 }
 
@@ -354,36 +318,23 @@ export async function confirmStatementImport(
     return { error: t("checksumFailed", { detail: failures.map((f) => f.sectionKey).join(", ") }) };
   }
 
-  const accountCtx = await loadAccountContext(supabase, accountId, parsed.parserId);
+  const accountCtx = await loadAccountContext(supabase, accountId);
   if ("error" in accountCtx) return { error: accountCtx.error };
-  const { account, options } = accountCtx;
+  const { account, lines } = accountCtx;
+  let cardGroupId = account.card_group_id;
 
-  let mappings: Record<string, string>;
-  try {
-    const raw: unknown = JSON.parse(String(formData.get("mappings") ?? "{}"));
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("not an object");
-    mappings = Object.fromEntries(
-      Object.entries(raw as Record<string, unknown>).filter(([, v]) => typeof v === "string"),
-    ) as Record<string, string>;
-  } catch {
-    return { error: t("invalidUpload") };
+  /* A section the card has no line for yet brings its line with it: the preview
+     said so, and confirming is the go-ahead. */
+  const missing = parsed.sections.map((s) => s.sectionKey).filter((line) => !lines.has(line));
+  if (missing.length > 0) {
+    const tForm = await getTranslations("AccountForm");
+    const added = await addCardLines(supabase, user.id, account, missing, tForm("lineInstallments"));
+    if ("error" in added) return { error: await dbError(added.error, "confirmStatementImport") };
+    cardGroupId = added.groupId;
+    for (const [line, id] of added.ids)
+      lines.set(line, { id, name: "", credit_limit: null, statement_closing_day: null, payment_due_day: null });
   }
-  const optionById = new Map(options.map((o) => [o.id, o]));
-
-  // Every section must land on a currency-matching card the user owns.
-  for (const s of parsed.sections) {
-    const target = mappings[s.sectionKey];
-    const opt = target ? optionById.get(target) : undefined;
-    if (!opt) return { error: t("unmappedSection", { section: s.sectionKey }) };
-    if (opt.currency !== s.currency)
-      return { error: t("currencyMismatch", { section: s.sectionKey, currency: s.currency }) };
-  }
-
-  // Two sections mapped to the same account would each delete-by-(account,
-  // period_end) in the RPC, so the second section's import silently destroys
-  // the first's — reject the duplicate before it ever reaches the database.
-  const mappedIds = parsed.sections.map((s) => mappings[s.sectionKey]);
-  if (new Set(mappedIds).size !== mappedIds.length) return { error: t("duplicateMapping") };
+  const lineFor = (s: { sectionKey: CardLine }) => lines.get(s.sectionKey)!;
 
   // Category resolution inputs.
   const [{ data: cats }, { data: ruleRows }, { data: profile }] = await Promise.all([
@@ -398,7 +349,7 @@ export async function confirmStatementImport(
 
   const payload = {
     parser_id: parsed.parserId,
-    card_group_id: account.card_group_id ?? "",
+    card_group_id: cardGroupId ?? "",
     file_name: fileName,
     file_path: "",
     exclude_from_budget: excludeFromBudget,
@@ -406,7 +357,7 @@ export async function confirmStatementImport(
       const rate = baseRate(s.currency, baseCurrency, rates);
       const fxFallback = s.currency !== baseCurrency && !rates[s.currency];
       return {
-        account_id: mappings[s.sectionKey],
+        account_id: lineFor(s).id,
         section_key: s.sectionKey,
         period_start: s.periodStart,
         period_end: s.periodEnd,
@@ -460,12 +411,11 @@ export async function confirmStatementImport(
 
   /* What the issuer printed, written back onto the card. A stub created during
      import arrives with no closing day, due day or limit — this is where it stops
-     being a stub. Each mapped account is filled from its own section: on a grouped
-     card the DOP line may be a sibling, and each line carries its own limit.
+     being a stub. Each line is filled from its own section: on a grouped card the
+     DOP line may be a sibling, and each line carries its own limit.
      Fills nulls only; see lib/statements/backfill.ts. */
   for (const s of parsed.sections) {
-    const target = optionById.get(mappings[s.sectionKey]);
-    if (!target) continue;
+    const target = lineFor(s);
     const patch = cardBackfillFromSection(
       {
         statement_closing_day: target.statement_closing_day ?? null,
@@ -476,23 +426,6 @@ export async function confirmStatementImport(
     );
     if (Object.keys(patch).length === 0) continue;
     await supabase.from("accounts").update(patch).eq("id", target.id);
-  }
-
-  // Remember confirmed mappings for zero-touch future imports.
-  if (account.card_group_id) {
-    const cardGroupId = account.card_group_id;
-    for (const s of parsed.sections) {
-      await supabase.from("statement_section_mappings").upsert(
-        {
-          user_id: user.id,
-          parser_id: parsed.parserId,
-          card_group_id: cardGroupId,
-          section_key: s.sectionKey,
-          account_id: mappings[s.sectionKey],
-        },
-        { onConflict: "user_id,parser_id,card_group_id,section_key" },
-      );
-    }
   }
 
   // Counted from the payload rather than re-read from the database: this is the

@@ -5,6 +5,7 @@ import { useTranslations } from "use-intl";
 import type { AccountWithStatus } from "@cigua/worker/api";
 import { inferLast4, inferNetwork } from "@cigua/core/accounts/network";
 import { formatPercent } from "@cigua/core/format";
+import { cardLineLabel, compareCardLines, isCardLine } from "@cigua/core/accounts/card-lines";
 import { Card } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
 import { CardFace } from "~/components/papel/card-face";
@@ -12,15 +13,15 @@ import { MoneyDisplay } from "~/components/money/money-display";
 import { useColors } from "~/theme/theme";
 
 /**
- * The currency lines of one physical card as a single tile: the face once, then a
- * row per line. The face opens the line in the person's own currency; each row
- * opens its own line.
+ * The lines of one physical card as a single tile: the face once, then a row per
+ * line, always DOP, USD, Cuotas. The face opens the line in the person's own
+ * currency; each row opens its own line.
  */
 export function CardGroupTile({
   name,
   brand,
   artColor,
-  accounts,
+  accounts: unsorted,
   baseCurrency,
 }: {
   name: string;
@@ -30,7 +31,9 @@ export function CardGroupTile({
   baseCurrency: string;
 }) {
   const t = useTranslations("Accounts");
+  const tf = useTranslations("AccountForm");
   const c = useColors();
+  const accounts = [...unsorted].sort((a, b) => compareCardLines(a.card_line, b.card_line));
   const network = inferNetwork(name, brand);
   const last4 = accounts.map((a) => inferLast4(a.name, a.last4)).find((v) => v !== null) ?? inferLast4(name);
   const primary = accounts.find((a) => a.currency === baseCurrency) ?? accounts[0];
@@ -58,7 +61,7 @@ export function CardGroupTile({
             >
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text size="sm" weight={500} numberOfLines={1}>
-                  {a.name}
+                  {isCardLine(a.card_line) ? cardLineLabel(a.card_line, tf("lineInstallments")) : a.name}
                 </Text>
                 <Text size="xs" tone="muted">
                   {util !== null ? t("usedPercent", { pct: formatPercent(util), currency: a.currency }) : a.currency}

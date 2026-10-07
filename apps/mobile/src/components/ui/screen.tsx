@@ -9,8 +9,12 @@ import { useReduceMotion } from "~/components/papel/guilloche";
 import { makeStyles, useColors } from "~/theme/theme";
 import { scale, type Size } from "~/theme/fonts";
 
-/** Room the tab screens leave for the bottom band and the quick-add seal above it. */
-export const TAB_CLEARANCE = 152;
+/** How far the quick-add seal's foot sits above the bottom safe-area edge: the band, plus a gap. */
+export const FAB_GAP = 76;
+
+/** Room the tab screens leave above the band so their last row clears the seal:
+ *  its top (FAB_GAP + 56 − the band's 60) plus a breath of paper. */
+export const TAB_CLEARANCE = 120;
 
 /**
  * A screen's scrolling sheet of paper. Pull to refresh re-reads the screen; the
