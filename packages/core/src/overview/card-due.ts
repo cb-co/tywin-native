@@ -27,3 +27,30 @@ export function cardAmountDue(
   const due = statementBalance != null ? Number(statementBalance) - paidSinceStatement : Number(owed ?? 0);
   return due >= 0.01 ? due : null;
 }
+
+/** A card's statement split into the two figures that matter before its due
+ *  date. Both are in the card's own currency and both count down as you pay. */
+export type CardDue = {
+  /** The cutoff balance still standing: {@link cardAmountDue}. */
+  balance: number;
+  /** What is left of the printed minimum, clamped to `balance`; 0 once
+   *  payments since the statement cover it. Null when there is no statement or
+   *  the bank printed no minimum — never inferred from a percentage. */
+  minimum: number | null;
+};
+
+/** The minimum is the real deadline (miss it and the bank charges a late fee
+ *  and reports it); the rest of the cutoff balance only decides whether
+ *  interest accrues. Null once the statement is settled, like cardAmountDue. */
+export function cardDue(
+  statementBalance: number | null,
+  owed: number | null,
+  paidSinceStatement: number,
+  minimumPayment: number | null,
+): CardDue | null {
+  const balance = cardAmountDue(statementBalance, owed, paidSinceStatement);
+  if (balance == null) return null;
+  if (statementBalance == null || minimumPayment == null) return { balance, minimum: null };
+  const left = Math.min(Math.max(Number(minimumPayment) - paidSinceStatement, 0), balance);
+  return { balance, minimum: left >= 0.01 ? left : 0 };
+}

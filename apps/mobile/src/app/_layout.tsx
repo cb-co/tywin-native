@@ -13,6 +13,7 @@ import { FeedbackProvider } from "~/lib/feedback";
 import { Toaster } from "~/components/ui/toast";
 import { ScreenError } from "~/components/ui/screen";
 import { face } from "~/theme/fonts";
+import { cancelReminders } from "~/lib/reminders/native";
 
 void SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -53,6 +54,11 @@ function RootNavigator() {
   useEffect(() => {
     if (!deciding) void SplashScreen.hideAsync().catch(() => {});
   }, [deciding]);
+
+  // Reminders carry the last person's figures: they go with them on sign-out.
+  useEffect(() => {
+    if (session.status === "signedOut") void cancelReminders();
+  }, [session.status]);
 
   if (deciding) return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   if (signedIn && !profile.data && profile.isError) return <ScreenError onRetry={() => void profile.refetch()} />;

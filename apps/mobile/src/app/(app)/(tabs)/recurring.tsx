@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { View } from "react-native";
 import { Plus } from "~/components/ui/icons";
 import { useTranslations } from "use-intl";
@@ -15,6 +16,9 @@ export default function RecurringScreen() {
   const quickAdd = useScreen("quickAdd");
   const [adding, setAdding] = useState(false);
   const settled = useSettled();
+  // `?record=<id>` is where a reminder's Record button lands when the charge
+  // needs a figure only the person knows: its record sheet opens on arrival.
+  const { record } = useLocalSearchParams<{ record?: string }>();
 
   if (!recurring.data || !quickAdd.data || !settled) {
     return (!recurring.data && recurring.isError) || (!quickAdd.data && quickAdd.isError) ? (
@@ -35,7 +39,12 @@ export default function RecurringScreen() {
           </Button>
         }
       />
-      <SubscriptionsView subscriptions={recurring.data.subscriptions} data={quickAdd.data} />
+      <SubscriptionsView
+        subscriptions={recurring.data.subscriptions}
+        data={quickAdd.data}
+        recordId={record}
+        onRecordOpened={() => router.setParams({ record: undefined })}
+      />
       <SubscriptionFormSheet mode="create" data={quickAdd.data} open={adding} onClose={() => setAdding(false)} />
     </Screen>
   );

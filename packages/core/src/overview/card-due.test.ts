@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardAmountDue, dayAfter } from "./card-due";
+import { cardAmountDue, cardDue, dayAfter } from "./card-due";
 
 describe("dayAfter", () => {
   it("advances one day", () => {
@@ -36,5 +36,28 @@ describe("cardAmountDue", () => {
   });
   it("ignores payments when there is no statement — owed is already net", () => {
     expect(cardAmountDue(null, 1500, 9999)).toBe(1500);
+  });
+});
+
+describe("cardDue", () => {
+  it("leads with the printed minimum while nothing has been paid", () => {
+    expect(cardDue(40000, 45000, 0, 6750)).toEqual({ balance: 40000, minimum: 6750 });
+  });
+  it("counts the minimum down with payments made since the statement", () => {
+    expect(cardDue(40000, 45000, 5000, 6750)).toEqual({ balance: 35000, minimum: 1750 });
+  });
+  it("reports the minimum as met once payments cover it, with the rest of the balance still standing", () => {
+    expect(cardDue(40000, 45000, 6750, 6750)).toEqual({ balance: 33250, minimum: 0 });
+    expect(cardDue(40000, 45000, 38000, 6750)).toEqual({ balance: 2000, minimum: 0 });
+  });
+  it("clamps the minimum to the balance left", () => {
+    expect(cardDue(1000, 1000, 0, 6750)).toEqual({ balance: 1000, minimum: 1000 });
+  });
+  it("has no minimum when the bank printed none, or there is no statement", () => {
+    expect(cardDue(40000, 45000, 0, null)).toEqual({ balance: 40000, minimum: null });
+    expect(cardDue(null, 1500, 0, 6750)).toEqual({ balance: 1500, minimum: null });
+  });
+  it("is null once the statement is settled", () => {
+    expect(cardDue(40000, 5000, 40000, 6750)).toBeNull();
   });
 });

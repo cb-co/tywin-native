@@ -95,16 +95,39 @@ describe("computeAvailable · the card leg", () => {
     expect(r.cardBasis).toEqual([{ accountId: "c1", name: "Popular", basis: "full" }]);
   });
 
-  it("clamps the minimum to what is actually still owed", () => {
-    // Statement 40000, already paid 38000, printed minimum 6750. You owe 2000,
-    // not 6750 — subtracting the printed figure would invent debt.
+  it("counts payments since the statement toward the minimum", () => {
+    // Statement 40000, printed minimum 6750, 5000 paid since. 1750 of the
+    // minimum is left — taking the printed 6750 off would count 5000 twice.
+    const r = computeAvailable({
+      ...base,
+      accounts: [acct("checking", 50000)],
+      cards: [card({ paidSinceStatement: 5000, minimumPayment: 6750 })],
+    });
+    expect(r.cardsMinimum).toBe(1750);
+    expect(r.cardsFull).toBe(35000);
+  });
+
+  it("takes nothing off on the minimum basis once the minimum is paid", () => {
+    // Statement 40000, already paid 38000, printed minimum 6750. The minimum
+    // is met; the 2000 left is the full-basis line's business.
     const r = computeAvailable({
       ...base,
       accounts: [acct("checking", 50000)],
       cards: [card({ paidSinceStatement: 38000, minimumPayment: 6750 })],
     });
-    expect(r.cardsMinimum).toBe(2000);
+    expect(r.cardsMinimum).toBe(0);
     expect(r.cardsFull).toBe(2000);
+    expect(r.cardBasis).toEqual([{ accountId: "c1", name: "Popular", basis: "minimum" }]);
+  });
+
+  it("clamps the minimum to what is actually still owed", () => {
+    // Statement 3000, printed minimum 6750: you cannot owe more than the 3000.
+    const r = computeAvailable({
+      ...base,
+      accounts: [acct("checking", 50000)],
+      cards: [card({ statementBalance: 3000, minimumPayment: 6750 })],
+    });
+    expect(r.cardsMinimum).toBe(3000);
   });
 
   it("drops a settled card entirely", () => {

@@ -7,7 +7,7 @@
  * client — same split as card-due.ts. Every input here is a row getOverview
  * already fetches; this file composes, it does not query.
  */
-import { cardAmountDue } from "@cigua/core/overview/card-due";
+import { cardDue } from "@cigua/core/overview/card-due";
 
 /** Cash-like accounts only. An investment position and a car are net worth,
  *  not money you can spend before payday — the audit's "it includes a car". */
@@ -96,16 +96,16 @@ export function computeAvailable(input: AvailableInput): Available {
   for (const c of input.cards) {
     // Null once settled — a paid-off card contributes nothing and is not
     // listed, exactly as it drops off the Upcoming list.
-    const due = cardAmountDue(c.statementBalance, c.owed, c.paidSinceStatement);
+    const due = cardDue(c.statementBalance, c.owed, c.paidSinceStatement, c.minimumPayment);
     if (due == null) continue;
 
-    // Clamp to what is still owed: a user who has already paid below the
-    // printed minimum owes the remainder, not the printed figure.
-    const hasMinimum = c.minimumPayment != null;
-    const minimum = hasMinimum ? Math.min(Number(c.minimumPayment), due) : due;
+    // What is left of the minimum, the same figure the Upcoming row leads
+    // with: payments since the statement count toward it, so a minimum already
+    // paid is not taken off the hero a second time.
+    const hasMinimum = due.minimum != null;
 
-    cardsFull += toBase(due, c.currency);
-    cardsMinimum += toBase(minimum, c.currency);
+    cardsFull += toBase(due.balance, c.currency);
+    cardsMinimum += toBase(due.minimum ?? due.balance, c.currency);
     cardBasis.push({
       accountId: c.accountId,
       name: c.name,

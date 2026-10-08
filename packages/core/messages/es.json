@@ -107,7 +107,15 @@
     "importCalloutCta": "Importar estado de cuenta",
     "quincenaEdgeLabel": "Día {day} de {total}, día de pago {date}",
     "quincenaToday": "Hoy",
-    "availableOver": "Comprometido por encima de tu saldo"
+    "availableOver": "Comprometido por encima de tu saldo",
+    "upcomingCardMinimum": "Mínimo · saldo al corte {balance}",
+    "upcomingCardMinimumPaid": "Mínimo pagado · resto del saldo al corte",
+    "upcomingCardStatement": "Saldo al corte",
+    "upcomingOverdue": "Atrasado · {date}",
+    "remindersAskTitle": "Recibe un aviso antes de que venzan tus pagos",
+    "remindersAskBody": "Mínimos de tarjetas, cuotas de préstamos y cargos recurrentes, en este teléfono. Lo ya pagado se omite.",
+    "remindersAskEnable": "Activar",
+    "remindersAskLater": "Ahora no"
   },
   "AccountTypes": {
     "checking": "Cuenta corriente",
@@ -150,7 +158,8 @@
     "attentionTitle": "Necesita revisión",
     "attentionOverdue": "Atrasada",
     "attentionDueSoon": "Vence {date}",
-    "attentionUntriaged": "{count} sin categorizar"
+    "attentionUntriaged": "{count} sin categorizar",
+    "attentionMinimum": "Mínimo · corte {balance}"
   },
   "AccountDetail": {
     "cardLinesLabel": "Líneas de esta tarjeta",
@@ -790,7 +799,25 @@
     "exportButton": "Exportar",
     "exportRateLimited": "Acabas de exportar tus datos. Vuelve a intentarlo en unos minutos.",
     "exportFailed": "No se pudo guardar la exportación. Inténtalo de nuevo.",
-    "deleteAppleCancelled": "Confirma con Apple para terminar de eliminar tu cuenta."
+    "deleteAppleCancelled": "Confirma con Apple para terminar de eliminar tu cuenta.",
+    "remindersTitle": "Recordatorios de pagos",
+    "remindersDescription": "Un aviso en este teléfono antes de que venzan mínimos de tarjetas, cuotas y cargos recurrentes. Lo que ya registraste como pagado se omite.",
+    "remindersDenied": "Las notificaciones de Cigua están desactivadas en los ajustes del teléfono.",
+    "remindersOpenSettings": "Abrir ajustes",
+    "remindersHourTitle": "Hora",
+    "remindersHourDescription": "Cuándo llegan los recordatorios.",
+    "reminderCardsTitle": "Pagos de tarjetas",
+    "reminderCardsDescription": "3 días antes, el mismo día, y al día siguiente si el mínimo sigue sin pagar.",
+    "reminderLoansTitle": "Cuotas de préstamos",
+    "reminderLoansDescription": "2 días antes de cada cuota.",
+    "reminderRecurringTitle": "Pagos recurrentes",
+    "reminderRecurringDescription": "El mismo día, con un botón para registrarlo.",
+    "reminderStatementsTitle": "Estados por importar",
+    "reminderStatementsDescription": "Unos días después del corte de cada tarjeta.",
+    "reminderBonusTitle": "Plazos de bonos de bienvenida",
+    "reminderBonusDescription": "2 semanas y 3 días antes, mientras falte consumo.",
+    "reminderPaydayTitle": "Día de pago",
+    "reminderPaydayDescription": "La mañana en que cobras, un enlace a lo disponible."
   },
   "Rules": {
     "pageTitle": "Reglas de categorías",
@@ -1129,7 +1156,7 @@
     "overviewAvailable": "Disponible — la cifra grande impresa en el billete de peso: lo que aún puedes gastar antes de tu próximo pago, después de todo lo que ya está comprometido. Las filas de abajo muestran cómo se suma, y una línea de tiempo en el borde inferior marca la quincena desde su inicio hasta el día de pago, con hoy señalado.",
     "overviewNetWorth": "Patrimonio neto — una línea más pequeña en el mismo billete: lo que posees menos lo que debes, no lo que puedes gastar hoy.",
     "overviewStats": "Este período — una tabla rayada que cuelga del billete por una línea punteada: ingresos, pagado y presupuesto usado hasta ahora, con una regla que mide el presupuesto.",
-    "overviewUpcoming": "Próximos — un libro de lo que se viene, una fila por cada uno, con la fecha junto al monto: cargos de suscripciones y pagos de préstamos.",
+    "overviewUpcoming": "Próximos — un libro de lo que se viene, una fila por cada uno, con la fecha junto al monto: pagos de tarjetas, cuotas de préstamos y cargos recurrentes. Una tarjeta muestra el mínimo que falta, con su saldo al corte al lado; lo que ya registraste como pagado pasa a su próxima fecha.",
     "overviewZeroState": "¿Aún no tienes cuentas? Resumen muestra un billete violeta con Importar un estado de cuenta primero, y luego enlaces de inicio a Cuentas, Presupuestos y Suscripciones, en vez de una pantalla vacía.",
     "overviewFxWarning": "Si no se pueden obtener las tasas de cambio, Inicio e Insights lo avisan: los saldos en otras monedas se cuentan 1:1 hasta que vuelvan las tasas, y el aviso indica cuáles monedas están afectadas.",
     "disponibleTitle": "Cómo se calcula Disponible",
@@ -1358,5 +1385,27 @@
     "houseAdTitle": "Quita los anuncios con Cigua Pro",
     "houseAdBody": "Más tarjetas, cuentas y preguntas, y sin anuncios.",
     "houseAdCta": "Ver Cigua Pro"
+  },
+  "Notifications": {
+    "cardDueSoonTitle": "{name} vence el {date}",
+    "cardDueTodayTitle": "{name} vence hoy",
+    "cardMinimumBody": "Mínimo {amount} · saldo al corte {balance}",
+    "cardBalanceBody": "Saldo al corte {amount}",
+    "cardMissedTitle": "¿Pagaste {name}?",
+    "cardMissedBody": "{amount} vencía ayer. ¿Ya pagaste? Regístralo para que Cigua esté al día.",
+    "loanTitle": "Cuota de {name}: vence el {date}",
+    "loanBody": "{amount}. ¿Ya pagaste? Regístralo y este recordatorio desaparece.",
+    "recurringTitle": "{name} hoy",
+    "recurringBody": "{amount}. Regístralo para que tus saldos estén al día.",
+    "recordAction": "Registrar",
+    "statementTitle": "Ya debe estar el estado de {name}",
+    "statementBody": "Impórtalo para poner al día pagos, gastos y vencimientos.",
+    "bonusTitle": "El bono de bienvenida de {name} vence el {date}",
+    "bonusBody": "Te faltan {amount} en consumos para lograrlo.",
+    "paydayTitle": "Día de pago",
+    "paydayBody": "Mira cuánto tienes disponible hasta el {date}.",
+    "recorded": "{name} registrado",
+    "alreadyRecorded": "{name} ya estaba registrado",
+    "channelName": "Recordatorios de pagos"
   }
 }

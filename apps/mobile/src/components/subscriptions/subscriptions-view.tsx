@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { Pencil, Receipt, Repeat, Trash2 } from "~/components/ui/icons";
 import { useLocale, useTranslations } from "use-intl";
@@ -7,6 +7,7 @@ import { monthlyEquivalent, nextChargeDate, type BillingCycle } from "@cigua/cor
 import { recurringTotals } from "@cigua/core/subscriptions/totals";
 import { chargeCrossesCurrency } from "@cigua/core/subscriptions/charge";
 import { orderByNext } from "@cigua/core/subscriptions/order";
+import { formatDate } from "@cigua/core/format";
 import { act } from "~/lib/query";
 import { useFeedback } from "~/lib/feedback";
 import { Button } from "~/components/ui/button";
@@ -41,7 +42,18 @@ function chargeLegs(sub: SubscriptionWithRefs) {
  * Two ruled totals (money out and money in, at one size), then the templates,
  * next charge first. Income and the rest print as two bands only when both exist.
  */
-export function SubscriptionsView({ subscriptions, data }: { subscriptions: SubscriptionWithRefs[]; data: QuickAddData }) {
+export function SubscriptionsView({
+  subscriptions,
+  data,
+  recordId,
+  onRecordOpened,
+}: {
+  subscriptions: SubscriptionWithRefs[];
+  data: QuickAddData;
+  /** Opens this template's record sheet once, as a reminder asks. */
+  recordId?: string;
+  onRecordOpened?: () => void;
+}) {
   const t = useTranslations("Subscriptions");
   const tType = useTranslations("TransactionTypes");
   const tCycle = useTranslations("BillingCycles");
@@ -53,14 +65,23 @@ export function SubscriptionsView({ subscriptions, data }: { subscriptions: Subs
   const [editing, setEditing] = useState<SubscriptionWithRefs | null>(null);
   const [recording, setRecording] = useState<SubscriptionWithRefs | null>(null);
 
+  useEffect(() => {
+    if (!recordId) return;
+    const sub = subscriptions.find((x) => x.id === recordId);
+    if (sub) setRecording(sub);
+    onRecordOpened?.();
+  }, [recordId, subscriptions, onRecordOpened]);
+
   const totals = useMemo(() => recurringTotals(subscriptions, data.baseCurrency, data.rates), [subscriptions, data.baseCurrency, data.rates]);
-  const dateFmt = useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }), [locale]);
+  // The server's next unrecorded date: a charge recorded early moves it on. A
+  // screen saved before it existed falls back to the bare schedule.
   const nextLabel = useCallback(
     (sub: SubscriptionWithRefs) => {
+      if (sub.next_due !== undefined) return sub.next_due ? formatDate(sub.next_due, locale, { month: "short", day: "numeric" }) : "—";
       const d = nextChargeDate({ cycle: sub.billing_cycle as BillingCycle, anchorDay: sub.anchor_day, anchorDate: sub.anchor_date });
-      return d ? dateFmt.format(d) : "—";
+      return d ? new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(d) : "—";
     },
-    [dateFmt],
+    [locale],
   );
 
   const incomeSubs = orderByNext(subscriptions.filter((x) => x.kind === "income"));

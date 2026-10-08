@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { orderByNext } from "./order";
+import { orderByNext, type OrderableSub } from "./order";
 
-const sub = (name: string, over: Partial<{ is_active: boolean; billing_cycle: string; anchor_day: number | null; anchor_date: string | null }> = {}) => ({
+const sub = (name: string, over: Partial<OrderableSub> = {}) => ({
   name,
   is_active: true,
   billing_cycle: "monthly",
@@ -26,5 +26,12 @@ describe("orderByNext", () => {
     const out = orderByNext(input, from);
     expect(out.map((s) => s.name)).toEqual(["a", "b"]);
     expect(out).not.toBe(input);
+  });
+  it("prefers the server's next unrecorded date: a charge recorded early moves a template down", () => {
+    const out = orderByNext(
+      [sub("recorded", { anchor_day: 12, next_due: "2026-10-12" }), sub("due", { anchor_day: 28, next_due: "2026-09-28" })],
+      from,
+    );
+    expect(out.map((s) => s.name)).toEqual(["due", "recorded"]);
   });
 });

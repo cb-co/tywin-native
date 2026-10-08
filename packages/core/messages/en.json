@@ -107,7 +107,15 @@
     "importCalloutCta": "Import statement",
     "quincenaEdgeLabel": "Day {day} of {total}, payday {date}",
     "quincenaToday": "Today",
-    "availableOver": "Committed beyond your balance"
+    "availableOver": "Committed beyond your balance",
+    "upcomingCardMinimum": "Minimum · {balance} cutoff balance",
+    "upcomingCardMinimumPaid": "Minimum paid · rest of the cutoff balance",
+    "upcomingCardStatement": "Cutoff balance",
+    "upcomingOverdue": "Overdue · {date}",
+    "remindersAskTitle": "Get a heads-up before payments are due",
+    "remindersAskBody": "Card minimums, loan installments and recurring charges, on this phone. Anything already paid is skipped.",
+    "remindersAskEnable": "Turn on",
+    "remindersAskLater": "Not now"
   },
   "AccountTypes": {
     "checking": "Checking",
@@ -150,7 +158,8 @@
     "attentionTitle": "Needs a look",
     "attentionOverdue": "Overdue",
     "attentionDueSoon": "Due {date}",
-    "attentionUntriaged": "{count} uncategorized"
+    "attentionUntriaged": "{count} uncategorized",
+    "attentionMinimum": "Minimum · {balance} cutoff"
   },
   "AccountDetail": {
     "cardLinesLabel": "Lines on this card",
@@ -790,7 +799,25 @@
     "exportButton": "Export",
     "exportRateLimited": "You just exported your data. Try again in a few minutes.",
     "exportFailed": "The export couldn't be saved. Please try again.",
-    "deleteAppleCancelled": "Confirm with Apple to finish deleting your account."
+    "deleteAppleCancelled": "Confirm with Apple to finish deleting your account.",
+    "remindersTitle": "Payment reminders",
+    "remindersDescription": "A heads-up on this phone before card minimums, installments and recurring charges are due. Anything you've logged as paid is skipped.",
+    "remindersDenied": "Notifications are off for Cigua in your phone's settings.",
+    "remindersOpenSettings": "Open settings",
+    "remindersHourTitle": "Time",
+    "remindersHourDescription": "When reminders arrive.",
+    "reminderCardsTitle": "Card payments",
+    "reminderCardsDescription": "3 days before, on the day, and the day after if the minimum is still unpaid.",
+    "reminderLoansTitle": "Loan installments",
+    "reminderLoansDescription": "2 days before each installment.",
+    "reminderRecurringTitle": "Recurring payments",
+    "reminderRecurringDescription": "On the day, with a button to record it.",
+    "reminderStatementsTitle": "Statements to import",
+    "reminderStatementsDescription": "A few days after each card's cutoff.",
+    "reminderBonusTitle": "Welcome bonus deadlines",
+    "reminderBonusDescription": "2 weeks and 3 days before, while there's spending to go.",
+    "reminderPaydayTitle": "Payday",
+    "reminderPaydayDescription": "The morning you're paid, a pointer to what's available."
   },
   "Rules": {
     "pageTitle": "Category rules",
@@ -1129,7 +1156,7 @@
     "overviewAvailable": "Disponible — the big figure printed on the peso note: what you can still spend before your next payday, after everything already committed. The rows under it show how it adds up, and a timeline along the bottom edge marks the quincena from its start to payday, with today ticked.",
     "overviewNetWorth": "Net worth — a smaller line on the same peso note: what you own minus what you owe, not what you can spend today.",
     "overviewStats": "This period — a ruled table hanging off the note by a dashed line: income, paid out, and budget used so far, with a ruled meter for the budget.",
-    "overviewUpcoming": "Upcoming — a ledger of what's due next, one row each, with the date beside the amount: subscription charges and loan payments.",
+    "overviewUpcoming": "Upcoming — a ledger of what's due next, one row each, with the date beside the amount: card payments, loan installments and recurring charges. A card shows the minimum still left, with its cutoff balance beside it; anything you've already logged as paid moves on to its next date.",
     "overviewZeroState": "No accounts yet? Overview shows a violet note with Import a statement first, then starter links to Accounts, Budgets, and Subscriptions, instead of an empty page.",
     "overviewFxWarning": "If exchange rates can't be fetched, Overview and Insights say so — foreign holdings are counted 1:1 until rates return, and the warning tells you which currencies are affected.",
     "disponibleTitle": "How Disponible is calculated",
@@ -1358,5 +1385,27 @@
     "houseAdTitle": "Go ad-free with Cigua Pro",
     "houseAdBody": "More cards, accounts and questions, and no ads.",
     "houseAdCta": "See Cigua Pro"
+  },
+  "Notifications": {
+    "cardDueSoonTitle": "{name} is due {date}",
+    "cardDueTodayTitle": "{name} is due today",
+    "cardMinimumBody": "Minimum {amount} · cutoff balance {balance}",
+    "cardBalanceBody": "Cutoff balance {amount}",
+    "cardMissedTitle": "Did you pay {name}?",
+    "cardMissedBody": "{amount} was due yesterday. Already paid? Log it so Cigua stays right.",
+    "loanTitle": "{name} installment due {date}",
+    "loanBody": "{amount}. Already paid? Log it and this reminder goes away.",
+    "recurringTitle": "{name} today",
+    "recurringBody": "{amount}. Record it so your balances stay right.",
+    "recordAction": "Record",
+    "statementTitle": "Your {name} statement should be out",
+    "statementBody": "Import it to bring payments, spending and due dates up to date.",
+    "bonusTitle": "{name} welcome bonus ends {date}",
+    "bonusBody": "{amount} more spending to reach it.",
+    "paydayTitle": "Payday",
+    "paydayBody": "See what's available until {date}.",
+    "recorded": "{name} recorded",
+    "alreadyRecorded": "{name} was already recorded",
+    "channelName": "Payment reminders"
   }
 }

@@ -11,6 +11,7 @@ import { sumAccountTransferCosts, type TransferCostRow } from "./transfer-costs"
 import { getExchangeRates, convertToBase } from "#/lib/fx";
 import { netWorthTotal } from "./net-worth";
 import { accountsNeedingAttention, type AttentionItem } from "./attention";
+import { statementPaymentsByCard } from "./card-payments";
 import { localDate } from "@cigua/core/period/cycle";
 
 export type { CardGroupLine } from "./group-lines";
@@ -380,8 +381,8 @@ export async function getNetWorth(baseCurrency: string): Promise<number> {
 }
 
 /**
- * Cards that need a decision: overdue, due soon, or still carrying
- * uncategorised statement lines. Walks every card account's newest
+ * Cards that need a decision: overdue or due soon with the minimum still
+ * unpaid, or still carrying uncategorised statement lines. Walks every card account's newest
  * statement rather than every statement, since only the newest one's due
  * date and overdue figures are still actionable. The triage-count half of
  * this mirrors `getPendingTriageCounts` exactly, just unscoped across every
@@ -399,7 +400,9 @@ export async function getAccountsAttention(): Promise<AttentionItem[]> {
   const ids = accounts.map((a) => a.id);
   const { data: statements } = await supabase
     .from("card_statements")
-    .select("id, account_id, import_id, due_date, overdue_amount, overdue_installments, period_end")
+    .select(
+      "id, account_id, import_id, due_date, overdue_amount, overdue_installments, period_end, statement_balance, minimum_payment",
+    )
     .in("account_id", ids)
     .order("period_end", { ascending: false });
 
@@ -424,6 +427,17 @@ export async function getAccountsAttention(): Promise<AttentionItem[]> {
         .select("statement_id,transaction:transactions!card_statement_lines_transaction_id_fkey(category_id)")
         .in("statement_id", importedStatementIds)
     : { data: [] };
+
+  // Payments since each newest statement closed: what tells a card already
+  // paid down from one still owing its minimum.
+  const paidByCard = await statementPaymentsByCard(
+    supabase,
+    [...newestByAccount.values()].map((s) => ({
+      account_id: s.account_id,
+      latest_statement_balance: s.statement_balance,
+      latest_period_end: s.period_end,
+    })),
+  );
 
   const triageCountByStatement = new Map<string, number>();
   for (const l of lines ?? []) {
@@ -450,6 +464,9 @@ export async function getAccountsAttention(): Promise<AttentionItem[]> {
       dueDate: statement?.due_date ?? null,
       overdueAmount: statement?.overdue_amount ?? null,
       overdueInstallments: statement?.overdue_installments ?? null,
+      statementBalance: statement?.statement_balance ?? null,
+      minimumPayment: statement?.minimum_payment ?? null,
+      paidSinceStatement: paidByCard.get(a.id) ?? 0,
       pendingTriageCount: statement ? triageCountByStatement.get(statement.id) ?? 0 : 0,
     };
   });

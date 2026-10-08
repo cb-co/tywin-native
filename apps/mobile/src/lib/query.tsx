@@ -84,19 +84,19 @@ type Screen = ScreenName | "transactions";
 const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   // Plan usage (in "session" and "settings") moves with anything a plan limits.
   "recommendation.refreshRecommendation": ["overview"],
-  "transactions.createTransaction": ["overview", "accounts", "account", "transactions"],
-  "transactions.updateTransaction": ["overview", "accounts", "account", "transactions", "insights", "budgets"],
-  "transactions.deleteTransaction": ["overview", "accounts", "account", "transactions", "insights", "budgets"],
+  "transactions.createTransaction": ["overview", "reminders", "accounts", "account", "transactions"],
+  "transactions.updateTransaction": ["overview", "reminders", "accounts", "account", "transactions", "insights", "budgets"],
+  "transactions.deleteTransaction": ["overview", "reminders", "accounts", "account", "transactions", "insights", "budgets"],
   "settings.updateBaseCurrency": null,
   "settings.updateDisplayName": null,
   "settings.setPayCycle": null,
   "rules.updateRule": ["rules"],
   "rules.deleteRule": ["rules"],
-  "recurring.createSubscription": ["overview", "recurring", "session", "settings"],
-  "recurring.updateSubscription": ["overview", "recurring"],
-  "recurring.deleteSubscription": ["overview", "recurring", "session", "settings"],
-  "recurring.setSubscriptionActive": ["overview", "recurring"],
-  "recurring.addCharge": ["overview", "accounts", "account", "recurring", "transactions"],
+  "recurring.createSubscription": ["overview", "reminders", "recurring", "session", "settings"],
+  "recurring.updateSubscription": ["overview", "reminders", "recurring"],
+  "recurring.deleteSubscription": ["overview", "reminders", "recurring", "session", "settings"],
+  "recurring.setSubscriptionActive": ["overview", "reminders", "recurring"],
+  "recurring.addCharge": ["overview", "reminders", "accounts", "account", "recurring", "transactions"],
   "imports.categorizeTriageGroup": ["overview", "budgets", "insights", "transactions", "importTriage", "account", "rules"],
   "budgets.setBudget": ["overview", "budgets"],
   "budgets.createCategory": ["budgets", "quickAdd"],
@@ -113,15 +113,15 @@ const AFFECTS: Partial<Record<string, Screen[] | null>> = {
   "goals.deleteGoal": ["accounts", "account", "budgets", "goal", "insights", "session", "settings"],
   "goals.deleteContribution": ["accounts", "account", "budgets", "goal", "insights"],
   "goals.addContribution": ["accounts", "account", "budgets", "goal", "insights"],
-  "accounts.createAccount": ["overview", "accounts", "quickAdd", "session", "settings"],
-  "accounts.updateAccount": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
+  "accounts.createAccount": ["overview", "reminders", "accounts", "quickAdd", "session", "settings"],
+  "accounts.updateAccount": ["overview", "reminders", "accounts", "account", "quickAdd", "session", "settings"],
   "accounts.backfillCardArt": ["overview", "accounts", "account"],
-  "accounts.archiveAccount": ["overview", "accounts", "account", "quickAdd", "session", "settings"],
-  "accounts.deleteAccount": ["overview", "accounts", "account", "quickAdd", "transactions", "session", "settings"],
+  "accounts.archiveAccount": ["overview", "reminders", "accounts", "account", "quickAdd", "session", "settings"],
+  "accounts.deleteAccount": ["overview", "reminders", "accounts", "account", "quickAdd", "transactions", "session", "settings"],
   "accounts.createBank": ["accounts"],
-  "accounts.createCardWithLines": ["overview", "accounts", "quickAdd", "session", "settings"],
-  "accounts.createCardStub": ["overview", "accounts", "quickAdd", "session", "settings"],
-  "statements.deleteCardStatement": ["overview", "accounts", "account", "budgets", "insights", "transactions"],
+  "accounts.createCardWithLines": ["overview", "reminders", "accounts", "quickAdd", "session", "settings"],
+  "accounts.createCardStub": ["overview", "reminders", "accounts", "quickAdd", "session", "settings"],
+  "statements.deleteCardStatement": ["overview", "reminders", "accounts", "account", "budgets", "insights", "transactions"],
   "statements.saveMerchantRule": ["rules"],
   "onboarding.finishOnboarding": null,
 };
@@ -144,7 +144,7 @@ export async function invalidateAfter(action: string): Promise<void> {
 /** A statement import touches nearly everything; the confirm step calls this. */
 export async function invalidateAfterImport(): Promise<void> {
   await Promise.all(
-    (["overview", "accounts", "account", "budgets", "insights", "quickAdd", "session", "settings"] as const).map((s) =>
+    (["overview", "reminders", "accounts", "account", "budgets", "insights", "quickAdd", "session", "settings"] as const).map((s) =>
       queryClient.invalidateQueries({ queryKey: ["screen", s] }),
     ),
   );

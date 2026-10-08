@@ -1,7 +1,9 @@
 import { View } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { CalendarClock, PieChart, Repeat, Wallet } from "~/components/ui/icons";
-import { useFormatter, useTranslations } from "use-intl";
+import { useLocale, useTranslations } from "use-intl";
+import type { UpcomingItem } from "@cigua/worker/api";
+import { formatDate } from "@cigua/core/format";
 import { greetingName } from "@cigua/core/profile";
 import { useScreen } from "~/lib/query";
 import {
@@ -20,12 +22,15 @@ import { Card } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
 import { LedgerRow } from "~/components/papel/ledger";
 import { MoneyDisplay } from "~/components/money/money-display";
+import { useMaskedFormatMoney } from "~/components/money/figure-mask";
 import { AvailableHero } from "~/components/overview/available-hero";
 import { PeriodStub } from "~/components/overview/period-stub";
 import { RecommendationCard } from "~/components/overview/recommendation-card";
 import { AskEntry } from "~/components/overview/ask-entry";
 import { ImportCallout, EmptyOverviewNote } from "~/components/overview/import-callout";
 import { ImportButton } from "~/components/statements/import-button";
+import { StatementImportSheet } from "~/components/statements/statement-import-sheet";
+import { RemindersCallout } from "~/components/overview/reminders-callout";
 import { FxDegradedNotice } from "~/components/fx/fx-degraded-notice";
 import { useColors } from "~/theme/theme";
 
@@ -37,10 +42,11 @@ const STARTER_LINKS = [
 
 export default function OverviewScreen() {
   const t = useTranslations("Overview");
-  const f = useFormatter();
   const c = useColors();
   const { data: o, refetch, isError } = useScreen("overview");
   const settled = useSettled();
+  // `?import=1` is where a statement reminder lands: straight into the importer.
+  const { import: importParam } = useLocalSearchParams<{ import?: string }>();
 
   if (!o && isError) return <ScreenError onRetry={() => void refetch()} />;
   if (!o || !settled) return <OverviewSkeleton />;
@@ -92,6 +98,7 @@ export default function OverviewScreen() {
       </View>
 
       {o.importPrompt !== "none" ? <ImportCallout state={o.importPrompt} /> : null}
+      <RemindersCallout hasSomethingDue={o.upcoming.length > 0} />
 
       <RecommendationCard rec={o.recommendation?.rec ?? null} stale={o.recommendation?.stale ?? false} />
       <AskEntry />
@@ -107,20 +114,54 @@ export default function OverviewScreen() {
         ) : (
           <Card flush>
             {o.upcoming.map((item, i) => (
-              <LedgerRow
-                key={item.key}
-                rule={i < o.upcoming.length - 1}
-                lead={<CalendarClock size={16} color={c.mutedForeground} />}
-                title={item.title}
-                subtitle={item.subtitle}
-                amount={<MoneyDisplay amount={item.amount} currency={item.currency} size="inline" />}
-                meta={f.dateTime(new Date(item.date), { month: "short", day: "numeric" })}
-              />
+              <UpcomingRow key={item.key} item={item} today={o.today} rule={i < o.upcoming.length - 1} />
             ))}
           </Card>
         )}
       </View>
+      <StatementImportSheet open={importParam === "1"} onClose={() => router.setParams({ import: undefined })} />
     </Screen>
+  );
+}
+
+/**
+ * One thing coming due. A card with a statement leads with the minimum still
+ * left — the deadline that costs a late fee — and keeps the cutoff balance
+ * standing beside it; once the minimum is paid the row carries the rest of the
+ * balance. A past date is flagged rather than dropped: it is the row that
+ * matters most.
+ */
+function UpcomingRow({ item, today, rule }: { item: UpcomingItem; today: string; rule: boolean }) {
+  const t = useTranslations("Overview");
+  const locale = useLocale();
+  const c = useColors();
+  const money = useMaskedFormatMoney();
+  const date = formatDate(item.date, locale, { month: "short", day: "numeric" });
+  const overdue = item.date < today;
+  const subtitle = !item.card
+    ? item.subtitle
+    : item.card.basis === "minimum"
+      ? t("upcomingCardMinimum", { balance: money(item.card.statementLeft, item.currency) })
+      : item.card.minimumPaid
+        ? t("upcomingCardMinimumPaid")
+        : t("upcomingCardStatement");
+  return (
+    <LedgerRow
+      rule={rule}
+      lead={<CalendarClock size={16} color={overdue ? c.red : c.mutedForeground} />}
+      title={item.title}
+      subtitle={subtitle}
+      amount={<MoneyDisplay amount={item.amount} currency={item.currency} size="inline" />}
+      meta={
+        overdue ? (
+          <Text size="xs" tone="red" figure align="right">
+            {t("upcomingOverdue", { date })}
+          </Text>
+        ) : (
+          date
+        )
+      }
+    />
   );
 }
 

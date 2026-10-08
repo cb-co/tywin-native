@@ -25,6 +25,7 @@ import { Select } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Text } from "~/components/ui/text";
 import { toast } from "~/components/ui/toast";
+import { ReminderRows } from "~/components/settings/reminder-rows";
 import { makeStyles, useTheme } from "~/theme/theme";
 
 const PAY_CYCLE_LABEL_KEY = { monthly: "payCycleMonthly", semimonthly: "payCycleSemimonthly", weekly: "payCycleWeekly" } as const;
@@ -413,6 +414,8 @@ function SettingsPanel({ data, onRefresh }: { data: ScreenData<"settings">; onRe
         <Row inline title={t("soundEffectsTitle")} description={t("soundEffectsDescription")}>
           <Switch checked={enabled} onCheckedChange={setEnabled} accessibilityLabel={t("soundEffectsTitle")} />
         </Row>
+
+        <ReminderRows Row={Row} />
 
         <Row inline title={t("helpTitle")} description={t("helpDescription")}>
           <Button variant="outline" size="sm" icon={CircleHelp} onPress={() => router.push("/help")}>

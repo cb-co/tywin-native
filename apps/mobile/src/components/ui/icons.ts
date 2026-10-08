@@ -12,6 +12,7 @@ export { default as ArrowLeftRight } from "lucide-react-native/icons/arrow-left-
 export { default as ArrowRight } from "lucide-react-native/icons/arrow-right";
 export { default as ArrowUpRight } from "lucide-react-native/icons/arrow-up-right";
 export { default as Banknote } from "lucide-react-native/icons/banknote";
+export { default as Bell } from "lucide-react-native/icons/bell";
 export { default as Bird } from "lucide-react-native/icons/bird";
 export { default as CalendarClock } from "lucide-react-native/icons/calendar-clock";
 export { default as Check } from "lucide-react-native/icons/check";

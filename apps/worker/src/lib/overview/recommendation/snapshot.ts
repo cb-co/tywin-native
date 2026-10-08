@@ -39,7 +39,16 @@ export type RecommendationSnapshot = {
   accounts: { type: string; currency: string; balance: number }[];
   loans: { currency: string; outstanding: number; installment: number }[];
   goals: { target: number; saved: number; targetDate: string | null }[];
-  upcoming: { kind: UpcomingKind; amount: number; currency: string; dueInDays: number }[];
+  /** For a card_payment with a statement, `amount` is the minimum still left
+   *  (or the rest of the cutoff balance once the minimum is paid), and
+   *  `statementBalanceLeft` is the cutoff balance still standing. */
+  upcoming: {
+    kind: UpcomingKind;
+    amount: number;
+    currency: string;
+    dueInDays: number;
+    statementBalanceLeft?: number;
+  }[];
   /* Always the CALENDAR month, unlike monthIncome/monthExpense above, which
      follow the person's pay period. "Same point last month" only means
      something against a fixed month, and dayOfMonth is a calendar day. */
@@ -144,6 +153,7 @@ export function buildSnapshot(rows: SnapshotRows): RecommendationSnapshot {
       amount: r(u.amount),
       currency: u.currency,
       dueInDays: dueInDays(u.date, now),
+      ...(u.card ? { statementBalanceLeft: r(u.card.statementLeft) } : {}),
     })),
     trend: {
       monthToDate: { income: r(thisMonth.income), expense: r(thisMonth.expense) },

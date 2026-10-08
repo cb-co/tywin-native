@@ -4,22 +4,31 @@ import { baseCurrencyOf } from "@cigua/core/profile";
 import { netWorthTotal } from "#/lib/accounts/net-worth";
 import { nextChargeDate, monthlyEquivalent, type BillingCycle } from "@cigua/core/subscriptions/cycle";
 import { getExchangeRates, convertToBase, unconvertedCurrencies } from "#/lib/fx";
-import { cardAmountDue, dayAfter } from "@cigua/core/overview/card-due";
+import { cardDue } from "@cigua/core/overview/card-due";
+import { nextUnpaid, type LoggedPayment, type Unpaid } from "@cigua/core/overview/next-unpaid";
+import { statementPaymentsByCard } from "#/lib/accounts/card-payments";
 import { importPromptState, type ImportPrompt } from "./import-prompt";
 import { isOutgoing } from "./outgoing";
 import { currentPeriod } from "@cigua/core/period/profile";
 import { wholeBudgetMonth } from "#/lib/budgets/queries";
-import { localDate, type Period } from "@cigua/core/period/cycle";
+import { addDays, localDate, type Period } from "@cigua/core/period/cycle";
 import { computeAvailable, type Available } from "./available";
 import { computeFunding, type ContributionRow } from "#/lib/goals/funding";
 
 export type UpcomingItem = {
   key: string;
-  date: string; // ISO date
+  /** `YYYY-MM-DD`. A date, not an instant: format it in UTC (`formatDate`) or
+   *  a phone west of Greenwich shows the day before. */
+  date: string;
   title: string;
   subtitle: string;
+  /** What to pay by `date`. For a card with a statement behind it, see `card`. */
   amount: number;
   currency: string;
+  /** Credit cards with a statement. `amount` is then what keeps the card
+   *  current: the minimum still left while there is one, the rest of the cutoff
+   *  balance once it is met (or when the bank printed no minimum). */
+  card?: { basis: "minimum" | "statement"; statementLeft: number; minimumPaid: boolean };
 };
 
 export type Overview = {
@@ -54,60 +63,61 @@ export type Overview = {
   available: Available;
 };
 
-function nextDue(day: number | null, from = new Date()): Date | null {
-  return nextChargeDate({ cycle: "monthly", anchorDay: day }, from);
+/** A card's due date from its payment day, when no statement gives one. From
+ *  today's midnight, not now: from now, a card due today rolls to next month. */
+function nextDue(day: number | null, today: string): string | null {
+  const [y, m, d] = today.split("-").map(Number);
+  const next = nextChargeDate({ cycle: "monthly", anchorDay: day }, new Date(y, m - 1, d));
+  return next ? localDate(next) : null;
 }
 
-type CardRow = {
-  account_id: string | null;
-  latest_statement_balance: number | null;
-  latest_period_end: string | null;
-};
-
-/** Payments made against each card's latest statement, in the card's own
- *  currency — i.e. transactions into the card dated after that statement
- *  closed. Anything on or before the closing date is already netted into
- *  `statement_balance`, and later charges belong to the next statement, so its
- *  closing date is the only correct cut-off. Mirrors the coalesce the balance
- *  views use for the destination leg (20260720093500_payment_destination_amount).
- */
-async function statementPaymentsByCard(
+/** Payments logged lately toward each loan and each recurring payment — what
+ *  tells an installment already paid from one still to pay (see nextUnpaid).
+ *  Loans by destination, in the loan's own currency (the same coalesce as
+ *  statementPaymentsByCard); recurring payments by the template the charge was
+ *  recorded from. Each window covers the longest run-up its schedules can
+ *  have: a month for loans, two-thirds of a year for a yearly template. */
+export async function recentPayments(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  cards: CardRow[],
-): Promise<Map<string, number>> {
-  const settled = cards.filter(
-    (c): c is CardRow & { account_id: string; latest_period_end: string } =>
-      !!c.account_id && !!c.latest_period_end && c.latest_statement_balance != null,
-  );
-  if (settled.length === 0) return new Map();
+  loanIds: string[],
+  subIds: string[],
+  today: string,
+): Promise<{ loans: Map<string, LoggedPayment[]>; subs: Map<string, string[]> }> {
+  const [{ data: loanRows }, { data: subRows }] = await Promise.all([
+    loanIds.length
+      ? supabase
+          .from("transactions")
+          .select("to_account_id,amount,to_amount,occurred_at")
+          .eq("type", "payment")
+          .in("to_account_id", loanIds)
+          .gte("occurred_at", addDays(today, -31))
+      : Promise.resolve({ data: [] as { to_account_id: string | null; amount: number; to_amount: number | null; occurred_at: string }[] }),
+    subIds.length
+      ? supabase
+          .from("transactions")
+          .select("subscription_id,occurred_at")
+          .in("subscription_id", subIds)
+          .gte("occurred_at", addDays(today, -250))
+      : Promise.resolve({ data: [] as { subscription_id: string | null; occurred_at: string }[] }),
+  ]);
 
-  // One round trip for every card: filter from the earliest cut-off, then
-  // apply each card's own cut-off in memory.
-  const earliest = settled.reduce(
-    (min, c) => (c.latest_period_end < min ? c.latest_period_end : min),
-    settled[0].latest_period_end,
-  );
-
-  const { data: rows } = await supabase
-    .from("transactions")
-    .select("to_account_id,amount,to_amount,occurred_at")
-    .eq("type", "payment")
-    .in(
-      "to_account_id",
-      settled.map((c) => c.account_id),
-    )
-    .gte("occurred_at", dayAfter(earliest));
-
-  const cutoff = new Map(settled.map((c) => [c.account_id, dayAfter(c.latest_period_end)]));
-  const paid = new Map<string, number>();
-  for (const r of rows ?? []) {
-    const id = r.to_account_id;
-    if (!id) continue;
-    const from = cutoff.get(id);
-    if (!from || r.occurred_at.slice(0, 10) < from) continue;
-    paid.set(id, (paid.get(id) ?? 0) + Number(r.to_amount ?? r.amount ?? 0));
+  const loans = new Map<string, LoggedPayment[]>();
+  for (const r of loanRows ?? []) {
+    if (!r.to_account_id) continue;
+    const list = loans.get(r.to_account_id) ?? [];
+    list.push({ date: r.occurred_at.slice(0, 10), amount: Number(r.to_amount ?? r.amount ?? 0) });
+    loans.set(r.to_account_id, list);
   }
-  return paid;
+  const subs = new Map<string, string[]>();
+  for (const r of subRows ?? []) {
+    if (!r.subscription_id) continue;
+    subs.set(r.subscription_id, [...(subs.get(r.subscription_id) ?? []), r.occurred_at.slice(0, 10)]);
+  }
+  return { loans, subs };
+}
+
+function dueInput(due: Unpaid | null, currency: string) {
+  return { amount: due?.amount ?? 0, currency, date: due?.date ?? null };
 }
 
 export async function getOverview(): Promise<Overview> {
@@ -122,7 +132,8 @@ export async function getOverview(): Promise<Overview> {
     .select("base_currency,display_name,pay_cycle,pay_anchor_day")
     .maybeSingle();
 
-  const period = currentPeriod(profile, localDate());
+  const today = localDate();
+  const period = currentPeriod(profile, today);
 
   const [
     { data: cashflowRows },
@@ -170,12 +181,6 @@ export async function getOverview(): Promise<Overview> {
   const cashflow = (cashflowRows ?? [])[0];
 
   const baseCurrency = baseCurrencyOf(profile);
-  const [rates, cardPaid] = await Promise.all([
-    getExchangeRates(baseCurrency),
-    statementPaymentsByCard(supabase, cards ?? []),
-  ]);
-  const toBase = (amount: number, currency: string) => convertToBase(amount, currency, baseCurrency, rates);
-
   const acctById = new Map((accounts ?? []).map((a) => [a.id, a]));
 
   /* The recurring templates that are real money leaving, and the ONE list
@@ -185,6 +190,18 @@ export async function getOverview(): Promise<Overview> {
   const outgoing = (subs ?? []).filter((s) =>
     isOutgoing(s, (id) => acctById.get(id)?.type),
   );
+
+  const [rates, cardPaid, paid] = await Promise.all([
+    getExchangeRates(baseCurrency),
+    statementPaymentsByCard(supabase, cards ?? []),
+    recentPayments(
+      supabase,
+      (loans ?? []).flatMap((l) => (l.account_id ? [l.account_id] : [])),
+      outgoing.map((s) => s.id),
+      today,
+    ),
+  ]);
+  const toBase = (amount: number, currency: string) => convertToBase(amount, currency, baseCurrency, rates);
 
   // Only the rows that actually feed a base-currency total: `upcoming` shows
   // each amount in its own currency, so a missing rate costs it nothing.
@@ -210,47 +227,84 @@ export async function getOverview(): Promise<Overview> {
       0,
     );
 
+  /* The next installment and the next charge still to pay — one already
+     logged has moved on to the one after. Computed once: the Upcoming rows and
+     the hero's dated legs read the same figures, so they cannot disagree. */
+  const loanDue = (loans ?? []).map((l) => ({
+    row: l,
+    due: nextUnpaid({
+      schedule: { cycle: "monthly", anchorDay: l.payment_due_day },
+      amount: Number(l.installment_amount ?? 0),
+      payments: paid.loans.get(l.account_id ?? "") ?? [],
+      today,
+    }),
+  }));
+  const subDue = outgoing.map((s) => ({
+    row: s,
+    due: nextUnpaid({
+      schedule: { cycle: s.billing_cycle as BillingCycle, anchorDay: s.anchor_day, anchorDate: s.anchor_date },
+      amount: Number(s.amount),
+      // A recorded charge settles its occurrence whatever it cost: it may have
+      // settled in the account's currency, not the template's, so its amount
+      // cannot be compared with the template's.
+      payments: (paid.subs.get(s.id) ?? []).map((date) => ({ date, amount: Number(s.amount) })),
+      today,
+    }),
+  }));
+
   const upcoming: UpcomingItem[] = [];
 
   for (const c of cards ?? []) {
     // Null once the statement is settled — the row then drops off until the
     // next import brings a fresh balance and due date. A card left unpaid keeps
     // showing its real, overdue date, which is the point.
-    const amount = cardAmountDue(c.latest_statement_balance, c.owed, cardPaid.get(c.account_id ?? "") ?? 0);
-    const d = c.latest_due_date ? new Date(c.latest_due_date) : nextDue(c.payment_due_day);
+    const due = cardDue(
+      c.latest_statement_balance,
+      c.owed,
+      cardPaid.get(c.account_id ?? "") ?? 0,
+      c.latest_minimum_payment,
+    );
+    const date = c.latest_due_date ?? nextDue(c.payment_due_day, today);
     const acct = acctById.get(c.account_id ?? "");
-    if (d && acct && amount != null)
-      upcoming.push({
-        key: `card-${c.account_id}`,
-        date: d.toISOString(),
-        title: t("cardPaymentTitle", { name: acct.name }),
-        subtitle: t("creditCardSubtitle", { currency: c.currency ?? acct.currency }),
-        amount,
-        currency: c.currency ?? acct.currency,
-      });
+    if (!date || !acct || !due) continue;
+    // Minimum paid and the due date gone by: what is left is not overdue, it
+    // rolls into the next statement. Nothing is coming due until that import.
+    if (date < today && due.minimum === 0) continue;
+    const currency = c.currency ?? acct.currency;
+    const owesMinimum = due.minimum != null && due.minimum > 0;
+    upcoming.push({
+      key: `card-${c.account_id}`,
+      date,
+      title: t("cardPaymentTitle", { name: acct.name }),
+      subtitle: t("creditCardSubtitle", { currency }),
+      amount: owesMinimum ? due.minimum! : due.balance,
+      currency,
+      card:
+        c.latest_statement_balance != null
+          ? { basis: owesMinimum ? "minimum" : "statement", statementLeft: due.balance, minimumPaid: due.minimum === 0 }
+          : undefined,
+    });
   }
-  for (const l of loans ?? []) {
-    const d = nextDue(l.payment_due_day);
+  for (const { row: l, due } of loanDue) {
     const acct = acctById.get(l.account_id ?? "");
-    if (d && acct)
+    if (due && acct)
       upcoming.push({
         key: `loan-${l.account_id}`,
-        date: d.toISOString(),
+        date: due.date,
         title: t("loanInstallmentTitle", { name: acct.name }),
         subtitle: t("loanSubtitle", { currency: l.currency ?? acct.currency }),
-        amount: Number(l.installment_amount ?? 0),
+        amount: due.amount,
         currency: l.currency ?? acct.currency,
       });
   }
-  for (const s of outgoing) {
-    const d = nextChargeDate({ cycle: s.billing_cycle as BillingCycle, anchorDay: s.anchor_day, anchorDate: s.anchor_date });
-    if (d)
+  for (const { row: s, due } of subDue) {
+    if (due)
       upcoming.push({
         key: `sub-${s.id}`,
-        date: d.toISOString(),
+        date: due.date,
         title: s.name,
         subtitle: t("subscriptionSubtitle", { currency: s.currency }),
-        amount: Number(s.amount),
+        amount: due.amount,
         currency: s.currency,
       });
   }
@@ -298,22 +352,8 @@ export async function getOverview(): Promise<Overview> {
       paidSinceStatement: cardPaid.get(c.account_id ?? "") ?? 0,
       minimumPayment: c.latest_minimum_payment,
     })),
-    loans: (loans ?? []).map((l) => {
-      const d = nextDue(l.payment_due_day);
-      return {
-        amount: Number(l.installment_amount ?? 0),
-        currency: l.currency ?? baseCurrency,
-        date: d ? localDate(d) : null,
-      };
-    }),
-    subscriptions: outgoing.map((s) => {
-      const d = nextChargeDate({ cycle: s.billing_cycle as BillingCycle, anchorDay: s.anchor_day, anchorDate: s.anchor_date });
-      return {
-        amount: Number(s.amount),
-        currency: s.currency,
-        date: d ? localDate(d) : null,
-      };
-    }),
+    loans: loanDue.map(({ row: l, due }) => dueInput(due, l.currency ?? baseCurrency)),
+    subscriptions: subDue.map(({ row: s, due }) => dueInput(due, s.currency)),
     fxUnconverted,
   });
 

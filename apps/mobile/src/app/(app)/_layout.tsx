@@ -3,6 +3,7 @@ import { useTranslations } from "use-intl";
 import { QuickAddProvider } from "~/components/quick-add/quick-add";
 import { QuickAddSheet } from "~/components/quick-add/quick-add-sheet";
 import { useStackOptions } from "~/components/shell/stack-options";
+import { Reminders } from "~/lib/reminders/reminders";
 
 /**
  * The signed-in app: the tabs, and the few screens pushed over them. Detail
@@ -20,6 +21,7 @@ export default function AppLayout() {
         <Stack.Screen name="settings/rules" options={{ title: "" }} />
       </Stack>
       <QuickAddSheet />
+      <Reminders />
     </QuickAddProvider>
   );
 }

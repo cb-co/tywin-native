@@ -57,6 +57,7 @@ export type {
   CardStatementRow,
 } from "#/lib/accounts/queries";
 export type { AttentionItem } from "#/lib/accounts/attention";
+export type { UpcomingItem } from "#/lib/overview/queries";
 export type { GoalCardRow, GoalsOverview, ContributableAccount } from "#/lib/goals/queries";
 export type { Pace } from "#/lib/goals/pace";
 export type { SubscriptionWithRefs } from "#/lib/subscriptions/queries";

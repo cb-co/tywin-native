@@ -9,6 +9,7 @@
 import { getLocale, getTranslations } from "#/i18n";
 import { createClient } from "#/lib/supabase/server";
 import { getOverview } from "#/lib/overview/queries";
+import { getReminders } from "#/lib/notifications/reminders";
 import { getRecommendation } from "#/lib/overview/recommendation/queries";
 import {
   getAccountsWithStatus,
@@ -375,8 +376,15 @@ async function welcome() {
   };
 }
 
+/** What the phone schedules payment reminders from. Read in the background
+ *  by the app shell, never shown as a page. */
+async function reminders() {
+  return getReminders();
+}
+
 export const screens = {
   session,
+  reminders,
   quickAdd,
   overview,
   accounts,
