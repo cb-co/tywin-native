@@ -15,6 +15,13 @@ export function TabHeader() {
   );
 }
 
+/**
+ * A stack's own tab page (Accounts, Budgets): the tab header, without the pushed
+ * screens' header background. The native stack lays that background out in flow
+ * above a custom header, so it would print a blank, ruled header-high band on top.
+ */
+export const tabPageOptions: NativeStackNavigationOptions = { header: TabHeader, headerBackground: undefined };
+
 /** A pushed screen's header: plain paper, the title in ink, a bare back arrow, and
  *  a hairline under it so every screen's top edge is ruled, not just the tabs'. */
 export function useStackOptions(): NativeStackNavigationOptions {
